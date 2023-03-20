@@ -82,6 +82,9 @@ int distrib_init(void *params){
                               else part->z0[np]  = -part->z0[np];
                         part->x0[np]   = R*cos(phi);  //kpc
                         part->y0[np]   = R*sin(phi);  //kpc
+			part->x[np]= part->x0[np];
+			part->y[np]= part->y0[np];
+			part->z[np]= part->z0[np];
 //			printf(" %e %e %e %e \n",R,part->x0[np],part->y0[np],part->z0[np]);
                         np++;
 
@@ -110,9 +113,11 @@ FILE *kick(void *params){
 	double glr,gbr; // galactic latitude, galactic longitude in radians
 	double age_pulsar_yr;
 	FILE *fp_gal=NULL;
+	//FILE *file=NULL;
 	int x[100];
 	char *fname;
         fname = malloc(150);
+	//file=fopen("kick_result.txt","w+");
 	if ( ( fp_gal = fopen("galactic_coord.dat","w+")) == NULL){
 		fprintf(stderr,"Couldn't open file galactic_coord.dat \n");
 	//exit(-1);
@@ -172,10 +177,12 @@ FILE *kick(void *params){
 
 
 			fprintf(fp_gal,"Gal %e %e %e %d \n",part->gl[np],part->gb[np],part->dist[np],2);
+			//fprintf(file,"%e %e\n",part->x[np],part->y[np]);
 	//		printf("Gal %e %e %e %d \n",part->gl[np],part->gb[np],part->dist[np],2);
 			//printf("%e \n",part->gl[np]);
 			//printf("%e  %e \n",part->x[np],part->z[np]);
         	} 
+		//fclose(file);
 
 
 return fp_gal;
@@ -289,8 +296,10 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 	double S_N ; // signal to noise ratio
 	long S_Nmin=10 ; // signal to noise ratio
 	FILE *fp=NULL;
+	FILE *file_data=NULL;
 	char *fname;
         fname = malloc(150);
+	file_data=fopen("P_Pdot_positions.txt","w+");
 	//sprintf(fname,"ppdot_N_%.ld_B_%.1e_sigB_%.1f_P_%.2f_sigP_%.3f_alphad_%.1f_k_%.ld_brate_%.ld_vold_%.ld_SN_%.ld.dat",part->Npulsars,part->b_mean,part->sigma_b,part->p_mean,part->sigma_p,part->alpha_d,part->k_tau0_B0,part->birth_rate,part->v_old,S_Nmin);
 	sprintf(fname,"ppdot_ska");
 	//sprintf(fname,"ppdot_N_%.ld_B_%.e_sigB_%.1f_P_%.2f_sigP_%.3f_alphad_%.1f_k_%.ld_brate_%.ld_vold_%.ld_SN_%.ld.dat",part->Npulsars,part->b_mean,part->sigma_b,part->p_mean,part->sigma_p,part->alpha_d,part->k_tau0_B0,part->birth_rate,part->v_old,S_Nmin);
@@ -334,7 +343,9 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 				if(fabs(alpha-xi)<= rho && alpha >= rho && xi < M_PI/2){ 
 					Nbeam++;
                 			if (detec==1){
-						 Nr=1;  // mJy
+						Nr=1;  // mJy
+						part->detec[np]=1;
+                                                part->detec_rad[np]=1;
 						count_radio_tot++;
 			//		printf("Smin %e Fr %e \n",Smin_radio,part->Fr[np]);
 					}
@@ -342,7 +353,9 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 					Nbeam++;
                 			if (detec==1){
 						count_radio_tot++;
-						 Nr=1;  
+						part->detec[np]=1;
+                                                part->detec_rad[np]=1;
+						Nr=1;  
 			//		printf("Smin %e Fr %e \n",Smin_radio,part->Fr[np]);
 						}
 					}
@@ -354,7 +367,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 					    Smin_gamma=4e-15; // in W.m^-2 
 					} else Smin_gamma=16e-15;
 				//Smin_gamma=5e-12;
-                			if(part->Fg[np]>Smin_gamma) Ng=1;  
+                			if(part->Fg[np]>Smin_gamma) {Ng=1;part->detec[np]=1;part->detec_gam[np]=1; }  
                 			// Ng=1;  
                 			//if(part->Fg[np]>16e-12) Ng=1;  // mJy
 				}  else continue; 
@@ -365,7 +378,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 				//	printf("%e %e \n",log10(part->period[np]),log10(part->w_r[np]*180/M_PI));
 				//	printf("logP %e logwr %e \n",log10(part->period[np]),log10(part->w_r[np]));
 				//	printf("%e \n",180*asin(part->z[np]/part->dist[np]/M_PI)); // galactic latitude
-					count_radio_gamma++;	
+					count_radio_gamma++;part->detec_rg[np]=1;part->detec[np]=1;part->detec_rad[np]=0;part->detec_gam[np]=0;	
 			
 			        		/*if(part->Edot[np]>1e25) { //32
 							Nsup_radio_gamma+=1;
@@ -461,6 +474,21 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			Nr=0;
 			Ng=0;
 			detec=0;
+			       if(part->detec_rad[np]==1){
+
+                                  fprintf(file_data,"%e %e %e %e 1 %e %e \n",part->period[np],part->Pdot[np],part->x_s[np],part->y_s[np],part->age_pulsar[np],part->err_rel_g[np]);
+                        }
+
+                               else if(part->detec_gam[np]==1){
+
+                                  fprintf(file_data,"%e %e %e %e 2 %e %e \n",part->period[np],part->Pdot[np],part->x_s[np],part->y_s[np],part->age_pulsar[np],part->err_rel_g[np]);
+                        }
+
+                               else if(part->detec_rg[np]==1){
+
+                                  fprintf(file_data,"%e %e %e %e 3 %e %e \n",part->period[np],part->Pdot[np],part->x_s[np],part->y_s[np],part->age_pulsar[np],part->err_rel_g[np]);
+                        }
+
 
 		}
 

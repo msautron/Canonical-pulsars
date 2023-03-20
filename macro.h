@@ -31,6 +31,16 @@ struct func_params{
         double *z0; //kpc initial z0 in the Galactocentric frame
         double *x0; // idem 
         double *y0; //idem
+        double *x_s;
+	double *y_s;
+	double *z_s;
+	double *vx0; //table which stores the initial velocities on the x absciss, km/s
+	double *vy0; //table which stores the initial velocities on the y absciss, km/s
+	double *vz0; //table which stores the initial velocities on the z absciss, km/s
+        double *vx;  // velocities on the x absciss, km/s
+	double *vy;  // velocities on the y absciss, km/s
+	double *vz;  // velocities on the z absciss, km/s
+        double *err_rel_g; // relative error on the energy for the integration of the equation of movement 
         long   np; //pulsar number= index of tables that store the pulsars parameters) 
         double sigma_v; // sigma 1D
         double *period; //stores the actual period
@@ -38,6 +48,10 @@ struct func_params{
 	double Rexp; //in kpc parameter for the R distribution
 	long v_young; //sigma 1D for the young pulsarvelocity
 	long v_old; // old
+        long *detec; // indicates if the pulsar is considered as detected
+	long *detec_rad; // indicates if the pulsar is detected in radio
+	long *detec_gam; //indicates if the pulsar is detected in gamma
+	long *detec_rg; // indicates if the pulsar is detected in radio and gamma
         double zexp; // in kpc
 	double *Smin;
 	double Fmin;
@@ -72,5 +86,7 @@ struct func_params{
 #define R_NS 12000   /*Moment of Inertia in kg.m2 */ 
 #define M_PI 3.14159265358979323846 /* pi */
 #define SI_mu0 1.25663706212e-6 /* vacuum permeability in H/m */
+#define G_grav 6.67430e-20 //gravitational constant km^-3 kg^-1 s^-2
+#define MSUN 1.98847e30 //Solar mass kg
 #endif
 

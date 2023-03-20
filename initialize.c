@@ -110,4 +110,37 @@ void initialize(int argc, char *argv[], void *params){
        part->gb= malloc(sizeof(*part->gb) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
                 if (part->gb== NULL) printf("gb: allocation failed"); // check if allocation succeeded 
 
+       part->vx0= malloc(sizeof(*part->vx0) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate)
+                if (part->vx0== NULL) printf("vx0: allocation failed");	// check if allocation succeede
+
+       part->vy0= malloc(sizeof(*part->vy0) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->vy0== NULL) printf("vy0: allocation failed"); // check if allocation succeede
+
+       part->vz0= malloc(sizeof(*part->vz0) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->vz0== NULL) printf("vz0: allocation failed"); // check if allocation succeede
+       part->vz= malloc(sizeof(*part->vz) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->vz== NULL) printf("vz: allocation failed"); // check if allocation succeede
+
+       part->vy= malloc(sizeof(*part->vy) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->vy== NULL) printf("vy: allocation failed"); // check if allocation succeede
+       part->vx= malloc(sizeof(*part->vx) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->vx== NULL) printf("vx: allocation failed"); // check if allocation succeede
+
+       part->err_rel_g= malloc(sizeof(*part->err_rel_g) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->err_rel_g== NULL) printf("err_rel_g: allocation failed"); // check if allocation succeede
+       part->x_s= malloc(sizeof(*part->x_s) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->x_s== NULL) printf("x_s: allocation failed"); // check if allocation succeeded
+       part->y_s= malloc(sizeof(*part->y_s) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->y_s== NULL) printf("y_s: allocation failed"); // check if allocation succeeded  
+       part->z_s= malloc(sizeof(*part->z_s) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->z_s== NULL) printf("z_s: allocation failed"); // check if allocation succeeded 
+       part->detec= malloc(sizeof(*part->detec) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->detec== NULL) printf("detec: allocation failed"); // check if allocation succeeded
+       part->detec_rad= malloc(sizeof(*part->detec_rad) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->detec_rad== NULL) printf("detec_rad: allocation failed"); // check if allocation succeeded
+       part->detec_gam= malloc(sizeof(*part->detec_gam) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->detec_gam== NULL) printf("detec_gam: allocation failed"); // check if allocation succeeded
+       part->detec_rg= malloc(sizeof(*part->detec_rg) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->detec_rg== NULL) printf("detec_rg: allocation failed"); // check if allocation succeeded
+
 }

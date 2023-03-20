@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 #Init variables
 pulsars=[]
 P_list,P_dot_list,x_s_list,y_s_list,em_type_list=[],[],[],[],[]
-P_str,P_dot_str,x_s_str,y_s_str,emission_type='','','','',''
-P,P_dot,x_s,y_s=0,0,0,0
+P_str,P_dot_str,x_s_str,y_s_str,emission_type_str='','','','',''
+P,P_dot,x_s,y_s,emission_type=0,0,0,0,0
 
 #read the file in the pulsars list
 file= open("P_Pdot_positions.txt","r")
@@ -20,14 +20,15 @@ for i in range(len(pulsars)):
         P_dot_str+=pulsars[i][j+13]
         x_s_str+=pulsars[i][j+27]
         y_s_str+=pulsars[i][j+39]
-    emission_type+=pulsars[i][52]+pulsars[i][53]
+    emission_type_str+=pulsars[i][52]
+    emission_type=float(emission_type_str)
     P=float(P_str)
     P_dot=float(P_dot_str)
     x_s=float(x_s_str)
     y_s=float(y_s_str)
     pulse=[P,P_dot,x_s,y_s,emission_type]
     pulsars[i]=pulse
-    P_str,P_dot_str,x_s_str,y_s_str,emission_type='','','','',''
+    P_str,P_dot_str,x_s_str,y_s_str,emission_type_str='','','','',''
 
 #Creation of the different useful lists
 for i in range(len(pulsars)):

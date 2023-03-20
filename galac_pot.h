@@ -1,0 +1,10 @@
+void distrib_vinit(void *params);
+double phi_tot(void *params,long np);
+double tot_energy(void *params,long np);
+void phi_1(void *params,double *k,double step,double phi1[3],long np);
+void phi_2(void *params,double *k,double step,double phi2[3],long np);
+void phi_h(void *params,double *k,double step,double phih[3],long np);
+void evol_galac_pot_RK4(void *params);
+void evol_galac_pot_verlet(void *params);
+void evol_galac_pot_yoshi(void *params);
+void send_data(void *params);

@@ -6,6 +6,7 @@
 #include"macro.h"
 #include"birth_pulsars.h"
 #include"evolution.h"
+#include"galac_pot.h"
 #include"ism_scattering.h"
 #include"detection.h"
 #include<gsl/gsl_rng.h>
@@ -59,6 +60,9 @@ int main(int argc, char **argv){
   
         // Distribution of the pulsars in the Galaxy        
 	distrib_init(&params); // initial distribution of the pulsars
+	distrib_vinit(&params);
+	send_data(&params);
+        //evol_galac_pot_verlet(&params);	
 	kick(&params);//birth kick velocity - writes gl, gb and dist in file galactic_coord.dat
 
 	printf("##Total number of simulated pulsars: %ld \n",params.Npulsars);
