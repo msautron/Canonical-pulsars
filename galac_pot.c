@@ -132,7 +132,7 @@ void evol_galac_pot_verlet(void *params){
     for(np=0;np<part->Npulsars;np++){
 
        part->x[np]=part->x[np]/L0;part->y[np]=part->y[np]/L0;part->z[np]=part->z[np]/L0;
-       part->x[np]=part->x[np]/v0;part->y[np]=part->y[np]/v0;part->z[np]=part->z[np]/v0;
+       part->vx[np]=part->vx[np]/v0;part->vy[np]=part->vy[np]/v0;part->vz[np]=part->vz[np]/v0;
 
        double E0=tot_energy(part,np);
        for(double t=TMILKY*yr_sec-part->age_pulsar[np];t<TMILKY*yr_sec;t+=step){
@@ -175,11 +175,14 @@ void evol_galac_pot_verlet(void *params){
 
        }
 
+     double Ef=tot_energy(part,np);
+     part->x[np]=part->x[np]*L0;part->y[np]=part->y[np]*L0;part->z[np]=part->z[np]*L0;
+     part->vx[np]=part->vx[np]*v0;part->vy[np]=part->vy[np]*v0;part->vz[np]=part->vz[np]*v0;
+
      part->x_s[np]= 8.5-part->x[np]; // shift center of the Galaxy to the Sun
      part->y_s[np]= part->y[np];
      part->z_s[np]= 0.015-part->z[np];
 
-     double Ef=tot_energy(part,np);
      part->err_rel_g[np]=fabs((E0-Ef)/E0)*100;
      fprintf(file,"%e|%e|%e|\n",part->x_s[np],part->y_s[np],part->err_rel_g[np]);
 
