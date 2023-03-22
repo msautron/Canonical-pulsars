@@ -21,8 +21,8 @@ double func_angle_mhd(double x, void *params){ // function for which we want to 
       long np=part->np;
       double alpha_d=part->alpha_d;
       double tau_d=part->tau_d;
-      double age = part->age_pulsar;
-      double cosa0 = part->cos_a0[part->np] ;
+      double age = part->age_pulsar[np];
+      double cosa0 = part->cos_a0[np] ;
       double t_used;
       double sin2a0=1.-sq(cosa0);
 
@@ -74,7 +74,6 @@ int evolution(void *params){
         struct func_params *part= (struct func_params*)params;
   
         FILE *fp;
-        fp=fopen(fname,"r+");
         if ( ( fp = fopen("pulsar_properties.dat","w+")) == NULL){
       	     printf("Couldn't open file pulsar_properties.dat \n");
 	     exit(-1);
@@ -202,7 +201,7 @@ int evolution(void *params){
 	              part->Pdot[np]    =   four_pi2*k*(1./part->period[np]);
 		    }
 		    
-		    else (part->vacuum_evol){ 
+		    else { 
 		      k   =   k1*(sq(part->Binit[np])*((1-sq(cosa0))*exp(-2*part->age_pulsar[np]/part->tau_vac_al))); //vacuum
 		      alpha = sqrt(1-sq(cosa0))*exp(-part->age_pulsar[np]/part->tau_vac_al);
 	              part->alpha[np]=alpha;
