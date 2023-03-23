@@ -47,12 +47,15 @@ double phi_tot(void *params,long np){
       double R=sqrt(sq(x*L0*kpc2km)+sq(y*L0*kpc2km));double r=sqrt(sq(x*L0*kpc2km)+sq(y*L0*kpc2km)+sq(z*L0*kpc2km));
       double a1=0,b1=0.277*kpc2km,M1=1.12e10*MSUN;
       double a2=3.7*kpc2km,b2=0.2*kpc2km,M2=8.07e10*MSUN;
-      double rc=6*kpc2km,Mc=5e10*MSUN;
-      double phi;double phi_1;double phi_2;double phi_h;
+      //double rc=6*kpc2km,Mc=5e10*MSUN;
+      double Mh=12474*2.325*10e7*MSUN;double ah=7.7*kpc2km;
+      double phi;double phi_1;double phi_2;//double phi_h;
+      double phi_NFW;
       phi_1=-(G_grav*M1)/(sqrt(sq(R)+sq(a1+sqrt(sq(z*L0*kpc2km)+sq(b1)))));
       phi_2=-(G_grav*M2)/(sqrt(sq(R)+sq(a2+sqrt(sq(z*L0*kpc2km)+sq(b2)))));
-      phi_h=-(G_grav*Mc/(rc))*(0.5*log(1+(sq(r)/sq(rc)))+(rc/r)*atan(r/rc));
-      phi=phi_1+phi_2+phi_h;
+      //phi_h=-(G_grav*Mc/(rc))*(0.5*log(1+(sq(r)/sq(rc)))+(rc/r)*atan(r/rc));
+      phi_NFW=-(G_grav*Mh/(r))*log(1.0+(r/ah));
+      phi=phi_1+phi_2+phi_NFW;
       return phi;
 
 }
@@ -117,6 +120,21 @@ void phih(void *params,double phih[3],long np){
 
 }
 
+void phi_NFW(void *params,double phi_NFW[3],long np){
+
+	struct func_params *part= (struct func_params*)params;
+        const double kpc2km=3.0856775807e16;
+        double Mh=12474*2.325*10e7*MSUN;double ah=7.7*kpc2km;double L0=1.0;double v0=100.0;
+        double T0=(L0*kpc2km)/v0;
+        double x=part->x[np];double y=part->y[np];double z=part->z[np];
+        double r=sqrt(sq(x*L0*kpc2km)+sq(y*L0*kpc2km)+sq(z*L0*kpc2km));
+        double phi_x=(G_grav*Mh*x/(sq(r)))*(((1.0/r)*log(1.0+(r/ah)))-(1.0/ah))*(sq(T0)/L0);
+        double phi_y=(G_grav*Mh*y/(sq(r)))*(((1.0/r)*log(1.0+(r/ah)))-(1.0/ah))*(sq(T0)/L0);
+        double phi_z=(G_grav*Mh*z/(sq(r)))*(((1.0/r)*log(1.0+(r/ah)))-(1.0/ah))*(sq(T0)/L0);
+        phi_NFW[0]=phi_x;phi_NFW[1]=phi_y;phi_NFW[2]=phi_z;
+
+}
+
 void evol_galac_pot_verlet(void *params){
 
     struct func_params *part= (struct func_params*)params;
@@ -124,7 +142,7 @@ void evol_galac_pot_verlet(void *params){
     const double yr_sec=365*24*3600;long np;
     double L0=1.0;double v0=100.0;
     double T0=(L0*kpc2km)/v0;
-    double step=10e4*yr_sec;
+    double step=10e3*yr_sec;
     double step_wd=step/T0;
     double step_fshift=step_wd*0.5;
     FILE *file=NULL;
@@ -137,15 +155,17 @@ void evol_galac_pot_verlet(void *params){
        double E0=tot_energy(part,np);
        for(double t=TMILKY*yr_sec-part->age_pulsar[np];t<TMILKY*yr_sec;t+=step){
 
-         double gphih[3],gphi_1[3],gphi_2[3];
+         //double gphih[3];
+	 double gphi_1[3],gphi_2[3];
+	 double gphi_NFW[3];
          double grad_phi[3];
 	 int i;
 
 	 //Computation of the gradient with the space coordinates
-         phi_1(part,gphi_1,np);phi_2(part,gphi_2,np);phih(part,gphih,np);//phi_kepler(pos,gphi_k);
+         phi_1(part,gphi_1,np);phi_2(part,gphi_2,np);phi_NFW(part,gphi_NFW,np);//phih(part,gphih,np);//phi_kepler(pos,gphi_k);
          for(i=0;i<3;i++){
 
-              grad_phi[i]=gphi_1[i]+gphih[i]+gphi_2[i];//gphi_k[i];
+              grad_phi[i]=gphi_1[i]+gphi_NFW[i]+gphi_2[i];//gphi_k[i];
 
          }
 
@@ -160,10 +180,10 @@ void evol_galac_pot_verlet(void *params){
          part->z[np]+=part->vz[np]*step_wd;
 
 	 //Computation of the gradient with the space coordinates
-         phi_1(part,gphi_1,np);phi_2(part,gphi_2,np);phih(part,gphih,np);//phi_kepler(pos,gphi_k);
+         phi_1(part,gphi_1,np);phi_2(part,gphi_2,np);phi_NFW(part,gphi_NFW,np);//phih(part,gphih,np);//phi_kepler(pos,gphi_k);
          for(i=0;i<3;i++){
 
-              grad_phi[i]=gphi_1[i]+gphih[i]+gphi_2[i];//gphi_k[i];
+              grad_phi[i]=gphi_1[i]+gphi_NFW[i]+gphi_2[i];//gphi_k[i];
 
          }
 
