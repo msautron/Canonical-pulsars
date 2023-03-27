@@ -202,6 +202,7 @@ void evol_galac_pot_verlet(void *params){
      part->x_s[np]= 8.5-part->x[np]; // shift center of the Galaxy to the Sun
      part->y_s[np]= part->y[np];
      part->z_s[np]= 0.015-part->z[np];
+     part->dist[np]= sqrt(sq(x_s)+sq(y_s)+sq(z_s));
 
      part->err_rel_g[np]=fabs((E0-Ef)/E0)*100;
      fprintf(file,"%e|%e|%e|\n",part->x_s[np],part->y_s[np],part->err_rel_g[np]);
@@ -337,6 +338,7 @@ void evol_galac_PEFRL(void *params){
       part->x_s[np]= 8.5-part->x[np]; // shift center of the Galaxy to the Sun
       part->y_s[np]= part->y[np];
       part->z_s[np]= 0.015-part->z[np];
+      part->dist[np]= sqrt(sq(x_s)+sq(y_s)+sq(z_s));
       fprintf(file,"%e|%e|%e|%e|\n",part->x[np],part->y[np],part->z[np],part->err_rel_g[np]);
 
       
