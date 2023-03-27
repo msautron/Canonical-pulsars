@@ -48,7 +48,7 @@ double phi_tot(void *params,long np){
       double a1=0,b1=0.277*kpc2km,M1=1.12e10*MSUN;
       double a2=3.7*kpc2km,b2=0.2*kpc2km,M2=8.07e10*MSUN;
       //double rc=6*kpc2km,Mc=5e10*MSUN;
-      double Mh=12474*2.325*10e7*MSUN;double ah=7.7*kpc2km;
+      double Mh=10474*2.325*10e7*MSUN;double ah=9.8*kpc2km;
       double phi;double phi_1;double phi_2;//double phi_h;
       double phi_NFW;
       phi_1=-(G_grav*M1)/(sqrt(sq(R)+sq(a1+sqrt(sq(z*L0*kpc2km)+sq(b1)))));
@@ -124,7 +124,7 @@ void phi_NFW(void *params,double phi_NFW[3],long np){
 
 	struct func_params *part= (struct func_params*)params;
         const double kpc2km=3.0856775807e16;
-        double Mh=12474*2.325*10e7*MSUN;double ah=7.7*kpc2km;double L0=1.0;double v0=100.0;
+        double Mh=10474*2.325*10e7*MSUN;double ah=9.8*kpc2km;double L0=1.0;double v0=100.0;
         double T0=(L0*kpc2km)/v0;
         double x=part->x[np];double y=part->y[np];double z=part->z[np];
         double r=sqrt(sq(x*L0*kpc2km)+sq(y*L0*kpc2km)+sq(z*L0*kpc2km));
@@ -142,7 +142,7 @@ void evol_galac_pot_verlet(void *params){
     const double yr_sec=365*24*3600;long np;
     double L0=1.0;double v0=100.0;
     double T0=(L0*kpc2km)/v0;
-    double step=10e3*yr_sec;
+    double step=1e4*yr_sec;
     double step_wd=step/T0;
     double step_fshift=step_wd*0.5;
     FILE *file=NULL;
@@ -210,6 +210,138 @@ void evol_galac_pot_verlet(void *params){
     
   fclose(file);
 
+}
+
+void evol_galac_PEFRL(void *params){
+
+    struct func_params *part= (struct func_params*)params;
+    const double yr_sec=365*24*3600;long np;
+    double step=1e5*yr_sec;
+    FILE *file=NULL;
+    const double kpc2km=3.0856775807e16;
+    double L0=1.0;double v0=100.0;
+    double T0=(L0*kpc2km)/v0;
+    double step_wd=step/T0;
+    double xsi=0.1786178958448091;double lambda=-0.2123418310626054;
+    double chi=-0.6626458266981849e-01;
+    file=fopen("x_y_err_verlet.txt","w+");
+    for(np=0;np<part->Npulsars;np++){
+
+       part->x[np]=part->x[np]/L0;part->y[np]=part->y[np]/L0;part->z[np]=part->z[np]/L0;
+       part->vx[np]=part->vx[np]/v0;part->vy[np]=part->vy[np]/v0;part->vz[np]=part->vz[np]/v0;
+
+       double E0=tot_energy(part,np);
+       for(double t=TMILKY*yr_sec-part->age_pulsar[np];t<TMILKY*yr_sec;t+=step){
+
+         double gphi_1[3];
+         double gphi_2[3];
+         //double gphih[3];
+         double gphi_NFW[3];
+         //double gphi_k[3];
+         //double gphi_AS[3];
+         double grad_phi[3];
+         int i;
+
+         //First shift of space coordinates
+         part->x[np]+=part->vx[np]*step_wd*xsi;
+         part->y[np]+=part->vy[np]*step_wd*xsi;
+         part->z[np]+=part->vz[np]*step_wd*xsi;
+
+         //Computation of the gradient with the new space coordinates
+         phi_1(part,gphi_1,np);
+         phi_2(part,gphi_2,np);
+         phi_NFW(part,gphi_NFW,np);
+         for(i=0;i<3;i++){
+
+                 grad_phi[i]=gphi_NFW[i]+gphi_1[i]+gphi_2[i];
+
+            }
+
+         //Shift of the velocities
+         part->vx[np]+=grad_phi[0]*step_wd*0.5*(1-2*lambda);
+         part->vy[np]+=grad_phi[1]*step_wd*0.5*(1-2*lambda);
+         part->vz[np]+=grad_phi[2]*step_wd*0.5*(1-2*lambda);
+
+         //second shift of space coordinates
+         part->x[np]+=part->vx[np]*step_wd*chi;
+         part->y[np]+=part->vy[np]*step_wd*chi;
+         part->z[np]+=part->vz[np]*step_wd*chi;
+
+         //Computation of the gradient with the new space coordinates
+         phi_1(part,gphi_1,np);
+         phi_2(part,gphi_2,np);
+         phi_NFW(part,gphi_NFW,np);
+         for(i=0;i<3;i++){
+
+                 grad_phi[i]=gphi_NFW[i]+gphi_1[i]+gphi_2[i];
+
+            }
+
+         //Second shift of velocities
+         part->vx[np]+=grad_phi[0]*step_wd*lambda;
+         part->vy[np]+=grad_phi[1]*step_wd*lambda;
+         part->vz[np]+=grad_phi[2]*step_wd*lambda;
+
+         //third shift of space coordinates
+         part->x[np]+=part->vx[np]*step_wd*(1-2*(chi+xsi));
+         part->y[np]+=part->vy[np]*step_wd*(1-2*(chi+xsi));
+         part->z[np]+=part->vz[np]*step_wd*(1-2*(chi+xsi));
+
+         //Computation of the gradient with the new space coordinates
+         phi_1(part,gphi_1,np);
+         phi_2(part,gphi_2,np);
+         phi_NFW(part,gphi_NFW,np);
+         for(i=0;i<3;i++){
+
+                 grad_phi[i]=gphi_NFW[i]+gphi_1[i]+gphi_2[i];
+
+            }
+
+         //third shift of velocities
+         part->vx[np]+=grad_phi[0]*step_wd*lambda;
+         part->vy[np]+=grad_phi[1]*step_wd*lambda;
+         part->vz[np]+=grad_phi[2]*step_wd*lambda;
+
+         //fourth shift of space coordinates
+         part->x[np]+=part->vx[np]*step_wd*chi;
+         part->y[np]+=part->vy[np]*step_wd*chi;
+         part->z[np]+=part->vz[np]*step_wd*chi;
+
+         //Computation of the gradient with the new space coordinates
+         phi_1(part,gphi_1,np);
+         phi_2(part,gphi_2,np);
+         phi_NFW(part,gphi_NFW,np);
+         for(i=0;i<3;i++){
+
+                 grad_phi[i]=gphi_NFW[i]+gphi_1[i]+gphi_2[i];
+
+            }
+
+         //fourth shift of velocities
+         part->vx[np]+=grad_phi[0]*step_wd*0.5*(1-2*lambda);
+         part->vy[np]+=grad_phi[1]*step_wd*0.5*(1-2*lambda);
+         part->vz[np]+=grad_phi[2]*step_wd*0.5*(1-2*lambda);
+
+         //final shift space coord
+         part->x[np]+=part->vx[np]*step_wd*xsi;
+         part->y[np]+=part->vy[np]*step_wd*xsi;
+         part->z[np]+=part->vz[np]*step_wd*xsi;
+       }
+
+      //Save values in a file + computation energy and error
+      double Ef=tot_energy(part,np);
+      part->err_rel_g[np]=fabs((E0-Ef)/E0)*100;
+      part->x[np]=part->x[np]*L0;part->y[np]=part->y[np]*L0;part->z[np]=part->z[np]*L0;
+      part->vx[np]=part->vx[np]*v0;part->vy[np]=part->vy[np]*v0;part->vz[np]=part->vz[np]*v0;
+
+      part->x_s[np]= 8.5-part->x[np]; // shift center of the Galaxy to the Sun
+      part->y_s[np]= part->y[np];
+      part->z_s[np]= 0.015-part->z[np];
+      fprintf(file,"%e|%e|%e|%e|\n",part->x[np],part->y[np],part->z[np],part->err_rel_g[np]);
+
+      
+    }
+    fclose(file);
 }
 
 void send_data(void *params){

@@ -6,4 +6,5 @@ void phi_2(void *params,double phi2[3],long np);
 void phih(void *params,double phih[3],long np);
 void phi_NFW(void *params,double phi_NFW[3],long np);
 void evol_galac_pot_verlet(void *params);
+void evol_galac_PEFRL(void *params);
 void send_data(void *params);
