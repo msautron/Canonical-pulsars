@@ -48,7 +48,7 @@ double phi_tot(void *params,long np){
       double a1=0,b1=0.277*kpc2km,M1=1.12e10*MSUN;
       double a2=3.7*kpc2km,b2=0.2*kpc2km,M2=8.07e10*MSUN;
       //double rc=6*kpc2km,Mc=5e10*MSUN;
-      double Mh=10474*2.325*10e7*MSUN;double ah=9.8*kpc2km;
+      double Mh=15474*2.325*10e7*MSUN;double ah=5.6*kpc2km;
       double phi;double phi_1;double phi_2;//double phi_h;
       double phi_NFW;
       phi_1=-(G_grav*M1)/(sqrt(sq(R)+sq(a1+sqrt(sq(z*L0*kpc2km)+sq(b1)))));
@@ -124,13 +124,13 @@ void phi_NFW(void *params,double phi_NFW[3],long np){
 
 	struct func_params *part= (struct func_params*)params;
         const double kpc2km=3.0856775807e16;
-        double Mh=10474*2.325*10e7*MSUN;double ah=9.8*kpc2km;double L0=1.0;double v0=100.0;
+        double Mh=15474*2.325*10e7*MSUN;double ah=5.6*kpc2km;double L0=1.0;double v0=100.0;
         double T0=(L0*kpc2km)/v0;
         double x=part->x[np];double y=part->y[np];double z=part->z[np];
         double r=sqrt(sq(x*L0*kpc2km)+sq(y*L0*kpc2km)+sq(z*L0*kpc2km));
-        double phi_x=(G_grav*Mh*x/(sq(r)))*(((1.0/r)*log(1.0+(r/ah)))-(1.0/ah))*(sq(T0)/L0);
-        double phi_y=(G_grav*Mh*y/(sq(r)))*(((1.0/r)*log(1.0+(r/ah)))-(1.0/ah))*(sq(T0)/L0);
-        double phi_z=(G_grav*Mh*z/(sq(r)))*(((1.0/r)*log(1.0+(r/ah)))-(1.0/ah))*(sq(T0)/L0);
+        double phi_x=-(G_grav*Mh*x/(sq(r)))*(((1.0/r)*log(1.0+(r/ah)))-(1.0/(ah+r)))*(sq(T0)/L0);
+        double phi_y=-(G_grav*Mh*y/(sq(r)))*(((1.0/r)*log(1.0+(r/ah)))-(1.0/(ah+r)))*(sq(T0)/L0);
+        double phi_z=-(G_grav*Mh*z/(sq(r)))*(((1.0/r)*log(1.0+(r/ah)))-(1.0/(ah+r)))*(sq(T0)/L0);
         phi_NFW[0]=phi_x;phi_NFW[1]=phi_y;phi_NFW[2]=phi_z;
 
 }
@@ -202,7 +202,7 @@ void evol_galac_pot_verlet(void *params){
      part->x_s[np]= 8.5-part->x[np]; // shift center of the Galaxy to the Sun
      part->y_s[np]= part->y[np];
      part->z_s[np]= 0.015-part->z[np];
-     part->dist[np]= sqrt(sq(x_s)+sq(y_s)+sq(z_s));
+     part->dist[np]= sqrt(sq(part->x_s[np])+sq(part->y_s[np])+sq(part->z_s[np]));
 
      part->err_rel_g[np]=fabs((E0-Ef)/E0)*100;
      fprintf(file,"%e|%e|%e|\n",part->x_s[np],part->y_s[np],part->err_rel_g[np]);
@@ -338,7 +338,7 @@ void evol_galac_PEFRL(void *params){
       part->x_s[np]= 8.5-part->x[np]; // shift center of the Galaxy to the Sun
       part->y_s[np]= part->y[np];
       part->z_s[np]= 0.015-part->z[np];
-      part->dist[np]= sqrt(sq(x_s)+sq(y_s)+sq(z_s));
+      part->dist[np]= sqrt(sq(part->x_s[np])+sq(part->y_s[np])+sq(part->z_s[np]));
       fprintf(file,"%e|%e|%e|%e|\n",part->x[np],part->y[np],part->z[np],part->err_rel_g[np]);
 
       
