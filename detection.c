@@ -142,9 +142,9 @@ FILE *kick(void *params){
 			part->z[np]=part->z0[np]+dz;
 		        	
                         // coordinates relative to the Sun in kpc 
-			x_s            = 8.5-part->x[np]; // shift center of the Galaxy to the Sun
-			y_s            = part->y[np]; 
-			z_s            = 0.015-part->z[np]; 
+			x_s            = 8.5-part->x[np];part->x_s[np]=x_s; // shift center of the Galaxy to the Sun
+			y_s            = part->y[np]; part->y_s[np]=y_s;
+			z_s            = 0.015-part->z[np]; part->z_s[np]=z_s;
     			r	       = sqrt(x_s*x_s+y_s*y_s);
 
 			part->dist[np]= sqrt(sq(x_s)+sq(y_s)+sq(z_s));
@@ -397,7 +397,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 				} 
 				else if(Nr==1 && Ng==0){ //radio only
                        
-					count_radio++;
+					count_radio++;part->detec[np]=1;part->detec_rad[np]=1;
 
 			        		if(part->Edot[np]>1e28) { 
 							Nsup_radio+=1;
@@ -432,7 +432,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 				}
 				else if(Ng==1 && Nr==0){ //gamma only
 				
-					count_gamma++;
+					count_gamma++;part->detec[np]=1;part->detec_gam[np]=1;
 
 			        		if(part->Edot[np]>1e28) { 
 							Nsup_gamma+=1;
@@ -476,17 +476,17 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			detec=0;
 			       if(part->detec_rad[np]==1){
 
-                                  fprintf(file_data,"%e %e %e %e 1 %e %e \n",part->period[np],part->Pdot[np],part->x_s[np],part->y_s[np],part->age_pulsar[np],part->err_rel_g[np]);
+                                  fprintf(file_data,"%e|%e|%e|%e|%e|%e|1|\n",part->period[np],part->Pdot[np],part->x_s[np],part->y_s[np],part->age_pulsar[np],part->err_rel_g[np]);
                         }
 
                                else if(part->detec_gam[np]==1){
 
-                                  fprintf(file_data,"%e %e %e %e 2 %e %e \n",part->period[np],part->Pdot[np],part->x_s[np],part->y_s[np],part->age_pulsar[np],part->err_rel_g[np]);
+                                  fprintf(file_data,"%e|%e|%e|%e|%e|%e|2|\n",part->period[np],part->Pdot[np],part->x_s[np],part->y_s[np],part->age_pulsar[np],part->err_rel_g[np]);
                         }
 
                                else if(part->detec_rg[np]==1){
 
-                                  fprintf(file_data,"%e %e %e %e 3 %e %e \n",part->period[np],part->Pdot[np],part->x_s[np],part->y_s[np],part->age_pulsar[np],part->err_rel_g[np]);
+                                  fprintf(file_data,"%e|%e|%e|%e|%e|%e|3|\n",part->period[np],part->Pdot[np],part->x_s[np],part->y_s[np],part->age_pulsar[np],part->err_rel_g[np]);
                         }
 
 
