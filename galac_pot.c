@@ -225,7 +225,7 @@ void evol_galac_PEFRL(void *params){
     double step_wd=step/T0;
     double xsi=0.1786178958448091;double lambda=-0.2123418310626054;
     double chi=-0.6626458266981849e-01;
-    file=fopen("x_y_err_verlet.txt","w+");
+    file=fopen("x_y_err_PEFRL.txt","w+");
     for(np=0;np<part->Npulsars;np++){
 
        part->x[np]=part->x[np]/L0;part->y[np]=part->y[np]/L0;part->z[np]=part->z[np]/L0;
@@ -236,10 +236,7 @@ void evol_galac_PEFRL(void *params){
 
          double gphi_1[3];
          double gphi_2[3];
-         //double gphih[3];
          double gphi_NFW[3];
-         //double gphi_k[3];
-         //double gphi_AS[3];
          double grad_phi[3];
          int i;
 

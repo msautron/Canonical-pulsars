@@ -60,11 +60,9 @@ int main(int argc, char **argv){
   
         // Distribution of the pulsars in the Galaxy        
 	distrib_init(&params); // initial distribution of the pulsars
-	distrib_vinit(&params);
-	//send_data(&params);
-        //evol_galac_pot_verlet(&params);
-        evol_galac_PEFRL(&params);	
-	//kick(&params);//birth kick velocity - writes gl, gb and dist in file galactic_coord.dat
+	//distrib_vinit(&params);
+        //evol_galac_PEFRL(&params);	
+	kick(&params);//birth kick velocity - writes gl, gb and dist in file galactic_coord.dat
 
 	printf("##Total number of simulated pulsars: %ld \n",params.Npulsars);
 	/* ISM modelling */
