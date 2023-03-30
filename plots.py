@@ -151,6 +151,7 @@ plt.ylim(-20,25)
 plt.title('Positions of the detected pulsars compared to the sun')
 plt.xlabel('x (kpc)')
 plt.ylabel('y (kpc)')
+plt.legend()
 plt.savefig('Positions_detected_pulsars.png')
 
 #Tests
