@@ -142,8 +142,8 @@ FILE *kick(void *params){
 			part->z[np]=part->z0[np]+dz;
 		        	
                         // coordinates relative to the Sun in kpc 
-			x_s            = 8.5-part->x[np];part->x_s[np]=x_s; // shift center of the Galaxy to the Sun
-			y_s            = part->y[np]; part->y_s[np]=y_s;
+			x_s            = part->x[np];part->x_s[np]=x_s; // shift center of the Galaxy to the Sun
+			y_s            = 8.5-part->y[np]; part->y_s[np]=y_s;
 			z_s            = 0.015-part->z[np]; part->z_s[np]=z_s;
     			r	       = sqrt(x_s*x_s+y_s*y_s);
 
