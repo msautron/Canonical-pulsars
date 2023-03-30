@@ -48,7 +48,7 @@ double phi_tot(void *params,long np){
       double a1=0,b1=0.277*kpc2km,M1=1.12e10*MSUN;
       double a2=3.7*kpc2km,b2=0.2*kpc2km,M2=8.07e10*MSUN;
       //double rc=6*kpc2km,Mc=5e10*MSUN;
-      double Mh=15474*2.325*10e7*MSUN;double ah=5.6*kpc2km;
+      double Mh=15474*2.325*1e7*MSUN;double ah=5.6*kpc2km;
       double phi;double phi_1;double phi_2;//double phi_h;
       double phi_NFW;
       phi_1=-(G_grav*M1)/(sqrt(sq(R)+sq(a1+sqrt(sq(z*L0*kpc2km)+sq(b1)))));
@@ -124,7 +124,7 @@ void phi_NFW(void *params,double phi_NFW[3],long np){
 
 	struct func_params *part= (struct func_params*)params;
         const double kpc2km=3.0856775807e16;
-        double Mh=15474*2.325*10e7*MSUN;double ah=5.6*kpc2km;double L0=1.0;double v0=100.0;
+        double Mh=15474*2.325*1e7*MSUN;double ah=5.6*kpc2km;double L0=1.0;double v0=100.0;
         double T0=(L0*kpc2km)/v0;
         double x=part->x[np];double y=part->y[np];double z=part->z[np];
         double r=sqrt(sq(x*L0*kpc2km)+sq(y*L0*kpc2km)+sq(z*L0*kpc2km));
