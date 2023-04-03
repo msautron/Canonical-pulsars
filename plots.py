@@ -39,9 +39,9 @@ for i in range(len(P_dota)):
         P2+=[Pa[i]]
         P_dot2+=[P_dota[i]]
         d2+=[da[i]]
-        z2+=[0.015-za[i]]
+        z2+=[za[i]-0.015]
         x2+=[xa[i]]
-        y2+=[8.5-ya[i]]
+        y2+=[ya[i]-8.5]
         age2+=[agea[i]]
         E_dot2+=[E_dota[i]]
 
@@ -93,8 +93,8 @@ for i in range(len(P)):
 #Make the plots
 #P-Pdot plot all pulsars
 plt.figure(1)
-plt.scatter(P,P_dot,c='red',marker='o',s=10,label='Simulation data')
-plt.scatter(P2,P_dot2,c='blue',marker='o',s=10,label='ATNF data')
+plt.scatter(P,P_dot,c='red',marker='o',s=5,label='Simulation data')
+plt.scatter(P2,P_dot2,c='blue',marker='o',s=5,label='ATNF data')
 plt.xlim(1e-2,1e1)
 plt.ylim(1e-20,1e-10)
 plt.yscale('log')
@@ -143,9 +143,9 @@ plt.savefig('P_Pdot_plot_rg.png')
 
 #Positions plot
 plt.figure(5)
-plt.scatter(x,y,s=10,c='red',label='Simulation data')
-plt.scatter(x2,y2,s=10,c='blue',label='ATNF data')
-plt.scatter([0],[0],c='yellow',marker='o',s=40) #position of the sun
+plt.scatter(x,y,s=2,c='red',label='Simulation data')
+plt.scatter(x2,y2,s=2,c='blue',label='ATNF data')
+plt.scatter([0],[0],c='yellow',marker='o',s=20,label='The Sun') #position of the sun
 plt.xlim(-50,30)
 plt.ylim(-20,25)
 plt.title('Positions of the detected pulsars compared to the sun')
