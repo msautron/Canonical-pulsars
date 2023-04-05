@@ -216,6 +216,7 @@ void evol_galac_pot_verlet(void *params){
 void evol_galac_PEFRL(void *params){
 
     struct func_params *part= (struct func_params*)params;
+    double RAD = 180/M_PI;double gbr;double glr;
     const double yr_sec=365*24*3600;long np;
     double step=1e5*yr_sec;
     FILE *file=NULL;
@@ -336,7 +337,26 @@ void evol_galac_PEFRL(void *params){
       part->y_s[np]= part->y[np]-8.5;
       part->z_s[np]= part->z[np]-0.015;
       part->dist[np]= sqrt(sq(part->x_s[np])+sq(part->y_s[np])+sq(part->z_s[np]));
-      fprintf(file,"%e|%e|%e|%e|\n",part->x[np],part->y[np],part->z[np],part->err_rel_g[np]);
+      double r= sqrt(sq(part->x_s[np])+sq(part->y_s[np]));
+      if(part->dist[np]<1e-15){
+            gbr=0;
+      }else{
+            gbr=asin(part->z_s[np]/part->dist[np]);
+           }
+      part->gb[np]=gbr*RAD;
+
+      if(r<1e-15){
+            glr=0;
+      }else{
+            if(part->x_s[np]>=0){
+                glr=acos(-part->y_s[np]/r);
+                    }else{
+                       glr=acos(part->y_s[np]/r)+M_PI;
+                              }
+                         }
+
+      part->gl[np]=glr*RAD;
+      fprintf(file,"%e|%e|%e|%e|%e|%e|%e|\n",part->x[np],part->y[np],part->z[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np]);
 
       
     }
