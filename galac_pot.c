@@ -49,13 +49,14 @@ double phi_tot(void *params,long np){
       double a2=3.7*kpc2km,b2=0.2*kpc2km,M2=8.07e10*MSUN;
       //double rc=6*kpc2km,Mc=5e10*MSUN;
       double Mh=15474*2.325*1e7*MSUN;double ah=5.6*kpc2km;
-      double phi;double phi_1;double phi_2;//double phi_h;
+      double phi;double phi_1;double phi_2;double phi_k;//double phi_h;
       double phi_NFW;
       phi_1=-(G_grav*M1)/(sqrt(sq(R)+sq(a1+sqrt(sq(z*L0*kpc2km)+sq(b1)))));
       phi_2=-(G_grav*M2)/(sqrt(sq(R)+sq(a2+sqrt(sq(z*L0*kpc2km)+sq(b2)))));
       //phi_h=-(G_grav*Mc/(rc))*(0.5*log(1+(sq(r)/sq(rc)))+(rc/r)*atan(r/rc));
       phi_NFW=-(G_grav*Mh/(r))*log(1.0+(r/ah));
-      phi=phi_1+phi_2+phi_NFW;
+      phi_k=-(G_grav*4e6*MSUN)/r;
+      phi=phi_1+phi_2+phi_NFW+phi_k;
       return phi;
 
 }
@@ -132,6 +133,21 @@ void phi_NFW(void *params,double phi_NFW[3],long np){
         double phi_y=-(G_grav*Mh*y/(sq(r)))*(((1.0/r)*log(1.0+(r/ah)))-(1.0/(ah+r)))*(sq(T0)/L0);
         double phi_z=-(G_grav*Mh*z/(sq(r)))*(((1.0/r)*log(1.0+(r/ah)))-(1.0/(ah+r)))*(sq(T0)/L0);
         phi_NFW[0]=phi_x;phi_NFW[1]=phi_y;phi_NFW[2]=phi_z;
+
+}
+
+void phi_kepler(void *params,double phi_k[3],long np){
+
+	struct func_params *part= (struct func_params*)params;
+        const double kpc2km=3.0856775807e16;
+        double Mc=4e6*MSUN;double L0=1.0;double v0=100.0;
+        double T0=(L0*kpc2km)/v0;
+        double x=part->x[np];double y=part->y[np];double z=part->z[np];
+        double r_2=sq(x*L0*kpc2km)+sq(y*L0*kpc2km)+sq(z*L0*kpc2km);
+        double phi_x=-(G_grav*Mc*x*sq(T0))/(pow(r_2,1.5)*L0);
+        double phi_y=-(G_grav*Mc*y*sq(T0))/(pow(r_2,1.5)*L0);
+        double phi_z=-(G_grav*Mc*z*sq(T0))/(pow(r_2,1.5)*L0);
+        phi_k[0]=phi_x;phi_k[1]=phi_y;phi_k[2]=phi_z;
 
 }
 
@@ -239,6 +255,7 @@ void evol_galac_PEFRL(void *params){
          double gphi_2[3];
          double gphi_NFW[3];
          double grad_phi[3];
+	 double gphi_k[3];
          int i;
 
          //First shift of space coordinates
@@ -250,9 +267,10 @@ void evol_galac_PEFRL(void *params){
          phi_1(part,gphi_1,np);
          phi_2(part,gphi_2,np);
          phi_NFW(part,gphi_NFW,np);
+	 phi_kepler(part,gphi_k,np);
          for(i=0;i<3;i++){
 
-                 grad_phi[i]=gphi_NFW[i]+gphi_1[i]+gphi_2[i];
+                 grad_phi[i]=gphi_NFW[i]+gphi_1[i]+gphi_2[i]+gphi_k[i];
 
             }
 
@@ -270,9 +288,10 @@ void evol_galac_PEFRL(void *params){
          phi_1(part,gphi_1,np);
          phi_2(part,gphi_2,np);
          phi_NFW(part,gphi_NFW,np);
+	 phi_kepler(part,gphi_k,np);
          for(i=0;i<3;i++){
 
-                 grad_phi[i]=gphi_NFW[i]+gphi_1[i]+gphi_2[i];
+                 grad_phi[i]=gphi_NFW[i]+gphi_1[i]+gphi_2[i]+gphi_k[i];
 
             }
 
@@ -290,9 +309,10 @@ void evol_galac_PEFRL(void *params){
          phi_1(part,gphi_1,np);
          phi_2(part,gphi_2,np);
          phi_NFW(part,gphi_NFW,np);
+	 phi_kepler(part,gphi_k,np);
          for(i=0;i<3;i++){
 
-                 grad_phi[i]=gphi_NFW[i]+gphi_1[i]+gphi_2[i];
+                 grad_phi[i]=gphi_NFW[i]+gphi_1[i]+gphi_2[i]+gphi_k[i];
 
             }
 
@@ -310,9 +330,10 @@ void evol_galac_PEFRL(void *params){
          phi_1(part,gphi_1,np);
          phi_2(part,gphi_2,np);
          phi_NFW(part,gphi_NFW,np);
+	 phi_kepler(part,gphi_k,np);
          for(i=0;i<3;i++){
 
-                 grad_phi[i]=gphi_NFW[i]+gphi_1[i]+gphi_2[i];
+                 grad_phi[i]=gphi_NFW[i]+gphi_1[i]+gphi_2[i]+gphi_k[i];
 
             }
 
