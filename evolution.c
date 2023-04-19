@@ -83,7 +83,7 @@ int evolution(void *params){
         sprintf(fname,"population_init%.0ld.dat",part->Npulsars);
         */
         long np;
-        long count=0;
+        //long count=0;
         double k;
         double four_pi2 = 4*M_PI*M_PI;   
         double two_pi = 2*M_PI;   

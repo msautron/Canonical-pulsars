@@ -114,7 +114,7 @@ FILE *kick(void *params){
 	double age_pulsar_yr;
 	FILE *fp_gal=NULL;
 	//FILE *file=NULL;
-	int x[100];
+	//int x[100];
 	char *fname;
         fname = malloc(150);
 	//file=fopen("kick_result.txt","w+");
@@ -343,7 +343,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			/* radio detection */
 				if(fabs(alpha-xi)<= rho && alpha >= rho && xi < M_PI/2){ 
 					Nbeam++;
-                			if (detec==1){
+                			if (detec==1 && is_dead(part,np)==1){
 						Nr=1;  // mJy
 						part->detec[np]=1;
                                                 part->detec_rad[np]=1;
@@ -352,7 +352,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 					}
 				} else if (fabs(xi-(M_PI-alpha))<=rho && alpha >= rho && xi > M_PI/2){ 
 					Nbeam++;
-                			if (detec==1){
+                			if (detec==1 && is_dead(part,np)==1){
 						count_radio_tot++;
 						part->detec[np]=1;
                                                 part->detec_rad[np]=1;
@@ -700,6 +700,14 @@ int gamma_flux(void *params){
 return(0);
 
 
+}
+
+int is_dead(void *params,long np){
+
+	struct func_params *part= (struct func_params*)params;
+	double ratio=part->B[np]/sq(part->period[np]);
+	if (ratio < 0.17e8) {return 0;}
+	else if (ratio > 0.17e8) {return 1;}
 }
 
 

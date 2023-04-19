@@ -15,7 +15,6 @@
 int birth(void *params){//generates Npulsars with an initial period, B and age 
 
         struct func_params *part= (struct func_params*)params;
-	FILE *fp=NULL;
 	//char *fname;
         //fname = malloc(50);
 	//sprintf(fname,"population_init%.0ld.dat",part->Npulsars);

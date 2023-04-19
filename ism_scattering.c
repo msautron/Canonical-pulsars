@@ -96,7 +96,7 @@ int get_dispersion_measure(void *params){
 	exit(1);
 	}
   	double dm[Npulsars], tau[Npulsars]; 
-  	int arr[Npulsars], arr2[Npulsars]; 
+  	//int arr[Npulsars], arr2[Npulsars]; 
 
 	if ( ( output_file_dmtau = fopen("dmtau.dat","w+")) == NULL){
 		printf("Couldn't open file dmtau.dat \n");
