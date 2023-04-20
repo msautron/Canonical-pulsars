@@ -713,7 +713,7 @@ int is_dead(void *params,long np){
 int is_dead2(void *params,long np){
 
 	struct func_params *part= (struct func_params*)params;
-	double xsi=9;double lambda=35;double f_star=1.6;double Kg=0.35;double F=1;double h_x0=3.1;
+	double xsi=11;double lambda=41;double f_star=1.9;double Kg=0.07;double F=0.7;double h_x0=3.1;
 	double beta_d=2.1*pow(xsi,-1/2)*Kg*pow((f_star/1.6),-9/4)*pow(lambda/15,-1/2)*h_x0*F;
 	double P_dot_death=1e-15*beta_d*pow(part->period[np],11/4);
 	if (part->Pdot[np]<P_dot_death) return 0;
