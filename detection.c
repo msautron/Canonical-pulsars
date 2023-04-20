@@ -343,7 +343,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			/* radio detection */
 				if(fabs(alpha-xi)<= rho && alpha >= rho && xi < M_PI/2){ 
 					Nbeam++;
-                			if (detec==1 && is_dead(part,np)==1){
+                			if (detec==1 && is_dead2(part,np)==1){
 						Nr=1;  // mJy
 						part->detec[np]=1;
                                                 part->detec_rad[np]=1;
@@ -352,7 +352,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 					}
 				} else if (fabs(xi-(M_PI-alpha))<=rho && alpha >= rho && xi > M_PI/2){ 
 					Nbeam++;
-                			if (detec==1 && is_dead(part,np)==1){
+                			if (detec==1 && is_dead2(part,np)==1){
 						count_radio_tot++;
 						part->detec[np]=1;
                                                 part->detec_rad[np]=1;
@@ -710,6 +710,16 @@ int is_dead(void *params,long np){
 	else if (ratio > 0.17e8) {return 1;}
 }
 
+int is_dead2(void *params,long np){
+
+	struct func_params *part= (struct func_params*)params;
+	double xsi=9;double lambda=35;double f_star=1.6;double Kg=0.35;double F=1;double h_x0=3.1;
+	double beta_d=2.1*pow(xsi,-1/2)*Kg*pow((f_star/1.6),-9/4)*pow(lambda/15,-1/2)*h_x0*F;
+	double P_dot_death=1e-15*beta_d*pow(part->period[np],11/4);
+	if (part->Pdot[np]<P_dot_death) return 0;
+	else if (part->Pdot[np]>=P_dot_death) return 1;
+
+}
 
 int radio_flux_low_freq(void *params){
 
