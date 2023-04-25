@@ -8,5 +8,6 @@ int radio_flux(void *params);
 int gamma_flux(void *params);
 int is_dead(void *params,long np);
 int is_dead2(void *params,long np);
+int is_dead3(void *params,long np);
 int radio_flux_low_freq(void *params);
 
