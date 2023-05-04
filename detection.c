@@ -614,6 +614,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			}
 
        			fclose(fp);
+			fclose(file_data);
 
 return(0);
 }
