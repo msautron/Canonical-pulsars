@@ -236,10 +236,10 @@ int geometry(void *params){ // calculated the geometry of the pulsar (i.e xi, an
 			cos_theta   =  gsl_rng_uniform(part->r); // theta of the rotation axis
 
 			/* line of sight vector */
-			norm=sqrt(sq(part->x[np]-8.5)+sq(part->y[np])+sq(part->z[np]));
-			n[0]=(part->x[np]-8.5)/norm;  
-			n[1]=(part->y[np])/norm;
-			n[2]=(part->z[np])/norm;
+			norm=sqrt(sq(part->x[np])+sq(part->y[np]-8.5)+sq(part->z[np]-0.015));
+			n[0]=(part->x[np])/norm;  
+			n[1]=(part->y[np]-8.5)/norm;
+			n[2]=(part->z[np]-0.015)/norm;
 
 			/* unit vector of the rotation axis */
 			n_omega[0]=((1-sq(cos_theta))*cos(phi)); 
