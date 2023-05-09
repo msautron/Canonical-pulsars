@@ -10,6 +10,7 @@
 #include<gsl/gsl_randist.h>
 #include<gsl/gsl_cdf.h>
 #include<gsl/gsl_roots.h>
+#include<gsl/gsl_errno.h>
 
 
 
@@ -148,9 +149,9 @@ int evolution(void *params){
 				        //R                    =    gsl_root_fdfsolver_newton;
 				        //s 		      =    gsl_root_fdfsolver_alloc(R);
 
-				      
-				         gsl_root_fsolver_set(s,&F,x_lo,x_hi);      
-				      
+				         gsl_set_error_handler_off();
+				         status=gsl_root_fsolver_set(s,&F,x_lo,x_hi);      
+
 					      for(iter = 0; iter < 100; iter++) { // What happens if iter=100 is reached and no solutions found???
 					
 						    status = gsl_root_fsolver_iterate(s);
@@ -173,6 +174,8 @@ int evolution(void *params){
 				          gsl_root_fsolver_free (s);
 
 				    }
+
+			    if(status!=0) sina=sqrt(1-cos2a0);
 
 			    alpha            =   asin(sina);
 			    part->alpha[np]  =   alpha;

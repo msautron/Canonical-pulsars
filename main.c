@@ -77,14 +77,46 @@ int main(int argc, char **argv){
 
 
 
-//Should I free all the parameters??        
+//Should I free all the parameters??         
 	free(params.Pinit); // deallocate the buffer 
 	free(params.period); // deallocate the buffer 
         free(params.Binit); // deallocate the buffer 
         free(params.alpha); // deallocate the buffer 
         free(params.x); // deallocate the buffer 
         free(params.y); // deallocate the buffer 
-        free(params.z); // deallocate the buffer 
+        free(params.z); // deallocate the buffer
+	free(params.B);
+        free(params.age_pulsar);
+        free(params.gb);
+        free(params.gl);
+        free(params.x0);
+        free(params.y0);
+        free(params.z0);
+        free(params.x_s);
+        free(params.y_s);
+        free(params.z_s);
+        free(params.vx0);
+        free(params.vy0);
+        free(params.vz0);
+        free(params.vx);
+        free(params.vy);
+        free(params.vz);
+        free(params.err_rel_g);
+        free(params.detec);
+        free(params.detec_rad);
+        free(params.detec_gam);
+        free(params.detec_rg);
+        free(params.Smin);
+        free(params.Edot);
+        free(params.Pdot);
+        free(params.xi);
+        free(params.rho);
+        free(params.w_r);
+        free(params.Fr);
+        free(params.flux_low_freq);
+        free(params.Fg);
+        free(params.cos_a0);
+        free(params.dist); 
 
 	gsl_rng_free(params.r);
 

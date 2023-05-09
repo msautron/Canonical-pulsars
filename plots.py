@@ -10,6 +10,8 @@ P2,P_dot2,d2,z2,x2,y2,age2,E_dot2,latitude2,longitude2=[],[],[],[],[],[],[],[],[
 log_age,log_age2,log_P,log_Pdot,log_P2,log_Pdot2=[],[],[],[],[],[] #Refers to the quantities we need in log scale
 RAD = 180/np.pi
 test_l=[]
+Ba=[]
+B0=3.2e15 #constant to compute the surface magnetic field of the observations
 
 #Put the data at the right place
 var,var2='',''
@@ -36,6 +38,22 @@ for i in range(int(len(data2)/8)):
     ya+=[float(data2[i*8+5])] #age of the pulsar in years
     agea+=[float(data2[i*8+6])] #age of the pulsars in seconds
     E_dota+=[float(data2[i*8+7])]  #Spin down power of the pulsar in ergs/s
+    Ba+=[B0*(Pa[i]*P_dota[i])**0.5] #surface magnetic field in T
+
+#sum_x,sum_y,sum_xy,sum_sqx,count=0,0,0,0,0
+#for i in range(len(Pa)):
+#    if P_dota[i]>0 and Ba[i]<5e8 and Ba[i]>5e6:
+#        #if (Pa[i]> 3e-1 and P_dota[i]>1e-16):
+#        #    if (Pa[i]<2 and P_dota[i]<1e-13):
+#        sum_x+=np.log10(Pa[i])
+#        sum_y+=np.log10(P_dota[i])
+#        sum_xy+=np.log10(Pa[i])*np.log10(P_dota[i])
+#        sum_sqx+=np.log10(Pa[i])**2
+#        count+=1
+
+#a_reglin=(sum_xy-((1/count))*(sum_x*sum_y))/(sum_sqx-(1/count)*(sum_x**2))
+#b_reglin=(sum_y-a_reglin*sum_x)/count
+#print(f'a : {a_reglin} \nb : {b_reglin} \n')
 
 for i in range(len(P_dota)):
     if P_dota[i]!=0.0 and da[i]!=0.0 and E_dota[i]!=0:
@@ -116,6 +134,19 @@ for i in range(len(P)):
     log_P+=[(np.log(P[i]))/(np.log(10))]
     log_Pdot+=[(np.log(P_dot[i]))/(np.log(10))]
 
+#sum_x2,sum_y2,sum_xy2,sum_sqx2,count2=0,0,0,0,0
+#for i in range(len(P)):
+#    if P_dot[i]>0:
+#        sum_x2+=np.log10(P[i])
+#        sum_y2+=np.log10(P_dot[i])
+#        sum_xy2+=np.log10(P[i])*np.log10(P_dot[i])
+#        sum_sqx2+=np.log10(P[i])**2
+#        count2+=1
+
+#a_reglin2=(sum_xy2-((1/count2))*(sum_x2*sum_y2))/(sum_sqx2-(1/count2)*(sum_x2**2))
+#b_reglin2=(sum_y2-a_reglin2*sum_x2)/count2
+#print(f'a_simu : {a_reglin2} \n b_simu : {b_reglin2} \n')
+
 #Lists depending on the pulsar emission type
 P_radio,P_dot_radio,x_radio,y_radio,age_radio,error_radio,distance_radio=[],[],[],[],[],[],[]
 P_gamma,P_dot_gamma,x_gamma,y_gamma,age_gamma,error_gamma,distance_gamma=[],[],[],[],[],[],[]
@@ -143,11 +174,16 @@ for i in range(len(P)):
         age_radio_gamma+=[age[i]]
         distance_radio_gamma+=[distance[i]]
 
+#L1=[i for i in np.arange(1e-2,1e1,0.1)]
+#L2=[10**(a_reglin*np.log10(i)+b_reglin) for i in np.arange(1e-2,1e1,0.1)]
+#L3=[10**(a_reglin2*np.log10(i)+b_reglin2) for i in np.arange(1e-2,1e1,0.1)]
 #Make the plots
 #P-Pdot plot all pulsars
 plt.figure(1)
 plt.scatter(P,P_dot,c='red',marker='o',s=5,label='Simulation data')
 plt.scatter(P2,P_dot2,c='blue',marker='o',s=5,label='ATNF data')
+#plt.plot(L1,L2)
+#plt.plot(L1,L3)
 plt.xlim(1e-2,1e1)
 plt.ylim(1e-20,1e-10)
 plt.yscale('log')
