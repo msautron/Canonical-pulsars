@@ -10,7 +10,7 @@ P2,P_dot2,d2,z2,x2,y2,age2,E_dot2,latitude2,longitude2=[],[],[],[],[],[],[],[],[
 log_age,log_age2,log_P,log_Pdot,log_P2,log_Pdot2=[],[],[],[],[],[] #Refers to the quantities we need in log scale
 RAD = 180/np.pi
 test_l=[]
-Ba=[]
+Ba,B2=[],[]
 B0=3.2e15 #constant to compute the surface magnetic field of the observations
 
 #Put the data at the right place
@@ -65,6 +65,28 @@ for i in range(len(P_dota)):
         y2+=[ya[i]]
         age2+=[agea[i]]
         E_dot2+=[E_dota[i]]
+        B2+=[3.2e15*(Pa[i]*P_dota[i])**0.5]
+
+with open("data_ATNF_for_c.txt","w") as f:
+    for i in range(len(P2)):
+        if B2[i]<5e8 and B2[i]>5e6:
+            f.write(f"{P2[i]}")
+            f.write("|")
+            f.write(f"{P_dot2[i]}")
+            f.write("|")
+            f.write(f"{d2[i]}")
+            f.write("|")
+            f.write(f"{x2[i]}")
+            f.write("|")
+            f.write(f"{y2[i]}")
+            f.write("|")
+            f.write(f"{z2[i]}")
+            f.write("|")
+            f.write(f"{age2[i]}")
+            f.write("|")
+            f.write(f"{E_dot2[i]}")
+            f.write("|")
+            f.write("\n")
 
 #count=0
 
@@ -174,6 +196,15 @@ for i in range(len(P)):
         age_radio_gamma+=[age[i]]
         distance_radio_gamma+=[distance[i]]
 
+#Plot the death line of the article from Mitra et al. (2019)
+T_6=2
+eta=0.15
+alpha_l=45*np.pi/180
+b=40
+const=(3.16e-4*T_6*1e-15)/((eta)**2*b*(np.cos(alpha_l))**2)
+P_line=[i for i in np.arange(1e-2,1e1,0.001)]
+Pdot_line=[const*(i**2) for i in np.arange(1e-2,1e1,0.001)]
+
 #L1=[i for i in np.arange(1e-2,1e1,0.1)]
 #L2=[10**(a_reglin*np.log10(i)+b_reglin) for i in np.arange(1e-2,1e1,0.1)]
 #L3=[10**(a_reglin2*np.log10(i)+b_reglin2) for i in np.arange(1e-2,1e1,0.1)]
@@ -182,6 +213,7 @@ for i in range(len(P)):
 plt.figure(1)
 plt.scatter(P,P_dot,c='red',marker='o',s=5,label='Simulation data')
 plt.scatter(P2,P_dot2,c='blue',marker='o',s=5,label='ATNF data')
+plt.plot(P_line,Pdot_line)
 #plt.plot(L1,L2)
 #plt.plot(L1,L3)
 plt.xlim(1e-2,1e1)
