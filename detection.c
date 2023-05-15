@@ -343,7 +343,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			/* radio detection */
 				if(fabs(alpha-xi)<= rho && alpha >= rho && xi < M_PI/2){ 
 					Nbeam++;
-                			if (detec==1 && is_dead4(part,np)==1){
+                			if (detec==1 && is_dead(part,np)==1){
 						Nr=1;  // mJy
 						part->detec[np]=1;
                                                 part->detec_rad[np]=1;
@@ -352,7 +352,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 					}
 				} else if (fabs(xi-(M_PI-alpha))<=rho && alpha >= rho && xi > M_PI/2){ 
 					Nbeam++;
-                			if (detec==1 && is_dead4(part,np)==1){
+                			if (detec==1 && is_dead(part,np)==1){
 						count_radio_tot++;
 						part->detec[np]=1;
                                                 part->detec_rad[np]=1;

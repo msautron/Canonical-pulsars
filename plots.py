@@ -12,6 +12,7 @@ RAD = 180/np.pi
 test_l=[]
 Ba,B2=[],[]
 B0=3.2e15 #constant to compute the surface magnetic field of the observations
+P_selected,Pdot_selected=[],[]
 
 #Put the data at the right place
 var,var2='',''
@@ -67,6 +68,11 @@ for i in range(len(P_dota)):
         E_dot2+=[E_dota[i]]
         B2+=[3.2e15*(Pa[i]*P_dota[i])**0.5]
 
+for i in range(len(P2)): #Selection of P and P_dot to get only the pulsars for the optimization program
+    if B2[i]<5e8 and B2[i]>5e6:
+        P_selected+=[P2[i]]
+        Pdot_selected+=[P_dot2[i]]
+
 with open("data_ATNF_for_c.txt","w") as f:
     for i in range(len(P2)):
         if B2[i]<5e8 and B2[i]>5e6:
@@ -98,7 +104,7 @@ with open("data_ATNF_for_c.txt","w") as f:
 #    test_l+=[test]
 
 #print(count)
-
+#Computation of latitude and longitude for the ATNF data
 for i in range(len(z2)):
     if d2[i]<1e-15 or i==9 or i==26:
         lat=0
@@ -113,7 +119,7 @@ for i in range(len(z2)):
     else:
         longi=(np.arccos(-y2[i]/r)+np.pi)*RAD
         longitude+=[longi]
-
+#Log calculation for age, P and Pdot for the ATNF data
 for i in range(len(age2)):
     log_age2+=[(np.log(age2[i]))/(np.log(10))]
 
@@ -208,7 +214,22 @@ Pdot_line=[const*(i**2) for i in np.arange(1e-2,1e1,0.001)]
 #L1=[i for i in np.arange(1e-2,1e1,0.1)]
 #L2=[10**(a_reglin*np.log10(i)+b_reglin) for i in np.arange(1e-2,1e1,0.1)]
 #L3=[10**(a_reglin2*np.log10(i)+b_reglin2) for i in np.arange(1e-2,1e1,0.1)]
+
 #Make the plots
+#test
+#plt.figure(12)
+#plt.scatter(P_selected,Pdot_selected,c='blue',marker='o',s=5,label='ATNF data')
+#plt.scatter(log_P,log_Pdot,c='red',marker='o',s=5,label='Simulation data')
+#plt.xlim(1e-2,1e1)
+#plt.ylim(1e-20,1e-10)
+#plt.yscale('log')
+#plt.xscale('log')
+#plt.title("Spin period derivative - Spin period diagram")
+#plt.xlabel('Spin period s')
+#plt.ylabel('Spin period derivative s.s^-1')
+#plt.legend()
+#plt.savefig('selected_P_Pdot.png')
+
 #P-Pdot plot all pulsars
 plt.figure(1)
 plt.scatter(P,P_dot,c='red',marker='o',s=5,label='Simulation data')
