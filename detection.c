@@ -295,22 +295,22 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
         int detec;
 	double S_N ; // signal to noise ratio
 	long S_Nmin=10 ; // signal to noise ratio
-	FILE *fp=NULL;
+	//FILE *fp=NULL;
 	FILE *file_data=NULL;
-	char *fname;
-        fname = malloc(150);
+	//char *fname;
+        //fname = malloc(150);
 	file_data=fopen("P_Pdot_positions.txt","w+");
 	//sprintf(fname,"ppdot_N_%.ld_B_%.1e_sigB_%.1f_P_%.2f_sigP_%.3f_alphad_%.1f_k_%.ld_brate_%.ld_vold_%.ld_SN_%.ld.dat",part->Npulsars,part->b_mean,part->sigma_b,part->p_mean,part->sigma_p,part->alpha_d,part->k_tau0_B0,part->birth_rate,part->v_old,S_Nmin);
-	sprintf(fname,"ppdot_ska");
+	//sprintf(fname,"ppdot_ska");
 	//sprintf(fname,"ppdot_N_%.ld_B_%.e_sigB_%.1f_P_%.2f_sigP_%.3f_alphad_%.1f_k_%.ld_brate_%.ld_vold_%.ld_SN_%.ld.dat",part->Npulsars,part->b_mean,part->sigma_b,part->p_mean,part->sigma_p,part->alpha_d,part->k_tau0_B0,part->birth_rate,part->v_old,S_Nmin);
 //	sprintf(fname,"ppdot_N_%.ld_B_%.e_sigB_%.1f_P_%.2f_sigP_%.3f_alphad_%.1f_k_%.ld_brate_%.ld_vold_%.ld_SN_%.ld.dat",part->Npulsars,part->b_mean,part->sigma_b,part->p_mean,part->sigma_p,part->alpha_d,part->k_tau0_B0,part->birth_rate,part->v_old,S_Nmin);
 	//sprintf(fname,"ppdot");
 	  //sprintf(fname,"ppdot_B_%.1e_sigB_%.2f_P_%.3f_sigP_%.3f.dat",part->b_mean,part->sigma_b,part->p_mean,part->sigma_p,part->);
 	//sprintf(fname,"ppdot1e8");
-	if ( ( fp = fopen(fname,"w+")) == (FILE *)NULL){
-		fprintf(stderr,"Couldn't open file %s \n",fname);
+	//if ( ( fp = fopen(fname,"w+")) == (FILE *)NULL){
+		//fprintf(stderr,"Couldn't open file %s \n",fname);
 	//exit(-1);
-		}
+	//	}
 
 			
            	for (np=0;np<part->Npulsars;np++){ 
@@ -450,7 +450,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
             			//	printf("%.9f %.9f \n",part->cos_a0[np],cos(part->alpha[np]));
             		//		printf("%.9f %.9f \n",part->Fr[np],part->dist[np]);
             				//printf("%.9f \n",part->Fr[np]);
-					fprintf(fp,"%e  %e \n",part->w_r[np],part->period[np]);
+					//fprintf(fp,"%e  %e \n",part->w_r[np],part->period[np]);
 					//printf("np %ld P %e wr %e rho %e xi %e alpha %e \n",np,part->period[np],part->w_r[np],rho,xi,alpha);
 					//fprintf(fp,"%e %e \n",part->x[np],part->y[np]);
 					//fprintf(fp,"%e %e %e %e %e \n",part->period[np],part->Pdot[np],part->dist[np],part->age_pulsar[np],glat);
@@ -575,7 +575,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			printf(" \n");
              */
 
-			fprintf(fp,"\n");
+			/*fprintf(fp,"\n");
 			fprintf(fp,"## birth_rate (yr) %ld \n",part->birth_rate);
 			fprintf(fp,"## sigma_P (s) %e \n",part->sigma_p);
 			fprintf(fp,"## sigma_B (logB) %e \n",part->sigma_b);
@@ -613,7 +613,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			
 			}
 
-       			fclose(fp);
+       			fclose(fp);*/
 			fclose(file_data);
 
 return(0);
