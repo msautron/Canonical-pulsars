@@ -49,11 +49,13 @@ double phi_tot(void *params,long np){
       double a2=3.7*kpc2km,b2=0.2*kpc2km,M2=8.07e10*MSUN;
       //double rc=6*kpc2km,Mc=5e10*MSUN;
       double Mh=15474*2.325*1e7*MSUN;double ah=5.6*kpc2km;
-      double phi;double phi_1;double phi_2;double phi_k;//double phi_h;
+      double phi;
+      double phi_1;
+      double phi_2;
+      double phi_k;
       double phi_NFW;
       phi_1=-(G_grav*M1)/(sqrt(sq(R)+sq(a1+sqrt(sq(z*L0*kpc2km)+sq(b1)))));
       phi_2=-(G_grav*M2)/(sqrt(sq(R)+sq(a2+sqrt(sq(z*L0*kpc2km)+sq(b2)))));
-      //phi_h=-(G_grav*Mc/(rc))*(0.5*log(1+(sq(r)/sq(rc)))+(rc/r)*atan(r/rc));
       phi_NFW=-(G_grav*Mh/(r))*log(1.0+(r/ah));
       phi_k=-(G_grav*4e6*MSUN)/r;
       phi=phi_1+phi_2+phi_NFW+phi_k;
