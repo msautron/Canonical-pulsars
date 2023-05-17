@@ -343,7 +343,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			/* radio detection */
 				if(fabs(alpha-xi)<= rho && alpha >= rho && xi < M_PI/2){ 
 					Nbeam++;
-                			if (detec==1 && is_dead(part,np)==1){
+                			if (detec==1 && is_dead4(part,np)==1){
 						Nr=1;  // mJy
 						part->detec[np]=1;
                                                 part->detec_rad[np]=1;
@@ -352,7 +352,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 					}
 				} else if (fabs(xi-(M_PI-alpha))<=rho && alpha >= rho && xi > M_PI/2){ 
 					Nbeam++;
-                			if (detec==1 && is_dead(part,np)==1){
+                			if (detec==1 && is_dead4(part,np)==1){
 						count_radio_tot++;
 						part->detec[np]=1;
                                                 part->detec_rad[np]=1;
@@ -703,7 +703,7 @@ return(0);
 
 }
 
-int is_dead(void *params,long np){
+int is_dead(void *params,long np){ // Death line from Faucher Giguère & Kaspi (2006) 
 
 	struct func_params *part= (struct func_params*)params;
 	double ratio=part->B[np]/sq(part->period[np]);
@@ -711,7 +711,7 @@ int is_dead(void *params,long np){
 	else if (ratio > 0.17e8) {return 1;}
 }
 
-int is_dead2(void *params,long np){
+/*int is_dead2(void *params,long np){ // Death line from Beskin & Istomin 2022 -> too restrictive 
 
 	struct func_params *part= (struct func_params*)params;
 	double xsi=11;double lambda=41;double f_star=1.9;double Kg=0.07;double F=0.7;double h_x0=3.1;
@@ -720,16 +720,16 @@ int is_dead2(void *params,long np){
 	if (part->Pdot[np]<P_dot_death) return 0;
 	else if (part->Pdot[np]>=P_dot_death) return 1;
 
-}
+}*/
 
-int is_dead3(void *params,long np){
+/*int is_dead3(void *params,long np){ // Death line from Wu et al. (2020) -> results similar to death line one 
 
         struct func_params *part= (struct func_params*)params;
         if (part->Edot[np] < 1e24) {return 0;}
         else if (part->Edot[np] > 1e24) {return 1;}
-}
+}*/
 
-int is_dead4(void *params,long np){
+int is_dead4(void *params,long np){ // Death line from Mitra et al. (2019) -> Kill almost nothing 
 
         struct func_params *part= (struct func_params*)params;
 	double eta=0.15;double alpha_l=45*(M_PI/180);double T6=2;double b=40;

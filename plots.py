@@ -234,7 +234,7 @@ Pdot_line=[const*(i**2) for i in np.arange(1e-2,1e1,0.001)]
 plt.figure(1)
 plt.scatter(P,P_dot,c='red',marker='o',s=5,label='Simulation data')
 plt.scatter(P2,P_dot2,c='blue',marker='o',s=5,label='ATNF data')
-plt.plot(P_line,Pdot_line)
+#plt.plot(P_line,Pdot_line)
 #plt.plot(L1,L2)
 #plt.plot(L1,L3)
 plt.xlim(1e-2,1e1)
