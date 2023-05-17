@@ -12,7 +12,7 @@
 #include<gsl/gsl_sf_gamma.h>
 #include"galac_pot.h"
 
-void distrib_vinit(void *params){
+void distrib_vinit(void *params){ //Give an initial speed to a pulsar
 
     struct func_params *part= (struct func_params*)params;
     long np;
@@ -38,7 +38,7 @@ void distrib_vinit(void *params){
 
 }
 
-double phi_tot(void *params,long np){
+double phi_tot(void *params,long np){ //Compute the gravitational potential felt by a pulsar
 
       struct func_params *part= (struct func_params*)params;
       const double kpc2km=3.0856775807e16;
@@ -63,7 +63,7 @@ double phi_tot(void *params,long np){
 
 }
 
-double tot_energy(void *params,long np){
+double tot_energy(void *params,long np){ //Compute the sum of Kinetic and potential energy of a pulsar
 
       struct func_params *part= (struct func_params*)params;
       double vx,vy,vz;
@@ -77,7 +77,7 @@ double tot_energy(void *params,long np){
 
 //Functions that compute the gradient of the different potentials
 
-void phi_1(void *params,double phi1[3],long np){
+void phi_1(void *params,double phi1[3],long np){ //Potential for the bulge of the Milky Way
 
        struct func_params *part= (struct func_params*)params;
        const double kpc2km=3.0856775807e16;
@@ -93,7 +93,7 @@ void phi_1(void *params,double phi1[3],long np){
 }
 
 
-void phi_2(void *params,double phi2[3],long np){
+void phi_2(void *params,double phi2[3],long np){ //Potential for the disk of the Milky Way
 
        struct func_params *part= (struct func_params*)params;
        const double kpc2km=3.0856775807e16;
@@ -108,7 +108,7 @@ void phi_2(void *params,double phi2[3],long np){
        phi2[0]=phi2_x;phi2[1]=phi2_y;phi2[2]=phi2_z;
 }
 
-void phih(void *params,double phih[3],long np){
+void phih(void *params,double phih[3],long np){ //Potential for Dark Matter halo but did not work
 
        struct func_params *part= (struct func_params*)params;
        const double kpc2km=3.0856775807e16;
@@ -123,7 +123,7 @@ void phih(void *params,double phih[3],long np){
 
 }
 
-void phi_NFW(void *params,double phi_NFW[3],long np){
+void phi_NFW(void *params,double phi_NFW[3],long np){ //Potential for the dark matter halo of the galaxy 
 
 	struct func_params *part= (struct func_params*)params;
         const double kpc2km=3.0856775807e16;
@@ -138,7 +138,7 @@ void phi_NFW(void *params,double phi_NFW[3],long np){
 
 }
 
-void phi_kepler(void *params,double phi_k[3],long np){
+void phi_kepler(void *params,double phi_k[3],long np){ //Potential for the supermassive black hole at the center of the Milky Way
 
 	struct func_params *part= (struct func_params*)params;
         const double kpc2km=3.0856775807e16;
@@ -153,7 +153,7 @@ void phi_kepler(void *params,double phi_k[3],long np){
 
 }
 
-void evol_galac_pot_verlet(void *params){
+void evol_galac_pot_verlet(void *params){ //Verlet integration scheme
 
     struct func_params *part= (struct func_params*)params;
     const double kpc2km=3.0856775807e16;
@@ -231,7 +231,7 @@ void evol_galac_pot_verlet(void *params){
 
 }
 
-void evol_galac_PEFRL(void *params){
+void evol_galac_PEFRL(void *params){ //PEFRL integration scheme
 
     struct func_params *part= (struct func_params*)params;
     double RAD = 180/M_PI;double gbr;double glr;
