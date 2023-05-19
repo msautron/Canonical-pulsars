@@ -102,6 +102,9 @@ FILE *kick(void *params){
 
     	struct func_params *part= (struct func_params*)params;
     	long np;
+	double two_pi=2*M_PI;
+	double v;
+	double cos_theta,phi;
 	double vx,vy,vz;
 	double x_s,y_s,z_s;
 	double dx,dy,dz;
@@ -120,17 +123,30 @@ FILE *kick(void *params){
 	//file=fopen("kick_result.txt","w+");
 	if ( ( fp_gal = fopen("galactic_coord.dat","w+")) == NULL){
 		fprintf(stderr,"Couldn't open file galactic_coord.dat \n");
-	//exit(-1);
+	exit(-1);
 		}
 			
            	for(np=0;np<part->Npulsars;np++){  
   	 		age_pulsar_yr    =  part->age_pulsar[np]/yr_sec; // /!\   should use a local variable
 			if (age_pulsar_yr<3*1e6) part->sigma_v=part->v_young;
 				else part->sigma_v=part->v_old;
+
+			/*//Computation of the velocity if we ignore the fact that pulsars are going in the same direction as the rotation axis
 			vx = gsl_ran_gaussian_ziggurat(part->r, part->sigma_v); //km/s
 			vy = gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
-			vz = gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
+			vz = gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);*/
         		//v  = sqrt(vx*vx + vy*vy + vz*vz); // is  v really useful??
+
+			//Computation of the velocity if we do not ignore the fact above
+			cos_theta   =  gsl_rng_uniform(part->r);
+                        phi            =   two_pi*gsl_rng_uniform(part->r);
+                        part->n_omega_x[np]=((1-sq(cos_theta))*cos(phi));
+                        part->n_omega_y[np]=((1-sq(cos_theta))*sin(phi));
+                        part->n_omega_z[np]=cos_theta;
+                        v=sqrt(8/M_PI)*part->sigma_v+gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
+                        vx=v*part->n_omega_x[np];
+                        vy=v*part->n_omega_y[np];
+                        vz=v*part->n_omega_z[np];
 
 			dx = vx*part->age_pulsar[np]/kpc2km;
 			dy = vy*part->age_pulsar[np]/kpc2km;
@@ -211,11 +227,11 @@ int geometry(void *params){ // calculated the geometry of the pulsar (i.e xi, an
 
     	struct func_params *part= (struct func_params*)params;
     	long np=0;
-	double two_pi=2*M_PI;   
-	double phi,cos_theta;
+	//double two_pi=2*M_PI;   
+	//double phi,cos_theta;
 	double Npulsars=part->Npulsars;
 	double n[3];
-	double n_omega[3];
+	//double n_omega[3];
 	double norm;
 	double xi,alpha;
 	double rho;
@@ -230,10 +246,10 @@ int geometry(void *params){ // calculated the geometry of the pulsar (i.e xi, an
 			//rho            = 3*sqrt(M_PI*hem/(2*part->period[np]*SI_C)); // replace by a numeric value
 			rho            = k/sqrt(part->period[np]); // 3*sqrt((PI*hem)/2*P*c) Equation 2 of Johnston et al. (2020)
 			part->rho[np]  = rho;
-	 		phi	       =   two_pi*gsl_rng_uniform(part->r); // azimuth of the rotation axis 
+	 		//phi	       =   two_pi*gsl_rng_uniform(part->r); // azimuth of the rotation axis 
 			//if(np%2==0)  cos_theta   =  gsl_rng_uniform(part->r); // theta of the rotation axis
 		       	  //    else   cos_theta   =  -gsl_rng_uniform(part->r); // theta is between -1 and 1 
-			cos_theta   =  gsl_rng_uniform(part->r); // theta of the rotation axis
+			//cos_theta   =  gsl_rng_uniform(part->r); // theta of the rotation axis
 
 			/* line of sight vector */
 			norm=sqrt(sq(part->x[np])+sq(part->y[np]-8.5)+sq(part->z[np]-0.015));
@@ -242,12 +258,12 @@ int geometry(void *params){ // calculated the geometry of the pulsar (i.e xi, an
 			n[2]=(part->z[np]-0.015)/norm;
 
 			/* unit vector of the rotation axis */
-			n_omega[0]=((1-sq(cos_theta))*cos(phi)); 
-			n_omega[1]=((1-sq(cos_theta))*sin(phi));			
-			n_omega[2]=cos_theta;			
+			/*n_omega[0]=((1-sq(cos_theta))*cos(phi));part->n_omega_x[np]=n_omega[0];
+			n_omega[1]=((1-sq(cos_theta))*sin(phi));part->n_omega_y[np]=n_omega[1];
+			n_omega[2]=cos_theta;part->n_omega_z[np]=n_omega[2];*/
 
 			/* angle between vectors n and n_omega	*/
-		        xi=acos(n_omega[0]*n[0]+n_omega[1]*n[1]+n_omega[2]*n[2]); 
+		        xi=acos(part->n_omega_x[np]*n[0]+part->n_omega_y[np]*n[1]+part->n_omega_z[np]*n[2]); 
 			part->xi[np]=xi;
 
 

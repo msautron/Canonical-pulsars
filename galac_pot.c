@@ -17,6 +17,10 @@ void distrib_vinit(void *params){ //Give an initial speed to a pulsar
     struct func_params *part= (struct func_params*)params;
     long np;
     double vx,vy,vz;
+    double v;
+    double cos_theta;
+    double phi;
+    double two_pi=2*M_PI;
     double age_pulsar_yr;
     const double yr_sec=365*24*3600;
 
@@ -26,9 +30,22 @@ void distrib_vinit(void *params){ //Give an initial speed to a pulsar
        if (age_pulsar_yr<3*1e6) part->sigma_v=part->v_young;
        else part->sigma_v=part->v_old;
 
-       vx = gsl_ran_gaussian_ziggurat(part->r, part->sigma_v); //km/s
+       //Computation of the velocity if we ignore the fact that pulsars are going in the same direction as the rotation axis
+       /*vx = gsl_ran_gaussian_ziggurat(part->r, part->sigma_v); //km/s
        vy = gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
-       vz = gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
+       vz = gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);*/
+
+       //Computation of the velocity if we do not ignore the fact above 
+       cos_theta   =  gsl_rng_uniform(part->r);
+       phi            =   two_pi*gsl_rng_uniform(part->r);
+       part->n_omega_x[np]=((1-sq(cos_theta))*cos(phi));
+       part->n_omega_y[np]=((1-sq(cos_theta))*sin(phi));
+       part->n_omega_z[np]=cos_theta;
+       v=sqrt(8/M_PI)*part->sigma_v+gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
+       vx=v*part->n_omega_x[np];
+       vy=v*part->n_omega_y[np];
+       vz=v*part->n_omega_z[np];
+
 
        part->vx0[np]=vx;part->vx[np]=vx;
        part->vy0[np]=vy;part->vy[np]=vy;

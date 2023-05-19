@@ -43,7 +43,7 @@ int main(int argc, char **argv){
 
 
 	printf("## birth_rate (yr) %ld \n",params.birth_rate);
-	printf("## sigma_P (s) %e \n",params.sigma_p);
+	printf("## sigma_P (s or log(s)) %e \n",params.sigma_p);
 	printf("## sigma_B (logB) %e \n",params.sigma_b);
 	printf("## Pmean (s) %e \n",params.p_mean);
 	printf("## Bmean (T) %e \n",params.b_mean);
@@ -62,7 +62,7 @@ int main(int argc, char **argv){
 	distrib_init(&params); // initial distribution of the pulsars
 	distrib_vinit(&params);
         evol_galac_PEFRL(&params);	
-	//kick(&params);//birth kick velocity - writes gl, gb and dist in file galactic_coord.dat
+	//kick(&params);//birth kick velocity
 
 	printf("##Total number of simulated pulsars: %ld \n",params.Npulsars);
 	/* ISM modelling */
@@ -116,7 +116,10 @@ int main(int argc, char **argv){
         free(params.flux_low_freq);
         free(params.Fg);
         free(params.cos_a0);
-        free(params.dist); 
+        free(params.dist);
+        free(params.n_omega_x);
+        free(params.n_omega_y);
+        free(params.n_omega_z);
 
 	gsl_rng_free(params.r);
 

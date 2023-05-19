@@ -26,15 +26,15 @@ void initialize(int argc, char *argv[], void *params){
          //part->Npulsars         =  	10000;
 	 part->k_tau0_B0        =       5;
          part->birth_rate	= 	70;
-         //part->b_mean		= 	2.5e8; //Tesla usual value used 
-	 part->b_mean           =       275422870.33381635; //Tesla, value used in Igoshev et al. (2022)
-         //part->p_mean		= 	60e-3;// usual value used in seconds (normal distribution)
-	 part->p_mean           =       0.09549925860214359;// value used in Igoshev et al. (2022) in seconds (log normal distribution)
-         //part->sigma_p		= 	0.010;//usual value used in s (normal distribution)
-	 part->sigma_p          =       0.53; // value used in Igoshev et al. (2022) (log normal distribution)
+         part->b_mean		= 	2.5e8; //Tesla usual value used 
+	 //part->b_mean           =       275422870.33381635; //Tesla, value used in Igoshev et al. (2022)
+         part->p_mean		= 	60e-3;// usual value used in seconds (normal distribution)
+	 //part->p_mean           =       0.06456542290346556;// value used in Igoshev et al. (2022) in seconds (log normal distribution)
+         part->sigma_p		= 	0.010;//usual value used in s (normal distribution)
+	 //part->sigma_p          =       0.45; // value used in Igoshev et al. (2022) (log normal distribution)
          part->alpha_d          = 	1.5;
-         //part->sigma_b		= 	0.5;//usual value used
-	 part->sigma_b          =       0.44; //value used in Igoshev et al. (2022)
+         part->sigma_b		= 	0.5;//usual value used
+	 //part->sigma_b          =       0.44; //value used in Igoshev et al. (2022)
          part->v_old            =	75.; //  km/s 
 /*
          part->birth_rate	= 	300;
@@ -146,5 +146,11 @@ void initialize(int argc, char *argv[], void *params){
                 if (part->detec_gam== NULL) printf("detec_gam: allocation failed"); // check if allocation succeeded
        part->detec_rg= malloc(sizeof(*part->detec_rg) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
                 if (part->detec_rg== NULL) printf("detec_rg: allocation failed"); // check if allocation succeeded
+       part->n_omega_z= malloc(sizeof(*part->n_omega_z) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->n_omega_z== NULL) printf("n_omega_z: allocation failed"); // check if allocation succeed
+       part->n_omega_y= malloc(sizeof(*part->n_omega_y) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->n_omega_y== NULL) printf("n_omega_y: allocation failed"); // check if allocation succeeded
+       part->n_omega_x= malloc(sizeof(*part->n_omega_x) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->n_omega_x== NULL) printf("n_omega_x: allocation failed"); // check if allocation succeeded
 
 }
