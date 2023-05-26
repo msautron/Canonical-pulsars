@@ -30,18 +30,18 @@ void distrib_vinit(void *params){ //Give an initial speed to a pulsar
        if (age_pulsar_yr<3*1e6) part->sigma_v=part->v_young;
        else part->sigma_v=part->v_old;
 
-       //Computation of the velocity if we ignore the fact that pulsars are going in the same direction as the rotation axis
+       //Computation of the velocity if we ignore the fact that pulsars are going in the same direction as the rotation axis when they are born
        /*vx = gsl_ran_gaussian_ziggurat(part->r, part->sigma_v); //km/s
        vy = gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
        vz = gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);*/
 
        //Computation of the velocity if we do not ignore the fact above 
-       cos_theta   =  gsl_rng_uniform(part->r);
-       phi            =   two_pi*gsl_rng_uniform(part->r);
-       part->n_omega_x[np]=((1-sq(cos_theta))*cos(phi));
-       part->n_omega_y[np]=((1-sq(cos_theta))*sin(phi));
+       cos_theta   =  2*gsl_rng_uniform(part->r)-1;
+       phi         =  two_pi*gsl_rng_uniform(part->r);
+       part->n_omega_x[np]=sqrt(1-sq(cos_theta))*cos(phi);
+       part->n_omega_y[np]=sqrt(1-sq(cos_theta))*sin(phi);
        part->n_omega_z[np]=cos_theta;
-       v=sqrt(8/M_PI)*part->sigma_v+gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
+       v=sqrt(8.0/M_PI)*part->sigma_v+gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
        vx=v*part->n_omega_x[np];
        vy=v*part->n_omega_y[np];
        vz=v*part->n_omega_z[np];
@@ -387,13 +387,15 @@ void evol_galac_PEFRL(void *params){ //PEFRL integration scheme
 
       if(r<1e-15){
             glr=0;
-      }else{
+                 }
+      else{
             if(part->x_s[np]>=0){
                 glr=acos(-part->y_s[np]/r);
-                    }else{
-                       glr=acos(part->y_s[np]/r)+M_PI;
-                              }
-                         }
+                                }
+	    else{
+                glr=acos(part->y_s[np]/r)+M_PI;
+                }
+            }
 
       part->gl[np]=glr*RAD;
       fprintf(file,"%e|%e|%e|%e|%e|%e|%e|\n",part->x[np],part->y[np],part->z[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np]);

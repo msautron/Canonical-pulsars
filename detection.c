@@ -10,6 +10,7 @@
 #include "evolution.h"
 #include<gsl/gsl_randist.h>
 #include<gsl/gsl_sf_gamma.h>
+#include<time.h>
 
 /*
 
@@ -69,7 +70,8 @@ int distrib_init(void *params){
         struct func_params *part= (struct func_params*)params;
         long np=0;
         double two_pi=2*M_PI;
-        double phi,R;
+	srand((unsigned)time(NULL));
+        double phi,R;double p,rng_0_1_d;int rng_0_1;
 
 
 
@@ -78,8 +80,9 @@ int distrib_init(void *params){
                         //rz             =  1.0683*pow(4.5,2)*gsl_sf_gamma(2)*gsl_ran_gamma(part->r,2,4.5); // distribution taken from Lorimer 2004 
                         R              =  gsl_ran_gamma(part->r,2,part->Rexp); // distribution taken from packzinski 
                         part->z0[np]    =  gsl_ran_exponential(part->r,part->zexp); //kpc
-                        if(np%2==0) part->z0[np] = part->z0[np];
-                              else part->z0[np]  = -part->z0[np];
+			rng_0_1=(rand() % 1000000001);rng_0_1_d=rng_0_1;p=rng_0_1_d/1000000000.0;
+                        if(p<0.5) part->z0[np] = part->z0[np];
+                        else if(p>=0.5)  part->z0[np]  = -part->z0[np];
                         part->x0[np]   = R*cos(phi);  //kpc
                         part->y0[np]   = R*sin(phi);  //kpc
 			part->x[np]= part->x0[np];
@@ -131,19 +134,19 @@ FILE *kick(void *params){
 			if (age_pulsar_yr<3*1e6) part->sigma_v=part->v_young;
 				else part->sigma_v=part->v_old;
 
-			/*//Computation of the velocity if we ignore the fact that pulsars are going in the same direction as the rotation axis
-			vx = gsl_ran_gaussian_ziggurat(part->r, part->sigma_v); //km/s
+			//Computation of the velocity if we ignore the fact that pulsars are going in the same direction as the rotation axis
+			/*vx = gsl_ran_gaussian_ziggurat(part->r, part->sigma_v); //km/s
 			vy = gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
-			vz = gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);*/
-        		//v  = sqrt(vx*vx + vy*vy + vz*vz); // is  v really useful??
+			vz = gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
+        		v  = sqrt(vx*vx + vy*vy + vz*vz); // is  v really useful??*/
 
 			//Computation of the velocity if we do not ignore the fact above
-			cos_theta   =  gsl_rng_uniform(part->r);
-                        phi            =   two_pi*gsl_rng_uniform(part->r);
-                        part->n_omega_x[np]=((1-sq(cos_theta))*cos(phi));
-                        part->n_omega_y[np]=((1-sq(cos_theta))*sin(phi));
+			cos_theta   =  2*gsl_rng_uniform(part->r)-1;
+                        phi         =  two_pi*gsl_rng_uniform(part->r);
+                        part->n_omega_x[np]=sqrt(1-sq(cos_theta))*cos(phi);
+			part->n_omega_y[np]=sqrt(1-sq(cos_theta))*sin(phi);
                         part->n_omega_z[np]=cos_theta;
-                        v=sqrt(8/M_PI)*part->sigma_v+gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
+                        v=sqrt(8.0/M_PI)*part->sigma_v+gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
                         vx=v*part->n_omega_x[np];
                         vy=v*part->n_omega_y[np];
                         vz=v*part->n_omega_z[np];
