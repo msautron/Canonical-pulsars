@@ -27,8 +27,8 @@ int birth(void *params){//generates Npulsars with an initial period, B and age
 
            	while(np<part->Npulsars){  
 
-                        part->Pinit[np]=part->p_mean+gsl_ran_gaussian_ziggurat(part->r,part->sigma_p); //Normal distribution from most of the litterature
-			//part->Pinit[np]=pow(10,log10(part->p_mean)+gsl_ran_gaussian_ziggurat(part->r,part->sigma_p)); //Log normal distribution found in Igoshev et al. (2022)
+                        //part->Pinit[np]=part->p_mean+gsl_ran_gaussian_ziggurat(part->r,part->sigma_p); //Normal distribution from most of the litterature
+			part->Pinit[np]=pow(10,log10(part->p_mean)+gsl_ran_gaussian_ziggurat(part->r,part->sigma_p)); //Log normal distribution found in Igoshev et al. (2022)
 			if (part->Pinit[np] < 0){
 		            continue;	
 			} 

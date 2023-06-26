@@ -13,12 +13,14 @@ test_l=[]
 Ba,B2=[],[]
 B0=3.2e15 #constant to compute the surface magnetic field of the observations
 P_selected,Pdot_selected=[],[]
+#B_init=[]
 
 #Put the data at the right place
 var,var2='',''
 reg_1=re.compile("-*.{12}[|]{1}")
 reg_2=re.compile("[|]{1}.{1}[|]{1}")
 reg_3=re.compile("[-+]?\d*[.]\d*[Ee]*[-+]*\d*")
+#reg_4=re.compile("-*.{12}")
 
 with open("ATNF_data.txt","r") as f:
     data2=re.findall(reg_3,f.read())
@@ -28,6 +30,13 @@ with open("P_Pdot_positions.txt","r") as f:
 
 with open("P_Pdot_positions.txt","r") as f:
     data_type=re.findall(reg_2,f.read())
+
+#with open("verif_lognorm.txt","r") as f:
+#    data_lognorm=re.findall(reg_4,f.read())
+
+#Get the data to verify it is a log normal distribution that we are using
+#for i in range(len(data_lognorm)):
+#    B_init+=[float(data_lognorm[i])]
 
 #Get the data of the ATNF catalogue
 for i in range(int(len(data2)/8)):
@@ -162,6 +171,16 @@ for i in range(len(P)):
     log_P+=[(np.log(P[i]))/(np.log(10))]
     log_Pdot+=[(np.log(P_dot[i]))/(np.log(10))]
 
+#Prep death line
+R_NS=12000
+Inertia=1e38
+mu_0=1.25663706212e-6 
+c_light=3e8
+P_dot_death=[]
+P_death=[i for i in np.arange(1e-2,1e1,0.001)]
+for i in range(len(P_death)):
+    P_dot_death+=[(16*(np.pi**3)*(R_NS**6)*(1+((np.sin(10*np.pi/180)**2))*(P_death[i])**3))*(0.17e8**2)/(Inertia*mu_0*(c_light**3))]
+
 #sum_x2,sum_y2,sum_xy2,sum_sqx2,count2=0,0,0,0,0
 #for i in range(len(P)):
 #    if P_dot[i]>0:
@@ -211,10 +230,6 @@ const=(3.16e-4*T_6*1e-15)/((eta)**2*b*(np.cos(alpha_l))**2)
 P_line=[i for i in np.arange(1e-2,1e1,0.001)]
 Pdot_line=[const*(i**2) for i in np.arange(1e-2,1e1,0.001)]
 
-#L1=[i for i in np.arange(1e-2,1e1,0.1)]
-#L2=[10**(a_reglin*np.log10(i)+b_reglin) for i in np.arange(1e-2,1e1,0.1)]
-#L3=[10**(a_reglin2*np.log10(i)+b_reglin2) for i in np.arange(1e-2,1e1,0.1)]
-
 #Make the plots
 #test
 #plt.figure(12)
@@ -237,6 +252,7 @@ plt.scatter(P2,P_dot2,c='blue',marker='o',s=5,label='ATNF data')
 #plt.plot(P_line,Pdot_line)
 #plt.plot(L1,L2)
 #plt.plot(L1,L3)
+#plt.plot(P_death,P_dot_death)
 plt.xlim(1e-2,1e1)
 plt.ylim(1e-20,1e-10)
 plt.yscale('log')
@@ -355,3 +371,12 @@ plt.xlabel('cos(alpha) and cos(alpha0)')
 plt.ylabel('Frequency')
 plt.title('Histogram of the inclination angle of the detected pulsars')
 plt.savefig('histo_cosalpha.png')
+
+#Binit histogram
+#plt.figure(12)
+#plt.hist(B_init,bins=150,range=(1e7,9e8),edgecolor='black',color='red',alpha=0.5,label='Simulation')
+#plt.legend()
+#plt.xlabel('Inital magnetic field B')
+#plt.ylabel('Frequency')
+#plt.title('Histogram of the initial magnetic field of the pulsars')
+#plt.savefig('B_init.png')

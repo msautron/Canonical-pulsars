@@ -722,6 +722,18 @@ return(0);
 
 }
 
+/*void verif_log_normal(void *params){
+
+	struct func_params *part= (struct func_params*)params;
+	FILE *file=NULL;
+	file=fopen("verif_lognorm.txt","w+");
+	for(int i=0;i<part->Npulsars;i++){
+           fprintf(file,"%e\n",part->Binit[i]);
+	}
+	fclose(file);
+
+}*/
+
 int is_dead(void *params,long np){ // Death line from Faucher Giguère & Kaspi (2006) 
 
 	struct func_params *part= (struct func_params*)params;
