@@ -50,21 +50,6 @@ for i in range(int(len(data2)/8)):
     E_dota+=[float(data2[i*8+7])]  #Spin down power of the pulsar in ergs/s
     Ba+=[B0*(Pa[i]*P_dota[i])**0.5] #surface magnetic field in T
 
-#sum_x,sum_y,sum_xy,sum_sqx,count=0,0,0,0,0
-#for i in range(len(Pa)):
-#    if P_dota[i]>0 and Ba[i]<5e8 and Ba[i]>5e6:
-#        #if (Pa[i]> 3e-1 and P_dota[i]>1e-16):
-#        #    if (Pa[i]<2 and P_dota[i]<1e-13):
-#        sum_x+=np.log10(Pa[i])
-#        sum_y+=np.log10(P_dota[i])
-#        sum_xy+=np.log10(Pa[i])*np.log10(P_dota[i])
-#        sum_sqx+=np.log10(Pa[i])**2
-#        count+=1
-
-#a_reglin=(sum_xy-((1/count))*(sum_x*sum_y))/(sum_sqx-(1/count)*(sum_x**2))
-#b_reglin=(sum_y-a_reglin*sum_x)/count
-#print(f'a : {a_reglin} \nb : {b_reglin} \n')
-
 for i in range(len(P_dota)):
     if P_dota[i]!=0.0 and da[i]!=0.0 and E_dota[i]!=0:
         P2+=[Pa[i]]
@@ -103,16 +88,6 @@ with open("data_ATNF_for_c.txt","w") as f:
             f.write("|")
             f.write("\n")
 
-#count=0
-
-#for i in range(len(z2)):
-#    test=z2[i]/d2[i]
-#    if test>=1 or test<=-1:
-#        count+=1
-#        print(i)
-#    test_l+=[test]
-
-#print(count)
 #Computation of latitude and longitude for the ATNF data
 for i in range(len(z2)):
     if d2[i]<1e-15 or i==9 or i==26:
@@ -163,7 +138,7 @@ for i in range(int(len(data)/11)):
     cos_alpha+=[np.cos(data[11*i+10])] #cosinus of the inclination angle after all the evolution
 
 
-for i in range(1,len(age)):
+for i in range(0,len(age)):
     logage=(np.log(age[i]/(365*24*60*60)))/(np.log(10))
     log_age+=[logage]
 
@@ -181,18 +156,12 @@ P_death=[i for i in np.arange(1e-2,1e1,0.001)]
 for i in range(len(P_death)):
     P_dot_death+=[(16*(np.pi**3)*(R_NS**6)*(1+((np.sin(10*np.pi/180)**2))*(P_death[i])**3))*(0.17e8**2)/(Inertia*mu_0*(c_light**3))]
 
-#sum_x2,sum_y2,sum_xy2,sum_sqx2,count2=0,0,0,0,0
-#for i in range(len(P)):
-#    if P_dot[i]>0:
-#        sum_x2+=np.log10(P[i])
-#        sum_y2+=np.log10(P_dot[i])
-#        sum_xy2+=np.log10(P[i])*np.log10(P_dot[i])
-#        sum_sqx2+=np.log10(P[i])**2
-#        count2+=1
 
-#a_reglin2=(sum_xy2-((1/count2))*(sum_x2*sum_y2))/(sum_sqx2-(1/count2)*(sum_x2**2))
-#b_reglin2=(sum_y2-a_reglin2*sum_x2)/count2
-#print(f'a_simu : {a_reglin2} \n b_simu : {b_reglin2} \n')
+#Prep plot period old pulsars
+P_old=[]
+for i in range(len(log_age)):
+    if log_age[i]>7.7 and log_age[i]<8.7:
+        P_old+=[log_P[i]]
 
 #Lists depending on the pulsar emission type
 P_radio,P_dot_radio,x_radio,y_radio,age_radio,error_radio,distance_radio=[],[],[],[],[],[],[]
@@ -257,7 +226,7 @@ plt.xlim(1e-2,1e1)
 plt.ylim(1e-20,1e-10)
 plt.yscale('log')
 plt.xscale('log')
-plt.title("Spin period derivative - Spin period diagram")
+#plt.title("Spin period derivative - Spin period diagram")
 plt.xlabel('Spin period s')
 plt.ylabel('Spin period derivative s.s^-1')
 plt.legend()
@@ -371,6 +340,15 @@ plt.xlabel('cos(alpha) and cos(alpha0)')
 plt.ylabel('Frequency')
 plt.title('Histogram of the inclination angle of the detected pulsars')
 plt.savefig('histo_cosalpha.png')
+
+#Period of old pulsars : histogram
+plt.figure(12)
+plt.hist(P_old,bins=150,range=(-2,1.5),edgecolor='black',color='red',alpha=0.5,label='Simulation')
+plt.legend()
+plt.xlabel('Log(P) (P in s)')
+plt.ylabel('Frequency')
+#plt.title('Histogram of the rotation period of the detected pulsars with ages betwen 1e7.7 years and 1e8.7')
+plt.savefig('histo_period_old.png')
 
 #Binit histogram
 #plt.figure(12)
