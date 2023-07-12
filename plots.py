@@ -137,6 +137,42 @@ for i in range(int(len(data)/11)):
     cos_alpha0+=[data[11*i+9]] #cosinus of the initial inclination angle
     cos_alpha+=[np.cos(data[11*i+10])] #cosinus of the inclination angle after all the evolution
 
+#Edot computation 
+Edot=[]
+Inertia=1e38
+count_rad,count_gam,count_radgam,count_radgam_E_big,count_gam_E_big,count_rad_E_big,count_radgam_E_bigbig,count_gam_E_bigbig,count_rad_E_bigbig=0,0,0,0,0,0,0,0,0
+for i in range(len(P)):
+    Edot+=[4*np.pi**2*Inertia*P_dot[i]*(P[i]**(-3))]
+
+for i in range(len(Edot)):
+    if Edot[i] > 1e31 and type_pulsar[i]==1:
+        count_rad_E_bigbig+=1
+    if Edot[i] > 1e31 and type_pulsar[i]==2:
+        count_gam_E_bigbig+=1
+    if Edot[i] > 1e31 and type_pulsar[i]==3:
+        count_radgam_E_bigbig+=1
+    if Edot[i] > 1e28 and type_pulsar[i]==1:
+        count_rad_E_big+=1
+    if Edot[i] > 1e28 and type_pulsar[i]==2:
+        count_gam_E_big+=1
+    if Edot[i] > 1e28 and type_pulsar[i]==3:
+        count_radgam_E_big+=1
+    if type_pulsar[i]==1:
+        count_rad+=1
+    if type_pulsar[i]==2:
+        count_gam+=1
+    if type_pulsar[i]==3:
+        count_radgam+=1
+ 
+print(f"Number of radio pulsars with Edot > 1e31 W : {count_rad_E_bigbig}\nNumber of gamma pulsars with Edot > 1e31 W : {count_gam_E_bigbig}\n")
+print(f"Number of radio-gamma pulsars with Edot > 1e31 W : {count_radgam_E_bigbig}\n")
+print(f"Number of radio pulsars with Edot > 1e28 W : {count_rad_E_big}\n")
+print(f"Number of gamma pulsars with Edot > 1e28 W : {count_gam_E_big}\n")
+print(f"Number of radio-gamma pulsars with Edot > 1e28 W : {count_radgam_E_big}\n")
+print(f"Number of radio pulsars : {count_rad}\n")
+print(f"Number of gamma pulsars : {count_gam}\n")
+print(f"Number of radio-gamma pulsars : {count_radgam}\n")
+
 
 for i in range(0,len(age)):
     logage=(np.log(age[i]/(365*24*60*60)))/(np.log(10))
@@ -148,13 +184,14 @@ for i in range(len(P)):
 
 #Prep death line
 R_NS=12000
-Inertia=1e38
 mu_0=1.25663706212e-6 
 c_light=3e8
-P_dot_death=[]
-P_death=[i for i in np.arange(1e-2,1e1,0.001)]
+P_dot_death,P_dot_death2=[],[]
+P_death=[np.log10(i) for i in np.arange(1e-2,1e1,0.001)]
+P_death2=[10**(P_death[i]) for i in range(len(P_death))]
 for i in range(len(P_death)):
-    P_dot_death+=[(16*(np.pi**3)*(R_NS**6)*(1+((np.sin(10*np.pi/180)**2))*(P_death[i])**3))*(0.17e8**2)/(Inertia*mu_0*(c_light**3))]
+    P_dot_death+=[3*P_death[i]+np.log10((16*(np.pi**3)*(R_NS**6)*(1+((np.sin(45*np.pi/180)**2))))*(0.17e8**2)/(Inertia*mu_0*(c_light**3)))]
+    P_dot_death2+=[10**(P_dot_death[i])]
 
 
 #Prep plot period old pulsars
@@ -221,7 +258,7 @@ plt.scatter(P2,P_dot2,c='blue',marker='o',s=5,label='ATNF data')
 #plt.plot(P_line,Pdot_line)
 #plt.plot(L1,L2)
 #plt.plot(L1,L3)
-#plt.plot(P_death,P_dot_death)
+plt.plot(P_death2,P_dot_death2,c='green',label='Death line')
 plt.xlim(1e-2,1e1)
 plt.ylim(1e-20,1e-10)
 plt.yscale('log')
@@ -349,6 +386,11 @@ plt.xlabel('Log(P) (P in s)')
 plt.ylabel('Frequency')
 #plt.title('Histogram of the rotation period of the detected pulsars with ages betwen 1e7.7 years and 1e8.7')
 plt.savefig('histo_period_old.png')
+
+#Death line alone
+#plt.figure(13)
+#plt.plot(P_death2,P_dot_death2)
+#plt.savefig("death_line.png")
 
 #Binit histogram
 #plt.figure(12)
