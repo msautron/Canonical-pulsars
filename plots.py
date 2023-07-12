@@ -4,7 +4,7 @@ import re
 from mpl_toolkits import mplot3d
 
 #Variable initialization
-P,P_dot,x,y,age,error,type_pulsar,distance,latitude,longitude,cos_alpha0,cos_alpha=[],[],[],[],[],[],[],[],[],[],[],[] #Refers to the simulation data
+P,P_dot,x,y,age,error,type_pulsar,distance,latitude,longitude,cos_alpha0,cos_alpha,Bf,z,vx,vy,vz,vx0,vy0,vz0=[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[] #Refers to the simulation data
 Pa,P_dota,da,za,xa,ya,agea,E_dota=[],[],[],[],[],[],[],[] #Refers to the data of the ATNF catalogue, before the unknown values are ruled out 
 P2,P_dot2,d2,z2,x2,y2,age2,E_dot2,latitude2,longitude2=[],[],[],[],[],[],[],[],[],[] #Refers to the data of the ATNF catalogue that is used
 log_age,log_age2,log_P,log_Pdot,log_P2,log_Pdot2=[],[],[],[],[],[] #Refers to the quantities we need in log scale
@@ -124,18 +124,26 @@ for i in range(len(data)):
     data[i]=float(var)
     var=''
 
-for i in range(int(len(data)/11)):
-    P+=[data[11*i]]    #Period of rotation of the pulsar in seconds
-    P_dot+=[data[11*i+1]]  #Period derivative of rotation of the pulsar, no units 
-    x+=[data[11*i+2]]#Position on the x-absciss relative to the sun in the galactocentric frame in kpc
-    y+=[data[11*i+3]]#Position on the y-absciss relative to the sun in the galactocentric frame in kpc
-    age+=[data[11*i+4]] #Age of the pulsar in seconds 
-    error+=[data[11*i+5]] #error on the positions of the pulsars (error computed with the energy)
-    distance+=[data[11*i+6]] #Distance to the galactic center in kpc
-    longitude+=[data[11*i+7]] #galactic latitude in degrees
-    latitude+=[data[11*i+8]] #galactic longitude in degrees
-    cos_alpha0+=[data[11*i+9]] #cosinus of the initial inclination angle
-    cos_alpha+=[np.cos(data[11*i+10])] #cosinus of the inclination angle after all the evolution
+for i in range(int(len(data)/19)):
+    P+=[data[19*i]]    #Period of rotation of the pulsar in seconds
+    P_dot+=[data[19*i+1]]  #Period derivative of rotation of the pulsar, no units 
+    x+=[data[19*i+2]]#Position on the x-absciss relative to the sun in the galactocentric frame in kpc
+    y+=[data[19*i+3]]#Position on the y-absciss relative to the sun in the galactocentric frame in kpc
+    age+=[data[19*i+4]] #Age of the pulsar in seconds 
+    error+=[data[19*i+5]] #error on the positions of the pulsars (error computed with the energy)
+    distance+=[data[19*i+6]] #Distance to the galactic center in kpc
+    longitude+=[data[19*i+7]] #galactic latitude in degrees
+    latitude+=[data[19*i+8]] #galactic longitude in degrees
+    cos_alpha0+=[data[19*i+9]] #cosinus of the initial inclination angle
+    cos_alpha+=[np.cos(data[19*i+10])] #cosinus of the inclination angle after all the evolution
+    Bf+=[data[19*i+11]] #Magnetic field of the pulsar today, in tesla
+    z+=[data[19*i+12]] #Position on the z-absciss relative to the sun in the galactocentric frame in kpc
+    vx+=[data[19*i+13]] #Velocity on the x-absciss of the pulsar today, in km/s
+    vy+=[data[19*i+14]] #Velocity on the y-absciss of the pulsar today, in km/s
+    vz+=[data[19*i+15]] #Velocity on the z-absciss of the pulsar today, in km/s
+    vx0+=[data[19*i+16]] #Velocity on the x-absciss of the pulsar initially, in km/s
+    vy0+=[data[19*i+17]] #Velocity on the y-absciss of the pulsar initially, in km/s
+    vz0+=[data[19*i+18]] #Velocity on the z-absciss of the pulsar initially, in km/s
 
 #Edot computation 
 Edot=[]
@@ -165,13 +173,13 @@ for i in range(len(Edot)):
         count_radgam+=1
  
 print(f"Number of radio pulsars with Edot > 1e31 W : {count_rad_E_bigbig}\nNumber of gamma pulsars with Edot > 1e31 W : {count_gam_E_bigbig}\n")
-print(f"Number of radio-gamma pulsars with Edot > 1e31 W : {count_radgam_E_bigbig}\n")
-print(f"Number of radio pulsars with Edot > 1e28 W : {count_rad_E_big}\n")
-print(f"Number of gamma pulsars with Edot > 1e28 W : {count_gam_E_big}\n")
-print(f"Number of radio-gamma pulsars with Edot > 1e28 W : {count_radgam_E_big}\n")
-print(f"Number of radio pulsars : {count_rad}\n")
-print(f"Number of gamma pulsars : {count_gam}\n")
-print(f"Number of radio-gamma pulsars : {count_radgam}\n")
+print(f"Number of radio-gamma pulsars with Edot > 1e31 W : {count_radgam_E_bigbig}")
+print(f"Number of radio pulsars with Edot > 1e28 W : {count_rad_E_big}")
+print(f"Number of gamma pulsars with Edot > 1e28 W : {count_gam_E_big}")
+print(f"Number of radio-gamma pulsars with Edot > 1e28 W : {count_radgam_E_big}")
+print(f"Number of radio pulsars : {count_rad}")
+print(f"Number of gamma pulsars : {count_gam}")
+print(f"Number of radio-gamma pulsars : {count_radgam}")
 
 
 for i in range(0,len(age)):
@@ -192,6 +200,13 @@ P_death2=[10**(P_death[i]) for i in range(len(P_death))]
 for i in range(len(P_death)):
     P_dot_death+=[3*P_death[i]+np.log10((16*(np.pi**3)*(R_NS**6)*(1+((np.sin(45*np.pi/180)**2))))*(0.17e8**2)/(Inertia*mu_0*(c_light**3)))]
     P_dot_death2+=[10**(P_dot_death[i])]
+
+#B(P,Pdot) computation in order to compare with the decaying Bf
+B_ppdot,v_norm,err_rel_B=[],[],[]
+for i in range(len(P)):
+    B_ppdot+=[(Inertia*mu_0*(c**3)*P_dot[i]*P[i])/(16*(np.pi**3)*(R_NS**6)*(1+(np.sin(np.arccos(cos_alpha[i]))**2)))]
+    v_norm+=[(vx[i]**2+vy[i]**2+vz[i]**2)**0.5]
+    err_rel_B+=[(np.abs(B_ppdot[i]-Bf[i]))/np.abs(B_ppdot[i])]
 
 
 #Prep plot period old pulsars
@@ -386,6 +401,24 @@ plt.xlabel('Log(P) (P in s)')
 plt.ylabel('Frequency')
 #plt.title('Histogram of the rotation period of the detected pulsars with ages betwen 1e7.7 years and 1e8.7')
 plt.savefig('histo_period_old.png')
+
+#Relative error between B(P,Pdot) and Bf the decaying magnetic field
+plt.figure(13)
+plt.hist(err_rel_B,bins=150,range(0,1),edgecolor='black',color='red',alpha=0.5,label='Simulation')
+plt.legend()
+plt.xlabel('Relative error between the magnetic field computed with decay or with P and Pdot')
+plt.ylabel('Frequency')
+#plt.title('Histogram of the error on the magnetic field for the detected pulsars')
+plt.savefig('histo_err_B.png')
+
+#Velocities
+plt.figure(14)
+plt.hist(v_norm,bins=150,range(-1000,1000),edgecolor='black',color='red',alpha=0.5,label='Simulation')
+plt.legend()
+plt.xlabel('Velocities of the pulsars in km/s')
+plt.ylabel('Frequency')
+#plt.title("Histogram of the velocities of the detected pulsars in the simulation")
+plt.savefig('histo_velocities.png')
 
 #Death line alone
 #plt.figure(13)
