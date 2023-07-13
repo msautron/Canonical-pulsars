@@ -172,7 +172,7 @@ for i in range(len(Edot)):
     if type_pulsar[i]==3:
         count_radgam+=1
  
-print(f"Number of radio pulsars with Edot > 1e31 W : {count_rad_E_bigbig}\nNumber of gamma pulsars with Edot > 1e31 W : {count_gam_E_bigbig}\n")
+print(f"Number of radio pulsars with Edot > 1e31 W : {count_rad_E_bigbig}\nNumber of gamma pulsars with Edot > 1e31 W : {count_gam_E_bigbig}")
 print(f"Number of radio-gamma pulsars with Edot > 1e31 W : {count_radgam_E_bigbig}")
 print(f"Number of radio pulsars with Edot > 1e28 W : {count_rad_E_big}")
 print(f"Number of gamma pulsars with Edot > 1e28 W : {count_gam_E_big}")
@@ -204,10 +204,9 @@ for i in range(len(P_death)):
 #B(P,Pdot) computation in order to compare with the decaying Bf
 B_ppdot,v_norm,err_rel_B=[],[],[]
 for i in range(len(P)):
-    B_ppdot+=[(Inertia*mu_0*(c**3)*P_dot[i]*P[i])/(16*(np.pi**3)*(R_NS**6)*(1+(np.sin(np.arccos(cos_alpha[i]))**2)))]
+    B_ppdot+=[((Inertia*mu_0*(c_light**3)*P_dot[i]*P[i])/(16*(np.pi**3)*(R_NS**6)*(1+(np.sin(np.arccos(cos_alpha[i]))**2))))**0.5]
     v_norm+=[(vx[i]**2+vy[i]**2+vz[i]**2)**0.5]
     err_rel_B+=[(np.abs(B_ppdot[i]-Bf[i]))/np.abs(B_ppdot[i])]
-
 
 #Prep plot period old pulsars
 P_old=[]
@@ -404,7 +403,7 @@ plt.savefig('histo_period_old.png')
 
 #Relative error between B(P,Pdot) and Bf the decaying magnetic field
 plt.figure(13)
-plt.hist(err_rel_B,bins=150,range(0,1),edgecolor='black',color='red',alpha=0.5,label='Simulation')
+plt.hist(err_rel_B,bins=500,range=(0.15,0.21),edgecolor='black',color='red',alpha=0.5,label='Simulation')
 plt.legend()
 plt.xlabel('Relative error between the magnetic field computed with decay or with P and Pdot')
 plt.ylabel('Frequency')
@@ -413,12 +412,21 @@ plt.savefig('histo_err_B.png')
 
 #Velocities
 plt.figure(14)
-plt.hist(v_norm,bins=150,range(-1000,1000),edgecolor='black',color='red',alpha=0.5,label='Simulation')
+plt.hist(v_norm,bins=150,range=(0,1000),edgecolor='black',color='red',alpha=0.5,label='Simulation')
 plt.legend()
 plt.xlabel('Velocities of the pulsars in km/s')
 plt.ylabel('Frequency')
 #plt.title("Histogram of the velocities of the detected pulsars in the simulation")
 plt.savefig('histo_velocities.png')
+
+#Comparison between Bfield computed with the decay and with P and Pdot
+plt.figure(15)
+plt.hist(Bf,bins=150,range=(1e6,1.5e8),edgecolor='black',color='red',alpha=0.5,label='Decaying magnetic field')
+plt.hist(B_ppdot,bins=150,range=(1e6,1.5e8),edgecolor='black',color='blue',alpha=0.5,label='Magnetic field computed with P and Pdot')
+plt.legend()
+plt.xlabel('Magnetic field (B in Tesla)')
+plt.ylabel('Frequency')
+plt.savefig('histo_Bfield.png')
 
 #Death line alone
 #plt.figure(13)
