@@ -387,7 +387,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 					    Smin_gamma=4e-15; // in W.m^-2 
 					} else Smin_gamma=16e-15;
 				//Smin_gamma=5e-12;
-                			if(part->Fg[np]>Smin_gamma) {Ng=1;part->detec[np]=1;part->detec_gam[np]=1; }  
+                			if(part->Fg[np]>Smin_gamma && is_dead(part,np)==1) {Ng=1;part->detec[np]=1;part->detec_gam[np]=1; }  
                 			// Ng=1;  
                 			//if(part->Fg[np]>16e-12) Ng=1;  // mJy
 				}  else continue; 
@@ -738,8 +738,12 @@ int is_dead(void *params,long np){ // Death line from Faucher Giguère & Kaspi (
 
 	struct func_params *part= (struct func_params*)params;
 	double ratio=part->B[np]/sq(part->period[np]);
-	if (ratio < 0.17e8) {return 0;}
-	else if (ratio > 0.17e8) {return 1;}
+	//double ratio2=part->Pdot[np]/(part->period[np]*sq(part->period[np]));
+	double cmp_value=3*log10(part->period[np])+log10(16*sq(M_PI)*M_PI*sq(R_NS)*sq(R_NS)*sq(R_NS)*(1.0+sq(sin(45*M_PI/180)))*sq(0.17e8)/(SI_I*SI_mu0*sq(SI_C)*SI_C));
+	if (log10(part->Pdot[np]) > cmp_value) {return 1;}
+	else if (log10(part->Pdot[np]) < cmp_value) {return 0;}
+	//if (ratio < 0.17e8) {return 0;}
+	//else if (ratio > 0.17e8) {return 1;}
 }
 
 /*int is_dead2(void *params,long np){ // Death line from Beskin & Istomin 2022 -> too restrictive 

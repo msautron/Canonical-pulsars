@@ -193,7 +193,7 @@ for i in range(len(P)):
 #Prep death line
 R_NS=12000
 mu_0=1.25663706212e-6 
-c_light=3e8
+c_light=2.997924858e8
 P_dot_death,P_dot_death2=[],[]
 P_death=[np.log10(i) for i in np.arange(1e-2,1e1,0.001)]
 P_death2=[10**(P_death[i]) for i in range(len(P_death))]
@@ -247,8 +247,8 @@ eta=0.15
 alpha_l=45*np.pi/180
 b=40
 const=(3.16e-4*T_6*1e-15)/((eta)**2*b*(np.cos(alpha_l))**2)
-P_line=[i for i in np.arange(1e-2,1e1,0.001)]
-Pdot_line=[const*(i**2) for i in np.arange(1e-2,1e1,0.001)]
+P_line=[10**(np.log10(i)) for i in np.arange(1e-2,1e1,0.001)]
+Pdot_line=[10**np.log10(const*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
 
 #Make the plots
 #test
@@ -403,7 +403,7 @@ plt.savefig('histo_period_old.png')
 
 #Relative error between B(P,Pdot) and Bf the decaying magnetic field
 plt.figure(13)
-plt.hist(err_rel_B,bins=500,range=(0.15,0.21),edgecolor='black',color='red',alpha=0.5,label='Simulation')
+plt.hist(err_rel_B,bins=500,range=(0,0.01),edgecolor='black',color='red',alpha=0.5,label='Simulation')
 plt.legend()
 plt.xlabel('Relative error between the magnetic field computed with decay or with P and Pdot')
 plt.ylabel('Frequency')

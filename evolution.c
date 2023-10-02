@@ -89,7 +89,8 @@ int evolution(void *params){
         double four_pi2 = 4*M_PI*M_PI;   
         double two_pi = 2*M_PI;   
         double height_pi2 =  8*M_PI*M_PI;   
-        double k1 = 5.277e-33 ; // en 1/s (8*M_PI*pow(part->R,6))/(3*SI_mu0*cube(SI_C)*SI_I);
+        //double k1 = 5.277e-33 ; // en 1/s (8*M_PI*pow(part->R,6))/(3*SI_mu0*cube(SI_C)*SI_I);
+	double k1 = 7.388120797268824e-33; // en 1/s (8*M_PI*pow(part->R,6))/(3*SI_mu0*cube(SI_C)*SI_I);
         double tau_0;
         double sina; 
         double alpha;
@@ -110,7 +111,7 @@ int evolution(void *params){
 
 		part->np = np; 
 	        tau_0             =    1.0/k1 * sq(1.0/part->Binit[np])*sq(0.5*part->Pinit[np]/M_PI); //s-1
-		part->cos_a0[np]  =    gsl_rng_uniform(part->r); // uniform between 0 and 1
+		part->cos_a0[np]  =    2*gsl_rng_uniform(part->r)-1; // uniform between 0 and 1
 		double cosa0      =    part->cos_a0[np] ;
 		double cos2a0     =    cosa0*cosa0 ;
 		omega_0           =    two_pi/(part->Pinit[np]);
