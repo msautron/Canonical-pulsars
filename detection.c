@@ -292,6 +292,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 
     	struct func_params *part= (struct func_params*)params;
     	long np=0;
+	//double B;double P;
 	long count_radio_tot=0;
 	long count_radio=0;
 	long count_gamma=0;
@@ -309,6 +310,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 	double xi,rho,alpha;
 	double Smin_gamma, Smin_radio;
         double glat;
+	//double ratio;
 	long Ntot;
 	long Nbeam=0;
         int detec;
@@ -316,9 +318,11 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 	long S_Nmin=10 ; // signal to noise ratio
 	//FILE *fp=NULL;
 	FILE *file_data=NULL;
+	//FILE *check_val;
 	//char *fname;
         //fname = malloc(150);
 	file_data=fopen("P_Pdot_positions.txt","w+");
+	//check_val=fopen("check_val.txt","w+");
 	//sprintf(fname,"ppdot_N_%.ld_B_%.1e_sigB_%.1f_P_%.2f_sigP_%.3f_alphad_%.1f_k_%.ld_brate_%.ld_vold_%.ld_SN_%.ld.dat",part->Npulsars,part->b_mean,part->sigma_b,part->p_mean,part->sigma_p,part->alpha_d,part->k_tau0_B0,part->birth_rate,part->v_old,S_Nmin);
 	//sprintf(fname,"ppdot_ska");
 	//sprintf(fname,"ppdot_N_%.ld_B_%.e_sigB_%.1f_P_%.2f_sigP_%.3f_alphad_%.1f_k_%.ld_brate_%.ld_vold_%.ld_SN_%.ld.dat",part->Npulsars,part->b_mean,part->sigma_b,part->p_mean,part->sigma_p,part->alpha_d,part->k_tau0_B0,part->birth_rate,part->v_old,S_Nmin);
@@ -335,6 +339,9 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
            	for (np=0;np<part->Npulsars;np++){ 
 	               // np=part->np;
 			xi=part->xi[np];
+			//B=part->B[np];
+			//P=part->period[np];
+			//ratio=B/sq(P);
 			rho=part->rho[np];
 			alpha=part->alpha[np];
 			glat = (180*asin(part->z[np]/part->dist[np]))/M_PI;
@@ -362,20 +369,22 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			/* radio detection */
 				if(fabs(alpha-xi)<= rho && alpha >= rho && xi < M_PI/2){ 
 					Nbeam++;
-                			if (detec==1 && is_dead(part,np)==1){
+                			if (detec==1 && is_dead4(part,np)==1){
 						Nr=1;  // mJy
 						part->detec[np]=1;
                                                 part->detec_rad[np]=1;
 						count_radio_tot++;
+						//fprintf(check_val,"%e|%e|%e\n",ratio,B,P);
 			//		printf("Smin %e Fr %e \n",Smin_radio,part->Fr[np]);
 					}
 				} else if (fabs(xi-(M_PI-alpha))<=rho && alpha >= rho && xi > M_PI/2){ 
 					Nbeam++;
-                			if (detec==1 && is_dead(part,np)==1){
+                			if (detec==1 && is_dead4(part,np)==1){
 						count_radio_tot++;
 						part->detec[np]=1;
                                                 part->detec_rad[np]=1;
 						Nr=1;  
+						//fprintf(check_val,"%e|%e|%e\n",ratio,B,P);
 			//		printf("Smin %e Fr %e \n",Smin_radio,part->Fr[np]);
 						}
 					}
@@ -387,7 +396,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 					    Smin_gamma=4e-15; // in W.m^-2 
 					} else Smin_gamma=16e-15;
 				//Smin_gamma=5e-12;
-                			if(part->Fg[np]>Smin_gamma && is_dead(part,np)==1) {Ng=1;part->detec[np]=1;part->detec_gam[np]=1; }  
+                			if(part->Fg[np]>Smin_gamma) {Ng=1;part->detec[np]=1;part->detec_gam[np]=1; }  
                 			// Ng=1;  
                 			//if(part->Fg[np]>16e-12) Ng=1;  // mJy
 				}  else continue; 
@@ -634,6 +643,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 
        			fclose(fp);*/
 			fclose(file_data);
+			//fclose(check_val);
 
 return(0);
 }
@@ -734,14 +744,23 @@ return(0);
 
 }*/
 
-int is_dead(void *params,long np){ // Death line from Faucher Giguère & Kaspi (2006) 
+double calc_Pdotline(void *params,long np){
 
-	struct func_params *part= (struct func_params*)params;
-	double ratio=part->B[np]/sq(part->period[np]);
+        struct func_params *part= (struct func_params*)params;
+        double log_pdot_line;
+        log_pdot_line=3*log10(part->period[np])+log10((16*(pow(M_PI,3))*pow(R_NS,6)*1.5)/(SI_I*SI_mu0*pow(SI_C,3)))+2*(log10(0.17)+8.0);
+        return log_pdot_line;
+}
+
+double is_dead(double B,double P){ // Death line from Faucher Giguère & Kaspi (2006) 
+
+	//struct func_params *part= (struct func_params*)params;
+	double ratio=B/sq(P);
+	return ratio;
 	//double ratio2=part->Pdot[np]/(part->period[np]*sq(part->period[np]));
-	double cmp_value=3*log10(part->period[np])+log10(16*sq(M_PI)*M_PI*sq(R_NS)*sq(R_NS)*sq(R_NS)*(1.0+sq(sin(45*M_PI/180)))*sq(0.17e8)/(SI_I*SI_mu0*sq(SI_C)*SI_C));
-	if (log10(part->Pdot[np]) > cmp_value) {return 1;}
-	else if (log10(part->Pdot[np]) < cmp_value) {return 0;}
+	//double cmp_value=3*log10(part->period[np])+log10(16*sq(M_PI)*M_PI*sq(R_NS)*sq(R_NS)*sq(R_NS)*(1.0+sq(sin(45*M_PI/180)))*sq(0.17e8)/(SI_I*SI_mu0*sq(SI_C)*SI_C));
+	//if (log10(part->Pdot[np]) >= cmp_value) {return 1;}
+	//else if (log10(part->Pdot[np]) < cmp_value) {return 0;}
 	//if (ratio < 0.17e8) {return 0;}
 	//else if (ratio > 0.17e8) {return 1;}
 }
@@ -764,11 +783,11 @@ int is_dead(void *params,long np){ // Death line from Faucher Giguère & Kaspi (
         else if (part->Edot[np] > 1e24) {return 1;}
 }*/
 
-int is_dead4(void *params,long np){ // Death line from Mitra et al. (2019) -> Kill almost nothing 
+int is_dead4(void *params,long np){ // Death line from Mitra et al. (2019) 
 
         struct func_params *part= (struct func_params*)params;
 	double eta=0.15;double alpha_l=45*(M_PI/180);double T6=2;double b=40;
-	double P_dot_lim=(3.16e-4*T6*sq(part->period[np])*1e-15)/(sq(eta)*b*sq(cos(alpha_l)));
+	double P_dot_lim=(3.16e-4*pow(T6,4)*sq(part->period[np])*1e-15)/(sq(eta)*b*sq(cos(alpha_l)));
 	if (part->Pdot[np]>=P_dot_lim) return 1;
 	else return 0;
 }

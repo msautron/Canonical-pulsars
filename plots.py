@@ -152,36 +152,6 @@ count_rad,count_gam,count_radgam,count_radgam_E_big,count_gam_E_big,count_rad_E_
 for i in range(len(P)):
     Edot+=[4*np.pi**2*Inertia*P_dot[i]*(P[i]**(-3))]
 
-for i in range(len(Edot)):
-    if Edot[i] > 1e31 and type_pulsar[i]==1:
-        count_rad_E_bigbig+=1
-    if Edot[i] > 1e31 and type_pulsar[i]==2:
-        count_gam_E_bigbig+=1
-    if Edot[i] > 1e31 and type_pulsar[i]==3:
-        count_radgam_E_bigbig+=1
-    if Edot[i] > 1e28 and type_pulsar[i]==1:
-        count_rad_E_big+=1
-    if Edot[i] > 1e28 and type_pulsar[i]==2:
-        count_gam_E_big+=1
-    if Edot[i] > 1e28 and type_pulsar[i]==3:
-        count_radgam_E_big+=1
-    if type_pulsar[i]==1:
-        count_rad+=1
-    if type_pulsar[i]==2:
-        count_gam+=1
-    if type_pulsar[i]==3:
-        count_radgam+=1
- 
-print(f"Number of radio pulsars with Edot > 1e31 W : {count_rad_E_bigbig}\nNumber of gamma pulsars with Edot > 1e31 W : {count_gam_E_bigbig}")
-print(f"Number of radio-gamma pulsars with Edot > 1e31 W : {count_radgam_E_bigbig}")
-print(f"Number of radio pulsars with Edot > 1e28 W : {count_rad_E_big}")
-print(f"Number of gamma pulsars with Edot > 1e28 W : {count_gam_E_big}")
-print(f"Number of radio-gamma pulsars with Edot > 1e28 W : {count_radgam_E_big}")
-print(f"Number of radio pulsars : {count_rad}")
-print(f"Number of gamma pulsars : {count_gam}")
-print(f"Number of radio-gamma pulsars : {count_radgam}")
-
-
 for i in range(0,len(age)):
     logage=(np.log(age[i]/(365*24*60*60)))/(np.log(10))
     log_age+=[logage]
@@ -195,10 +165,10 @@ R_NS=12000
 mu_0=1.25663706212e-6 
 c_light=2.997924858e8
 P_dot_death,P_dot_death2=[],[]
-P_death=[np.log10(i) for i in np.arange(1e-2,1e1,0.001)]
+P_death=[np.log10(i) for i in np.arange(1e-2,1e1,0.0001)]
 P_death2=[10**(P_death[i]) for i in range(len(P_death))]
 for i in range(len(P_death)):
-    P_dot_death+=[3*P_death[i]+np.log10((16*(np.pi**3)*(R_NS**6)*(1+((np.sin(45*np.pi/180)**2))))*(0.17e8**2)/(Inertia*mu_0*(c_light**3)))]
+    P_dot_death+=[3*P_death[i]+np.log10(((16*(np.pi**3)*(R_NS**6)*(1+((np.sin(45*np.pi/180)**2))))*(17000000**2))/(Inertia*mu_0*(c_light**3)))]
     P_dot_death2+=[10**(P_dot_death[i])]
 
 #B(P,Pdot) computation in order to compare with the decaying Bf
@@ -246,9 +216,88 @@ T_6=2
 eta=0.15
 alpha_l=45*np.pi/180
 b=40
-const=(3.16e-4*T_6*1e-15)/((eta)**2*b*(np.cos(alpha_l))**2)
+const=(3.16e-4*(T_6**4)*1e-15)/((eta)**2*b*(np.cos(alpha_l))**2)
 P_line=[10**(np.log10(i)) for i in np.arange(1e-2,1e1,0.001)]
 Pdot_line=[10**np.log10(const*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
+
+#Check if the pulsars are really acceptable with the ratio B/P^2 - 0.17e8 or with the Pdot of the death of Mitra et al. (2019)
+Diff=[]
+count_abno=0
+for i in range(len(P)):
+    #Diff+=[(Bf[i]/((P[i])**2))]
+    #Diff+=[np.log10(Bf[i]) - 2*np.log10(P[i]) - np.log10(0.17) -8.0]
+    Diff+=[(3.16e-4*(T_6**4)*1e-15*(P[i]**2))/((eta)**2*b*(np.cos(alpha_l))**2)-P_dot[i]]
+    if Diff[i]>0:
+        count_abno+=1
+        #print(i)
+        #print(Diff[i])
+        #print(P[i])
+print(f"The number of pulsars which should be dead is : {count_abno}\nlength list :{len(Diff)}\n")
+print(Diff[0])
+print(Bf[0])
+print(P[0])
+
+#Remove all the points below the death line 
+P_dot_line=[]
+nb_rm=0
+for i in range(len(P)):
+    #P_dot_line+=[3*np.log10(P[i])+np.log10(((16*(np.pi**3)*(R_NS**6)*(1+((np.sin(45*np.pi/180)**2))))*(17000000**2))/(Inertia*mu_0*(c_light**3)))]
+    P_dot_line+=[(3.16e-4*(T_6**4)*1e-15*(P[i]**2))/((eta)**2*b*(np.cos(alpha_l))**2)]
+
+for j in range(len(P_dot_line)):
+    if P_dot_line[j]>P_dot[j-nb_rm]:
+        del P[j-nb_rm]
+        del P_dot[j-nb_rm]
+        del x[j-nb_rm] #Position on the x-absciss relative to the sun in the galactocentric frame in kpc
+        del y[j-nb_rm] #Position on the y-absciss relative to the sun in the galactocentric frame in kpc
+        del age[j-nb_rm] #Age of the pulsar in seconds
+        del error[j-nb_rm] #error on the positions of the pulsars (error computed with the energy)
+        del distance[j-nb_rm] #Distance to the galactic center in kpc
+        del longitude[j-nb_rm] #galactic latitude in degrees
+        del latitude[j-nb_rm] #galactic longitude in degrees
+        del cos_alpha0[j-nb_rm] #cosinus of the initial inclination angle
+        del cos_alpha[j-nb_rm] #cosinus of the inclination angle after all the evolution
+        del Bf[j-nb_rm] #Magnetic field of the pulsar today, in tesla
+        del z[j-nb_rm] #Position on the z-absciss relative to the sun in the galactocentric frame in kpc
+        del vx[j-nb_rm] #Velocity on the x-absciss of the pulsar today, in km/s
+        del vy[j-nb_rm] #Velocity on the y-absciss of the pulsar today, in km/s
+        del vz[j-nb_rm] #Velocity on the z-absciss of the pulsar today, in km/s
+        del vx0[j-nb_rm] #Velocity on the x-absciss of the pulsar initially, in km/s
+        del vy0[j-nb_rm] #Velocity on the y-absciss of the pulsar initially, in km/s
+        del vz0[j-nb_rm]
+        del Edot[j-nb_rm]
+        del type_pulsar[j-nb_rm]
+        nb_rm+=1
+
+#Display of the statistics on all pulsar
+for i in range(len(Edot)):
+    if Edot[i] > 1e31 and type_pulsar[i]==1:
+        count_rad_E_bigbig+=1
+    if Edot[i] > 1e31 and type_pulsar[i]==2:
+        count_gam_E_bigbig+=1
+    if Edot[i] > 1e31 and type_pulsar[i]==3:
+        count_radgam_E_bigbig+=1
+    if Edot[i] > 1e28 and type_pulsar[i]==1:
+        count_rad_E_big+=1
+    if Edot[i] > 1e28 and type_pulsar[i]==2:
+        count_gam_E_big+=1
+    if Edot[i] > 1e28 and type_pulsar[i]==3:
+        count_radgam_E_big+=1
+    if type_pulsar[i]==1:
+        count_rad+=1
+    if type_pulsar[i]==2:
+        count_gam+=1
+    if type_pulsar[i]==3:
+        count_radgam+=1
+
+print(f"Number of radio pulsars with Edot > 1e31 W : {count_rad_E_bigbig}\nNumber of gamma pulsars with Edot > 1e31 W : {count_gam_E_bigbig}")
+print(f"Number of radio-gamma pulsars with Edot > 1e31 W : {count_radgam_E_bigbig}")
+print(f"Number of radio pulsars with Edot > 1e28 W : {count_rad_E_big}")
+print(f"Number of gamma pulsars with Edot > 1e28 W : {count_gam_E_big}")
+print(f"Number of radio-gamma pulsars with Edot > 1e28 W : {count_radgam_E_big}")
+print(f"Number of radio pulsars : {count_rad}")
+print(f"Number of gamma pulsars : {count_gam}")
+print(f"Number of radio-gamma pulsars : {count_radgam}")
 
 #Make the plots
 #test
@@ -269,10 +318,10 @@ Pdot_line=[10**np.log10(const*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
 plt.figure(1)
 plt.scatter(P,P_dot,c='red',marker='o',s=5,label='Simulation data')
 plt.scatter(P2,P_dot2,c='blue',marker='o',s=5,label='ATNF data')
-#plt.plot(P_line,Pdot_line)
+plt.plot(P_line,Pdot_line)
 #plt.plot(L1,L2)
 #plt.plot(L1,L3)
-plt.plot(P_death2,P_dot_death2,c='green',label='Death line')
+#plt.plot(P_death2,P_dot_death2,c='green',label='Death line')
 plt.xlim(1e-2,1e1)
 plt.ylim(1e-20,1e-10)
 plt.yscale('log')
