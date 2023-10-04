@@ -292,7 +292,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 
     	struct func_params *part= (struct func_params*)params;
     	long np=0;
-	//double B;double P;
+	double B;double P;
 	long count_radio_tot=0;
 	long count_radio=0;
 	long count_gamma=0;
@@ -318,32 +318,25 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 	long S_Nmin=10 ; // signal to noise ratio
 	//FILE *fp=NULL;
 	FILE *file_data=NULL;
-	//FILE *check_val;
+	FILE *check_val;
+	//FILE *check_val2;
+	double eta=0.15;double alpha_l=45*(M_PI/180);double T6=2;double b=40;
+	double P_dot_line;
 	//char *fname;
         //fname = malloc(150);
 	file_data=fopen("P_Pdot_positions.txt","w+");
-	//check_val=fopen("check_val.txt","w+");
-	//sprintf(fname,"ppdot_N_%.ld_B_%.1e_sigB_%.1f_P_%.2f_sigP_%.3f_alphad_%.1f_k_%.ld_brate_%.ld_vold_%.ld_SN_%.ld.dat",part->Npulsars,part->b_mean,part->sigma_b,part->p_mean,part->sigma_p,part->alpha_d,part->k_tau0_B0,part->birth_rate,part->v_old,S_Nmin);
-	//sprintf(fname,"ppdot_ska");
-	//sprintf(fname,"ppdot_N_%.ld_B_%.e_sigB_%.1f_P_%.2f_sigP_%.3f_alphad_%.1f_k_%.ld_brate_%.ld_vold_%.ld_SN_%.ld.dat",part->Npulsars,part->b_mean,part->sigma_b,part->p_mean,part->sigma_p,part->alpha_d,part->k_tau0_B0,part->birth_rate,part->v_old,S_Nmin);
-//	sprintf(fname,"ppdot_N_%.ld_B_%.e_sigB_%.1f_P_%.2f_sigP_%.3f_alphad_%.1f_k_%.ld_brate_%.ld_vold_%.ld_SN_%.ld.dat",part->Npulsars,part->b_mean,part->sigma_b,part->p_mean,part->sigma_p,part->alpha_d,part->k_tau0_B0,part->birth_rate,part->v_old,S_Nmin);
-	//sprintf(fname,"ppdot");
-	  //sprintf(fname,"ppdot_B_%.1e_sigB_%.2f_P_%.3f_sigP_%.3f.dat",part->b_mean,part->sigma_b,part->p_mean,part->sigma_p,part->);
-	//sprintf(fname,"ppdot1e8");
-	//if ( ( fp = fopen(fname,"w+")) == (FILE *)NULL){
-		//fprintf(stderr,"Couldn't open file %s \n",fname);
-	//exit(-1);
-	//	}
-
+	check_val=fopen("check_val.txt","w+");
+	//check_val2=fopen("check_val2.txt","w+");
 			
            	for (np=0;np<part->Npulsars;np++){ 
 	               // np=part->np;
 			xi=part->xi[np];
-			//B=part->B[np];
-			//P=part->period[np];
+			B=part->B[np];
+			P=part->period[np];
 			//ratio=B/sq(P);
 			rho=part->rho[np];
 			alpha=part->alpha[np];
+			P_dot_line=(3.16e-4*pow(T6,4)*sq(part->period[np])*1e-15)/(sq(eta)*b*sq(cos(alpha_l)));
 			glat = (180*asin(part->z[np]/part->dist[np]))/M_PI;
 			//glat = 180*asin(part->z[np]/part->dist[np]/M_PI);
 			//wtilde=part->w_r[np]*part->period[np]/(2*M_PI); // converting the width from radians to s 
@@ -354,12 +347,9 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			//S_N = part->Fr[np]/Smin_radio;
 			if (part->NenuFAR==1 ) S_N = part->flux_low_freq[np]/Smin_radio; // nenuphar
 			else S_N = part->Fr[np]/part->Smin[np];
-			
-			//ratio=(cos(part->rho[np])-cos(part->alpha[np])*cos(part->xi[np]))/(sin(part->alpha[np])*sin(part->xi[np]));
 
                         if (S_N > S_Nmin) detec = 1;
 				else detec  = 0;
-		        //detec = 1;
                  
 
 
@@ -369,23 +359,21 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			/* radio detection */
 				if(fabs(alpha-xi)<= rho && alpha >= rho && xi < M_PI/2){ 
 					Nbeam++;
-                			if (detec==1 && is_dead4(part,np)==1){
+                			if (detec==1){
 						Nr=1;  // mJy
 						part->detec[np]=1;
                                                 part->detec_rad[np]=1;
 						count_radio_tot++;
-						//fprintf(check_val,"%e|%e|%e\n",ratio,B,P);
-			//		printf("Smin %e Fr %e \n",Smin_radio,part->Fr[np]);
+						//fprintf(check_val2,"%e|%e|%e\n",B,P,P_dot_line);
 					}
 				} else if (fabs(xi-(M_PI-alpha))<=rho && alpha >= rho && xi > M_PI/2){ 
 					Nbeam++;
-                			if (detec==1 && is_dead4(part,np)==1){
+                			if (detec==1){
 						count_radio_tot++;
 						part->detec[np]=1;
                                                 part->detec_rad[np]=1;
 						Nr=1;  
-						//fprintf(check_val,"%e|%e|%e\n",ratio,B,P);
-			//		printf("Smin %e Fr %e \n",Smin_radio,part->Fr[np]);
+						//fprintf(check_val2,"%e|%e|%e\n",B,P,P_dot_line);
 						}
 					}
 				}
@@ -397,93 +385,53 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 					} else Smin_gamma=16e-15;
 				//Smin_gamma=5e-12;
                 			if(part->Fg[np]>Smin_gamma) {Ng=1;part->detec[np]=1;part->detec_gam[np]=1; }  
-                			// Ng=1;  
-                			//if(part->Fg[np]>16e-12) Ng=1;  // mJy
 				}  else continue; 
 
 
 				if(Ng==1 && Nr==1){  //both radio and gamma are detected
-
-				//	printf("%e %e \n",log10(part->period[np]),log10(part->w_r[np]*180/M_PI));
-				//	printf("logP %e logwr %e \n",log10(part->period[np]),log10(part->w_r[np]));
-				//	printf("%e \n",180*asin(part->z[np]/part->dist[np]/M_PI)); // galactic latitude
-					count_radio_gamma++;part->detec_rg[np]=1;part->detec[np]=1;part->detec_rad[np]=0;part->detec_gam[np]=0;	
-			
-			        		/*if(part->Edot[np]>1e25) { //32
-							Nsup_radio_gamma+=1;
-						}
-			        		if(part->Edot[np]>1e26) { //33
-							Nsup2_radio_gamma+=1;
-						}*/
-			        		if(part->Edot[np]>1e28) { //28
-							Nsup_radio_gamma+=1;
-						}
-			        		if(part->Edot[np]>1e31) { //31
-							Nsup2_radio_gamma+=1;
-						}
-
-				//	printf("%e %e %e %e \n",part->period[np],part->Pdot[np],part->dist[np],part->age_pulsar[np]);
+				        if (P_dot_line>part->Pdot[np]) {Ng=0;Nr=0;part->detec_rg[np]=0;part->detec[np]=0;part->detec_rad[np]=0;part->detec_gam[np]=0;}
+					else{
+					   count_radio_gamma++;part->detec_rg[np]=1;part->detec[np]=1;part->detec_rad[np]=0;part->detec_gam[np]=0;	
+		
+			        	       	   if(part->Edot[np]>1e28) { //28
+							   Nsup_radio_gamma+=1;
+						   }
+			        		   if(part->Edot[np]>1e31) { //31
+							   Nsup2_radio_gamma+=1;
+						   }
+						   fprintf(check_val,"%e|%e|%e\n",B,P,P_dot_line);
 				} 
+				}
 				else if(Nr==1 && Ng==0){ //radio only
                        
-					count_radio++;part->detec[np]=1;part->detec_rad[np]=1;
+					if (P_dot_line>part->Pdot[np]) {part->detec[np]=0;part->detec_rad[np]=0;}
+					else{
+					   count_radio++;part->detec[np]=1;part->detec_rad[np]=1;
 
-			        		if(part->Edot[np]>1e28) { 
-							Nsup_radio+=1;
-						}
-			        		if(part->Edot[np]>1e31) { 
-							Nsup2_radio+=1;
-						}
-			        	/*	if(part->Edot[np]>1e25) { 
-							Nsup_radio+=1;
-						}
-			        		if(part->Edot[np]>1e26) { 	
-							Nsup2_radio+=1;
-						}*/
-            				//printf("%.9f \n",part->Fr[np]);
-            		//		printf("%.9f %.9f \n",part->Fr[np],part->dist[np]);
-				//	printf("%e %e \n",log10(part->period[np]),log10(part->w_r[np]));
-			//		printf("Smin %e Fr %e P %e Wtilde %e wr %e S_N %e \n",Smin_radio,part->Fr[np],part->period[np],wtilde,part->w_r[np],S_N);
-					//printf("Smin %e Fr %e P %e Wtilde %e \n",Smin_radio,part->Fr[np],part->period[np],wtilde);
-					//printf("GEO np %ld P %e wr %e ratio %e rho %e xi %e alpha %e \n",np,part->period[np],part->w_r[np],ratio,rho,xi,alpha);
-				//	printf("%e %e \n",log10(part->period[np]),log10(part->w_r[np]*180/M_PI));
-					//printf(" %e %e \n",log10(part->period[np]),log10(part->w_r[np]));
-			//		printf("np %ld P %e wr %e rho %e xi %e alpha %e ratio %e \n",np,part->period[np],part->w_r[np],rho,xi,alpha,ratio);
-				//	printf(" \n");
-				//	printf("%e \n",180*asin(part->z[np]/part->dist[np]/M_PI)); // galactic latitude
-					//printf("np %ld P %e wr %e rho %e xi %e alpha %e \n",np,part->period[np],part->w_r[np],rho,xi,alpha);
-            			//	printf("%.9f %.9f \n",part->cos_a0[np],cos(part->alpha[np]));
-				//	fprintf(fp,"%e  %e \n",part->w_r[np],part->period[np]);
-					//fprintf(fp,"%e %e %e %e %e \n",part->period[np],part->Pdot[np],part->dist[np],part->age_pulsar[np],glat);
-            			//	printf("%.9f \n",part->Fr[np]);
-					//printf("%e %e %e %e \n",part->period[np],part->Pdot[np],part->dist[np],part->age_pulsar[np]);
-				//	fprintf(fp,"%e %e \n",part->x[np],part->y[np]);
+			        		   if(part->Edot[np]>1e28) { 
+							   Nsup_radio+=1;
+						   }
+			        		   if(part->Edot[np]>1e31) { 
+							   Nsup2_radio+=1;
+						   }
+						   fprintf(check_val,"%e|%e|%e\n",B,P,P_dot_line);
+				}
 				}
 				else if(Ng==1 && Nr==0){ //gamma only
 				
-					count_gamma++;part->detec[np]=1;part->detec_gam[np]=1;
+					if (P_dot_line>part->Pdot[np]) {part->detec[np]=0;part->detec_gam[np]=0;}
+					else{
+					   count_gamma++;part->detec[np]=1;part->detec_gam[np]=1;
 
-			        		if(part->Edot[np]>1e28) { 
-							Nsup_gamma+=1;
-						}
-			        		if(part->Edot[np]>1e31) { 	
-							Nsup2_gamma+=1;
-						}/* 
-			        		if(part->Edot[np]>1e25) { 
-							Nsup_gamma+=1;
-						}
-			        		if(part->Edot[np]>1e26) { 	
-							Nsup2_gamma+=1;
-						}*/
-            			//	printf("%.9f %.9f \n",part->cos_a0[np],cos(part->alpha[np]));
-            		//		printf("%.9f %.9f \n",part->Fr[np],part->dist[np]);
-            				//printf("%.9f \n",part->Fr[np]);
-					//fprintf(fp,"%e  %e \n",part->w_r[np],part->period[np]);
-					//printf("np %ld P %e wr %e rho %e xi %e alpha %e \n",np,part->period[np],part->w_r[np],rho,xi,alpha);
-					//fprintf(fp,"%e %e \n",part->x[np],part->y[np]);
-					//fprintf(fp,"%e %e %e %e %e \n",part->period[np],part->Pdot[np],part->dist[np],part->age_pulsar[np],glat);
-					//printf("%e %e %e %e \n",part->period[np],part->Pdot[np],part->dist[np],part->age_pulsar[np]);
+			        		   if(part->Edot[np]>1e28) { 
+							   Nsup_gamma+=1;
+						   } 
+			        		   if(part->Edot[np]>1e31) { 	
+							   Nsup2_gamma+=1;
+						   }
+						   fprintf(check_val,"%e|%e|%e\n",B,P,P_dot_line);
 				} 
+				}
 
 				if(Ng==1 || Nr==1) {
 			        		if(part->Edot[np]>1e28) { 
@@ -491,14 +439,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 						}
 			        		if(part->Edot[np]>1e31) { 
 							Nsup2++;
-						}
-			        	/*	if(part->Edot[np]>1e25) { 
-							Nsup++;
-						}
-			        		if(part->Edot[np]>1e26) { 
-							Nsup2++;
-						}
-					*/	
+						}	
 				}
 			Nr=0;
 			Ng=0;
@@ -523,34 +464,6 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 
  
 			Ntot = count_radio+count_gamma+count_radio_gamma;
-			//printf("Smin: %e \n",part->Fmin);
-
-		/*	printf("# Number of pulsars with Edot > 1e35 erg.s-1: %ld \n",Nsup);
-			printf("# Number of radio-only pulsars with Edot > 1e35 erg.s-1: %ld \n",Nsup_radio);
-			printf("# Number of gamma-only pulsars with Edot > 1e35 erg.s-1: %ld \n",Nsup_gamma);
-			printf("# Number of radio+gamma pulsars with Edot > 1e35 erg.s-1: %ld \n",Nsup_radio_gamma);
-			printf(" \n");
-			printf("# Number of pulsars with Edot > 1e38 erg.s-1: %ld \n",Nsup2);
-			printf("# Number of radio-only pulsars with Edot > 1e38 erg.s-1: %ld \n",Nsup2_radio);
-			printf("# Number of gamma-only pulsars with Edot > 1e38 erg.s-1: %ld \n",Nsup2_gamma);
-			printf("# Number of radio+gamma pulsars with Edot > 1e38 erg.s-1: %ld \n",Nsup2_radio_gamma);
-			printf(" \n"); */
-			/*printf("# Number of pulsars with Edot > 1e32 erg.s-1: %e \n",Nsup);
-			printf("# Number of radio-only pulsars with Edot > 1e32 erg.s-1: %e \n",double(Nsup_radio)/Nsup);
-			printf("# Number of gamma-only pulsars with Edot > 1e32 erg.s-1: %e \n",double(Nsup_gamma)/Nsup);
-			printf("# Number of radio+gamma pulsars with Edot > 1e32 erg.s-1: %e \n",double(Nsup_radio_gamma)/Nsup);
-			printf(" \n");
-			printf("# Number of pulsars with Edot > 1e33 erg.s-1: %e \n",Nsup2);
-			printf("# Number of radio-only pulsars with Edot > 1e33 erg.s-1: %e \n",double(Nsup2_radio)/Nsup2);
-			printf("# Number of gamma-only pulsars with Edot > 1e33 erg.s-1: %e \n",double(Nsup2_gamma)/Nsup2);
-			printf("# Number of radio+gamma pulsars with Edot > 1e33 erg.s-1: %e \n",double(Nsup2_radio_gamma)/Nsup2);
-			printf(" \n"); 
-			printf("# Total number of detected pulsars  %e \n",Ntot);
-			printf("# Total number of radio-only pulsars detected %e \n",double(count_radio)/Ntot);
-			printf("# Total number of gamma-only pulsars detected %e \n",double(count_gamma)/Ntot);
-			printf("# Total number of radio+gamma pulsars detected %e \n",double(count_radio_gamma)/Ntot);
-			printf("# Number of radio pulsars beaming to us %ld \n",Nbeam);
-			printf(" \n");*/
 
 
 			printf("# Number of pulsars with Edot > 1e32 erg.s-1: %ld \n",Nsup);
@@ -569,81 +482,9 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			printf("# Total number of radio+gamma pulsars detected %ld \n",count_radio_gamma);
 			printf("# Number of radio pulsars beaming to us %ld \n",Nbeam);
 			printf(" \n");
-
-
-
- /*                       //double frac_radio_1e32 = double(Nsup_radio)/Nsup; 
-                        double frac_radio_1e32 = (double) Nsup_radio/Nsup; 
-			double frac_gamma_1e32 = (double) Nsup_gamma/Nsup;
-			double frac_radio_gamma_1e32=(double) Nsup_radio_gamma/Nsup;
-
-                        double frac_radio_1e33 = (double) Nsup2_radio/Nsup2; 
-			double frac_gamma_1e33 = (double) Nsup2_gamma/Nsup2;
-			double frac_radio_gamma_1e33=(double) Nsup2_radio_gamma/Nsup2;
-
-                        double frac_radio_tot = (double) count_radio/Ntot; 
-			double frac_gamma_tot = (double) count_gamma/Ntot;
-			double frac_radio_gamma_tot=(double) count_radio_gamma/Ntot;
-
-			printf("# Number of pulsars with Edot > 1e32 erg.s-1: %ld \n",Nsup);
-			printf("# Number of radio-only pulsars with Edot > 1e32 erg.s-1: %e \n",frac_radio_1e32);
-			printf("# Number of gamma-only pulsars with Edot > 1e32 erg.s-1: %e \n",frac_gamma_1e32);
-			printf("# Number of radio+gamma pulsars with Edot > 1e32 erg.s-1: %e \n",frac_radio_gamma_1e32);
-			printf(" \n");
-			printf("# Number of pulsars with Edot > 1e33 erg.s-1: %ld \n",Nsup2);
-			printf("# Number of radio-only pulsars with Edot > 1e33 erg.s-1: %e \n",frac_radio_1e33);
-			printf("# Number of gamma-only pulsars with Edot > 1e33 erg.s-1: %e \n",frac_gamma_1e33);
-			printf("# Number of radio+gamma pulsars with Edot > 1e33 erg.s-1: %e \n",frac_radio_gamma_1e33);
-			printf(" \n");
-			printf("# Total number of detected pulsars  %ld \n",Ntot);
-			printf("# Total number of radio-only pulsars detected %e \n",frac_radio_tot);
-			printf("# Total number of gamma-only pulsars detected %e \n",frac_gamma_tot);
-			printf("# Total number of radio+gamma pulsars detected %e \n",frac_radio_gamma_tot);
-			printf("# Number of radio pulsars beaming to us %ld \n",Nbeam);
-			printf(" \n");
-             */
-
-			/*fprintf(fp,"\n");
-			fprintf(fp,"## birth_rate (yr) %ld \n",part->birth_rate);
-			fprintf(fp,"## sigma_P (s) %e \n",part->sigma_p);
-			fprintf(fp,"## sigma_B (logB) %e \n",part->sigma_b);
-			fprintf(fp,"## Pmean (s) %e \n",part->p_mean);
-			fprintf(fp,"## Bmean (T) %e \n",part->b_mean);
-			fprintf(fp,"## tau0_B0  %ld \n",part->k_tau0_B0);
-			fprintf(fp,"## alpha_d  %e \n",part->alpha_d);
-			fprintf(fp,"## vold (km.s-1) %ld \n",part->v_old);
-			fprintf(fp,"## vyoung (km.s-1) %ld \n",part->v_young);
-			fprintf(fp,"## Bvar %ld \n",part->Bfield_var);
-			fprintf(fp,"\n");
-
-			fprintf(fp,"# Number of pulsars with Edot > 1e35 erg.s-1: %ld \n",Nsup);
-			fprintf(fp,"# Number of radio-only pulsars with Edot > 1e35 erg.s-1: %ld \n",Nsup_radio);
-			fprintf(fp,"# Number of gamma-only pulsars with Edot > 1e35 erg.s-1: %ld \n",Nsup_gamma);
-			fprintf(fp,"# Number of radio+gamma pulsars with Edot > 1e35 erg.s-1: %ld \n",Nsup_radio_gamma);
-			fprintf(fp," \n");
-			fprintf(fp,"# Number of pulsars with Edot > 1e38 erg.s-1: %ld \n",Nsup2);
-			fprintf(fp,"# Number of radio-only pulsars with Edot > 1e38 erg.s-1: %ld \n",Nsup2_radio);
-			fprintf(fp,"# Number of gamma-only pulsars with Edot > 1e38 erg.s-1: %ld \n",Nsup2_gamma);
-			fprintf(fp,"# Number of radio+gamma pulsars with Edot > 1e38 erg.s-1: %ld \n",Nsup2_radio_gamma);
-			fprintf(fp," \n");
-			fprintf(fp,"# Total number of detected pulsars  %ld \n",Ntot);
-			fprintf(fp,"# Total number of radio-only pulsars detected %ld \n",count_radio);
-			fprintf(fp,"# Total number of gamma-only pulsars detected %ld \n",count_gamma);
-			fprintf(fp,"# Total number of radio+gamma pulsars detected %ld \n",count_radio_gamma);
-			fprintf(fp," \n");
-	//		printf(" %e %ld %ld  \n",part->sigma_b,count_radio+count_gamma+count_radio_gamma,Nsup);
-
-		//	if((Ntot > 3200 || Ntot < 2132) || (Nsup > 237 || Nsup < 158) || Nsup2 == 0){ //20% of Ntot observed (2665) and Nsup observed (197)
-			if((Ntot < 3200 && Ntot > 2132) && (Nsup < 237 && Nsup > 158) && (Nsup2 < 6 && Nsup2 > 0)){ //20% of Ntot observed (2665) and Nsup observed (197)
-			
-				fprintf(fp,"## valid");
-				printf("valid");
-			
-			}
-
-       			fclose(fp);*/
 			fclose(file_data);
-			//fclose(check_val);
+			fclose(check_val);
+			//fclose(check_val2);
 
 return(0);
 }
