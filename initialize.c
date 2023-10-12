@@ -152,5 +152,7 @@ void initialize(int argc, char *argv[], void *params){
                 if (part->n_omega_y== NULL) printf("n_omega_y: allocation failed"); // check if allocation succeeded
        part->n_omega_x= malloc(sizeof(*part->n_omega_x) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
                 if (part->n_omega_x== NULL) printf("n_omega_x: allocation failed"); // check if allocation succeeded
+       part->PA= malloc(sizeof(*part->PA) * part->Npulsars); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->PA== NULL) printf("n_omega_x: allocation failed");
 
 }

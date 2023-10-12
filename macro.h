@@ -13,6 +13,7 @@ struct func_params{
 	double *n_omega_x;
 	double *n_omega_y;
 	double *n_omega_z;
+	double *PA;
         long birth_rate;
         double R; //Radius of the neutron star
         double *alpha;//angle between the magnetic field and the rotation axis
