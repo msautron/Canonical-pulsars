@@ -141,8 +141,9 @@ FILE *kick(void *params){
         		v  = sqrt(vx*vx + vy*vy + vz*vz); // is  v really useful??*/
 
 			//Computation of the velocity if we do not ignore the fact above
+			srand((unsigned)time(NULL));
 			cos_theta   =  2*gsl_rng_uniform(part->r)-1;
-                        phi         =  two_pi*gsl_rng_uniform(part->r);
+                        phi         = two_pi*gsl_rng_uniform(part->r);
                         part->n_omega_x[np]=sqrt(1-sq(cos_theta))*cos(phi);
 			part->n_omega_y[np]=sqrt(1-sq(cos_theta))*sin(phi);
                         part->n_omega_z[np]=cos_theta;
@@ -373,7 +374,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 
 			        					        
 			/* radio detection */
-				if(fabs(alpha-xi)<= rho && alpha >= rho && xi < M_PI/2){ 
+				if(fabs(alpha-xi)<= rho && alpha >= rho){ 
 					Nbeam++;
                 			if (detec==1){
 						Nr=1;  // mJy
@@ -382,7 +383,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 						count_radio_tot++;
 						//fprintf(check_val2,"%e|%e|%e\n",B,P,P_dot_line);
 					}
-				} else if (fabs(xi-(M_PI-alpha))<=rho && alpha >= rho && xi > M_PI/2){ 
+				} else if (fabs(xi-(M_PI-alpha))<=rho && alpha >= rho){ 
 					Nbeam++;
                 			if (detec==1){
 						count_radio_tot++;

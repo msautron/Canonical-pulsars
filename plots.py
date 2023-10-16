@@ -218,8 +218,12 @@ eta=0.15
 alpha_l=45*np.pi/180
 b=40
 const=(3.16e-4*(T_6**4)*1e-15)/((eta)**2*b*(np.cos(alpha_l))**2)
+#const2=(3.16e-4*(T_6**4)*1e-15)/((eta)**2*b*(np.cos(0))**2)
+#const3=(3.16e-4*(T_6**4)*1e-15)/((eta)**2*b*(np.cos(89.9*np.pi/180))**2)
 P_line=[10**(np.log10(i)) for i in np.arange(1e-2,1e1,0.001)]
 Pdot_line=[10**np.log10(const*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
+#Pdot_line2=[10**np.log10(const2*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
+#Pdot_line3=[10**np.log10(const3*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
 
 #Check if the pulsars are really acceptable with the ratio B/P^2 - 0.17e8 or with the Pdot of the death of Mitra et al. (2019)
 Diff=[]
@@ -320,6 +324,8 @@ plt.figure(1)
 plt.scatter(P,P_dot,c='red',marker='o',s=5,label='Simulation data')
 plt.scatter(P2,P_dot2,c='blue',marker='o',s=5,label='ATNF data')
 plt.plot(P_line,Pdot_line,c='green',label='Death line')
+#plt.plot(P_line,Pdot_line2,linestyle="dashed",c='black',label='Death line min')
+#plt.plot(P_line,Pdot_line3,linestyle="dashed",c='yellow',label='Death line max')
 #plt.plot(L1,L2)
 #plt.plot(L1,L3)
 #plt.plot(P_death2,P_dot_death2,c='green',label='Death line')
