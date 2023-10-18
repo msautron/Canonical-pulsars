@@ -338,6 +338,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 	FILE *check_val;
 	//FILE *check_val2;
 	double eta=0.15;double alpha_l=45*(M_PI/180);double T6=2;double b=40;
+	double alpha_l2;double T6_2;
 	double P_dot_line;
 	//char *fname;
         //fname = malloc(150);
@@ -354,6 +355,11 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			rho=part->rho[np];
 			alpha=part->alpha[np];
 			P_dot_line=(3.16e-4*pow(T6,4)*sq(part->period[np])*1e-15)/(sq(eta)*b*sq(cos(alpha_l)));
+			if (P_dot_line/part->Pdot[np] >= pow(10,-0.5) || P_dot_line/part->Pdot[np] <= pow(10,0.5)) {
+				alpha_l2=60*(M_PI/180)*gsl_rng_uniform(part->r);
+				T6_2=2*gsl_rng_uniform(part->r)+1;
+				P_dot_line=(3.16e-4*pow(T6_2,4)*sq(part->period[np])*1e-15)/(sq(eta)*b*sq(cos(alpha_l2)));
+			}
 			glat = (180*asin(part->z[np]/part->dist[np]))/M_PI;
 			//glat = 180*asin(part->z[np]/part->dist[np]/M_PI);
 			//wtilde=part->w_r[np]*part->period[np]/(2*M_PI); // converting the width from radians to s 

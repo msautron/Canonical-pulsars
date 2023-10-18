@@ -235,12 +235,12 @@ for i in range(len(P)):
     if Diff[i]>P_dot[i]:
         count_abno+=1
         #print(i)
-        print(Diff[i])
+        #print(Diff[i])
         #print(P[i])
 print(f"The number of pulsars which should be dead is : {count_abno}\nlength list :{len(Diff)}\n")
-print(Diff[0])
-print(Bf[0])
-print(P[0])
+#print(Diff[0])
+#print(Bf[0])
+#print(P[0])
 
 #Remove all the points below the death line 
 #P_dot_line=[]
@@ -486,7 +486,7 @@ plt.savefig('histo_Bfield.png')
 
 #Position angle histogram
 plt.figure(16)
-plt.hist(PA,bins=121,range=(0,359),edgecolor='black',color='red',alpha=0.5,label='Simulation')
+plt.hist(PA,bins=121,range=(0,180),edgecolor='black',color='red',alpha=0.5,label='Simulation')
 plt.legend()
 plt.xlabel('Position angle in degrees')
 plt.ylabel('Frequency')
