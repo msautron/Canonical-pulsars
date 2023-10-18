@@ -290,7 +290,7 @@ int geometry(void *params){ // calculated the geometry of the pulsar (i.e xi, an
 }
 
 
-void position_angle(void *params){
+void spinvel_angle(void *params){
 
 	struct func_params *part= (struct func_params*)params;
 	long np=0;

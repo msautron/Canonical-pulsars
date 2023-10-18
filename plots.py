@@ -484,14 +484,14 @@ plt.xlabel('Magnetic field (B in Tesla)')
 plt.ylabel('Frequency')
 plt.savefig('histo_Bfield.png')
 
-#Position angle histogram
+#Spin-velocity angles histogram
 plt.figure(16)
 plt.hist(PA,bins=121,range=(0,180),edgecolor='black',color='red',alpha=0.5,label='Simulation')
 plt.legend()
-plt.xlabel('Position angle in degrees')
+plt.xlabel('spin-velocity angle in degrees')
 plt.ylabel('Frequency')
 #plt.title('Histogram of the angle between the velocity vector and the rotation axis of the detected pulsars')
-plt.savefig('histo_positionangle.png')
+plt.savefig('histo_spinvelangle.png')
 
 #Death line alone
 #plt.figure(13)
