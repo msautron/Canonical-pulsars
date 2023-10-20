@@ -179,11 +179,19 @@ for i in range(len(P)):
     v_norm+=[(vx[i]**2+vy[i]**2+vz[i]**2)**0.5]
     err_rel_B+=[(np.abs(B_ppdot[i]-Bf[i]))/np.abs(B_ppdot[i])]
 
-#Prep plot period old pulsars
+#Prep plot period old pulsars and plot old pulsars spin-velocity angle
 P_old=[]
+PA_old,PA_young=[],[]
 for i in range(len(log_age)):
     if log_age[i]>7.7 and log_age[i]<8.7:
         P_old+=[log_P[i]]
+
+for i in range(len(PA)):
+    if log_age[i]>=7:
+        PA_old.append(PA[i])
+    elif log_age[i]<7:
+        PA_young.append(PA[i])
+
 
 #Lists depending on the pulsar emission type
 P_radio,P_dot_radio,x_radio,y_radio,age_radio,error_radio,distance_radio=[],[],[],[],[],[],[]
@@ -324,11 +332,6 @@ plt.figure(1)
 plt.scatter(P,P_dot,c='red',marker='o',s=5,label='Simulation data')
 plt.scatter(P2,P_dot2,c='blue',marker='o',s=5,label='ATNF data')
 plt.plot(P_line,Pdot_line,c='green',label='Death line')
-#plt.plot(P_line,Pdot_line2,linestyle="dashed",c='black',label='Death line min')
-#plt.plot(P_line,Pdot_line3,linestyle="dashed",c='yellow',label='Death line max')
-#plt.plot(L1,L2)
-#plt.plot(L1,L3)
-#plt.plot(P_death2,P_dot_death2,c='green',label='Death line')
 plt.xlim(1e-2,1e1)
 plt.ylim(1e-20,1e-10)
 plt.yscale('log')
@@ -338,6 +341,7 @@ plt.xlabel('Spin period s')
 plt.ylabel('Spin period derivative s.s^-1')
 plt.legend()
 plt.savefig('P_Pdot_plot.png')
+plt.close()
 
 #P-Pdot plot radio pulsars only 
 plt.figure(2)
@@ -350,6 +354,7 @@ plt.xscale('log')
 plt.xlabel('Spin period s')
 plt.ylabel('Spin period derivative s.s^-1')
 plt.savefig('P_Pdot_plot_r.png')
+plt.close()
 
 #P-Pdot plot gamma pulsars only
 plt.figure(3)
@@ -362,6 +367,7 @@ plt.xscale('log')
 plt.xlabel('Spin period s')
 plt.ylabel('Spin period derivative s.s^-1')
 plt.savefig('P_Pdot_plot_g.png')
+plt.close()
 
 #P-Pdot plot radio gamma pulsars
 plt.figure(4)
@@ -374,6 +380,7 @@ plt.xscale('log')
 plt.xlabel('Spin period s')
 plt.ylabel('Spin period derivative s.s^-1')
 plt.savefig('P_Pdot_plot_rg.png')
+plt.close()
 
 #Positions plot
 plt.figure(5)
@@ -387,6 +394,7 @@ plt.xlabel('x (kpc)')
 plt.ylabel('y (kpc)')
 plt.legend()
 plt.savefig('Positions_detected_pulsars.png')
+plt.close()
 
 #Distance histogram
 plt.figure(6)
@@ -397,6 +405,7 @@ plt.xlabel('d (kpc)')
 plt.ylabel('Frequency')
 #plt.title('Distance to earth of the pulsars')
 plt.savefig('histo_dist.png')
+plt.close()
 
 #Age histogram
 plt.figure(7)
@@ -407,6 +416,7 @@ plt.xlabel('Log(age) (age in yr)')
 plt.ylabel('Frequency')
 #plt.title('Histogram of the age of the detected pulsars')
 plt.savefig('histo_age.png')
+plt.close()
 
 #Latitude histogram
 plt.figure(8)
@@ -417,6 +427,7 @@ plt.xlabel('Latitude in degrees')
 plt.ylabel('Frequency')
 #plt.title('Histogram of the latitude of the detected pulsars')
 plt.savefig('histo_latitude.png')
+plt.close()
 
 #Log(P) histogram
 plt.figure(9)
@@ -427,6 +438,7 @@ plt.xlabel('Log(P) (P in s)')
 plt.ylabel('Frequency')
 #plt.title('Histogram of the rotation period of the detected pulsars')
 plt.savefig('histo_period.png')
+plt.close()
 
 #Log(P_dot) histogram
 plt.figure(10)
@@ -437,6 +449,7 @@ plt.xlabel('Log(Pdot)')
 plt.ylabel('Frequency')
 #plt.title('Histogram of the rotation period derivative of the detected pulsars')
 plt.savefig('histo_pdot.png')
+plt.close()
 
 #cos(alpha0) and cos(alpha) histogram
 plt.figure(11)
@@ -447,6 +460,7 @@ plt.xlabel('cos(alpha) and cos(alpha0)')
 plt.ylabel('Frequency')
 #plt.title('Histogram of the inclination angle of the detected pulsars')
 plt.savefig('histo_cosalpha.png')
+plt.close()
 
 #Period of old pulsars : histogram
 plt.figure(12)
@@ -456,6 +470,7 @@ plt.xlabel('Log(P) (P in s)')
 plt.ylabel('Frequency')
 #plt.title('Histogram of the rotation period of the detected pulsars with ages betwen 1e7.7 years and 1e8.7')
 plt.savefig('histo_period_old.png')
+plt.close()
 
 #Relative error between B(P,Pdot) and Bf the decaying magnetic field
 plt.figure(13)
@@ -465,6 +480,7 @@ plt.xlabel('Relative error between the magnetic field computed with decay or wit
 plt.ylabel('Frequency')
 #plt.title('Histogram of the error on the magnetic field for the detected pulsars')
 plt.savefig('histo_err_B.png')
+plt.close()
 
 #Velocities
 plt.figure(14)
@@ -474,6 +490,7 @@ plt.xlabel('Velocities of the pulsars in km/s')
 plt.ylabel('Frequency')
 #plt.title("Histogram of the velocities of the detected pulsars in the simulation")
 plt.savefig('histo_velocities.png')
+plt.close()
 
 #Comparison between Bfield computed with the decay and with P and Pdot
 plt.figure(15)
@@ -483,6 +500,7 @@ plt.legend()
 plt.xlabel('Magnetic field (B in Tesla)')
 plt.ylabel('Frequency')
 plt.savefig('histo_Bfield.png')
+plt.close()
 
 #Spin-velocity angles histogram
 plt.figure(16)
@@ -492,6 +510,52 @@ plt.xlabel('spin-velocity angle in degrees')
 plt.ylabel('Frequency')
 #plt.title('Histogram of the angle between the velocity vector and the rotation axis of the detected pulsars')
 plt.savefig('histo_spinvelangle.png')
+plt.close()
+
+#Spin-velocity angle (old pulsars) histogram
+plt.figure(17)
+plt.hist(PA_old,bins=121,range=(0,180),edgecolor='black',color='red',alpha=0.5,label='Simulation')
+plt.legend()
+plt.xlabel('spin-velocity angle in degrees for pulsars older than 10 Myr')
+plt.ylabel('Frequency')
+#plt.title('Histogram of the angle between the velocity vector and the rotation axis of the detected pulsars')
+plt.savefig('histo_spinvelangle_old.png')
+plt.close()
+
+#Spin-velocity angle (young pulsars) histogram
+plt.figure(18)
+plt.hist(PA_young,bins=121,range=(0,180),edgecolor='black',color='red',alpha=0.5,label='Simulation')
+plt.legend()
+plt.xlabel('spin-velocity angle in degrees for pulsars younger than 10 Myr')
+plt.ylabel('Frequency')
+#plt.title('Histogram of the angle between the velocity vector and the rotation axis of the detected pulsars')
+plt.savefig('histo_spinvelangle_young.png')
+plt.close()
+
+#Spin-velocity angle (young pulsars and old) histogram
+plt.figure(19)
+plt.hist(PA_young,bins=121,range=(0,180),edgecolor='black',color='blue',alpha=0.5,label='Age < 10Myr')
+plt.hist(PA_old,bins=121,range=(0,180),edgecolor='black',color='red',alpha=0.5,label='Age > 10Myr')
+plt.legend()
+plt.xlabel('spin-velocity angle in degrees')
+plt.ylabel('Frequency')
+#plt.title('Histogram of the angle between the velocity vector and the rotation axis of the detected pulsars')
+plt.savefig('histo_spinvelangle_young_and_old.png')
+plt.close()
+
+#Plot age=f(spin-vel angle)
+plt.figure(20)
+plt.scatter(PA,log_age,c='red',marker='o',s=5,label='Simulation data')
+plt.xlim(0,180)
+plt.ylim(0,12)
+#plt.yscale('log')
+#plt.xscale('log')
+#plt.title("Spin period derivative - Spin period diagram")
+plt.xlabel('Spin-velocity angle in degrees')
+plt.ylabel('Log(age) in yr')
+plt.legend()
+plt.savefig('spin_vel_age_plot.png')
+plt.close()
 
 #Death line alone
 #plt.figure(13)
