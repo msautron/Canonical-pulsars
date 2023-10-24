@@ -66,10 +66,10 @@ double phi_tot(void *params,long np){ //Compute the gravitational potential felt
       double L0=1.0;
       double x=part->x[np];double y=part->y[np];double z=part->z[np];
       double R=sqrt(sq(x*L0*kpc2km)+sq(y*L0*kpc2km));double r=sqrt(sq(x*L0*kpc2km)+sq(y*L0*kpc2km)+sq(z*L0*kpc2km));
-      double a1=0,b1=0.277*kpc2km,M1=1.12e10*MSUN;
-      double a2=3.7*kpc2km,b2=0.2*kpc2km,M2=8.07e10*MSUN;
+      double a1=0,b1=0.267*kpc2km,M1=1.02e10*MSUN;
+      double a2=4.4*kpc2km,b2=0.308*kpc2km,M2=6.50535e10*MSUN;
       //double rc=6*kpc2km,Mc=5e10*MSUN;
-      double Mh=15474*2.325*1e7*MSUN;double ah=5.6*kpc2km;
+      double Mh=12474*2.325*1e7*MSUN;double ah=7.7*kpc2km;
       double phi;
       double phi_1;
       double phi_2;
@@ -102,7 +102,7 @@ void phi_1(void *params,double phi1[3],long np){ //Potential for the bulge of th
 
        struct func_params *part= (struct func_params*)params;
        const double kpc2km=3.0856775807e16;
-       double a1=0.0,b1=0.277*kpc2km,M1=1.12e10*MSUN;
+       double a1=0.0,b1=0.267*kpc2km,M1=1.02e10*MSUN;
        double L0=1.0;double v0=100.0;
        double T0=(L0*kpc2km)/v0;
        double x=part->x[np];double y=part->y[np];double z=part->z[np];
@@ -118,7 +118,7 @@ void phi_2(void *params,double phi2[3],long np){ //Potential for the disk of the
 
        struct func_params *part= (struct func_params*)params;
        const double kpc2km=3.0856775807e16;
-       double a2=3.7*kpc2km,b2=0.2*kpc2km,M2=8.07e10*MSUN;
+       double a2=4.4*kpc2km,b2=0.308*kpc2km,M2=6.50535e10*MSUN;
        double L0=1.0;double v0=100.0;
        double T0=(L0*kpc2km)/v0;
        double x=part->x[np];double y=part->y[np];double z=part->z[np];
@@ -148,7 +148,7 @@ void phi_NFW(void *params,double phi_NFW[3],long np){ //Potential for the dark m
 
 	struct func_params *part= (struct func_params*)params;
         const double kpc2km=3.0856775807e16;
-        double Mh=15474*2.325*1e7*MSUN;double ah=5.6*kpc2km;double L0=1.0;double v0=100.0;
+        double Mh=12474*2.325*1e7*MSUN;double ah=7.7*kpc2km;double L0=1.0;double v0=100.0;
         double T0=(L0*kpc2km)/v0;
         double x=part->x[np];double y=part->y[np];double z=part->z[np];
         double r=sqrt(sq(x*L0*kpc2km)+sq(y*L0*kpc2km)+sq(z*L0*kpc2km));
