@@ -220,18 +220,32 @@ for i in range(len(P)):
         age_radio_gamma+=[age[i]]
         distance_radio_gamma+=[distance[i]]
 
+#d3=[]
+#for i in range(len(d2)):
+#    if B2[i]>=1e6 and B2[i]<=1e9:
+#        d3.append(d2[i])
+
+#print(len(d3))
+#print(len(d2))
+
 #Plot the death line of the article from Mitra et al. (2019)
 T_6=2
+T_6_max=2.8
+T_6_min=1.9
 eta=0.15
 alpha_l=45*np.pi/180
+alpha_l_max=30*np.pi/180
+alpha_l_min=0
 b=40
 const=(3.16e-4*(T_6**4)*1e-15)/((eta)**2*b*(np.cos(alpha_l))**2)
-#const2=(3.16e-4*(T_6**4)*1e-15)/((eta)**2*b*(np.cos(0))**2)
-#const3=(3.16e-4*(T_6**4)*1e-15)/((eta)**2*b*(np.cos(89.9*np.pi/180))**2)
+const_min=(3.16e-4*(T_6_min**4)*1e-15)/((eta)**2*b*(np.cos(0))**2)
+const_max=(3.16e-4*(T_6_max**4)*1e-15)/((eta)**2*b*(np.cos(alpha_l_max))**2)
 P_line=[10**(np.log10(i)) for i in np.arange(1e-2,1e1,0.001)]
 Pdot_line=[10**np.log10(const*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
-#Pdot_line2=[10**np.log10(const2*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
-#Pdot_line3=[10**np.log10(const3*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
+Pdot_line4=[Pdot_line[i]*10**(-0.4) for i in range(len(Pdot_line))]
+Pdot_line5=[Pdot_line[i]*10**(0.4) for i in range(len(Pdot_line))]
+Pdot_line2=[10**np.log10(const_min*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
+Pdot_line3=[10**np.log10(const_max*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
 
 #Check if the pulsars are really acceptable with the ratio B/P^2 - 0.17e8 or with the Pdot of the death of Mitra et al. (2019)
 Diff=[]
@@ -327,11 +341,18 @@ print(f"Number of radio-gamma pulsars : {count_radgam}")
 #plt.legend()
 #plt.savefig('selected_P_Pdot.png')
 
+condition = [Pdot2 < Pdot3 for Pdot2, Pdot3 in zip(Pdot_line2,Pdot_line3)]
+
 #P-Pdot plot all pulsars
 plt.figure(1)
 plt.scatter(P,P_dot,c='red',marker='o',s=5,label='Simulation data')
 plt.scatter(P2,P_dot2,c='blue',marker='o',s=5,label='ATNF data')
-plt.plot(P_line,Pdot_line,c='green',label='Death line')
+#plt.plot(P_line,Pdot_line4,c='green',linestyle='-',linewidth=2)
+#plt.plot(P_line,Pdot_line5,c='green',linestyle='-',linewidth=2)
+#plt.plot(P_line,Pdot_line3,c='brown')
+#plt.plot(P_line,Pdot_line2,c='pink')
+plt.plot(P_line,Pdot_line,c='green',label='Death line',linestyle='-',linewidth=2)
+plt.fill_between(P_line,Pdot_line4,Pdot_line5,where=condition,facecolor='green',alpha=0.4,label='Death Valley' )
 plt.xlim(1e-2,1e1)
 plt.ylim(1e-20,1e-10)
 plt.yscale('log')
@@ -508,6 +529,7 @@ plt.hist(PA,bins=121,range=(0,180),edgecolor='black',color='red',alpha=0.5,label
 plt.legend()
 plt.xlabel('spin-velocity angle in degrees')
 plt.ylabel('Frequency')
+plt.yscale('log')
 #plt.title('Histogram of the angle between the velocity vector and the rotation axis of the detected pulsars')
 plt.savefig('histo_spinvelangle.png')
 plt.close()

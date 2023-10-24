@@ -360,8 +360,8 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			alpha=part->alpha[np];
 			P_dot_line=(3.16e-4*pow(T6,4)*sq(part->period[np])*1e-15)/(sq(eta)*b*sq(cos(alpha_l)));
 			if (P_dot_line/part->Pdot[np] >= pow(10,-0.4) && P_dot_line/part->Pdot[np] <= pow(10,0.4)) {
-				alpha_l2=20*(M_PI/180)*gsl_rng_uniform(part->r);
-				T6_2=6*gsl_rng_uniform(part->r)+1;
+				alpha_l2=30*(M_PI/180)*gsl_rng_uniform(part->r);
+				T6_2=4.7*gsl_rng_uniform(part->r)+1.9;
 				P_dot_line=(3.16e-4*pow(T6_2,4)*sq(part->period[np])*1e-15)/(sq(eta)*b*sq(cos(alpha_l2)));
 			}
 			glat = (180*asin(part->z[np]/part->dist[np]))/M_PI;
