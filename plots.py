@@ -51,6 +51,7 @@ for i in range(int(len(data2)/8)):
     Ba+=[B0*(Pa[i]*P_dota[i])**0.5] #surface magnetic field in T
 
 for i in range(len(P_dota)):
+    #P2.append(Pa[i])
     if P_dota[i]!=0.0 and da[i]!=0.0 and E_dota[i]!=0:
         P2+=[Pa[i]]
         P_dot2+=[P_dota[i]]
@@ -62,7 +63,7 @@ for i in range(len(P_dota)):
         E_dot2+=[E_dota[i]]
         B2+=[3.2e15*(Pa[i]*P_dota[i])**0.5]
 
-for i in range(len(P2)): #Selection of P and P_dot to get only the pulsars for the optimization program
+for i in range(len(P_dot2)): #Selection of P and P_dot to get only the pulsars for the optimization program
     if B2[i]<5e8 and B2[i]>5e6:
         P_selected+=[P2[i]]
         Pdot_selected+=[P_dot2[i]]
@@ -106,6 +107,10 @@ for i in range(len(z2)):
 #Log calculation for age, P and Pdot for the ATNF data
 for i in range(len(age2)):
     log_age2+=[(np.log(age2[i]))/(np.log(10))]
+
+log_Pa=[]
+for i in range(len(Pa)):
+    log_Pa+=[np.log10(Pa[i])]
 
 for i in range(len(P2)):
     log_P2+=[(np.log(P2[i]))/(np.log(10))]
@@ -341,6 +346,9 @@ print(f"Number of radio-gamma pulsars : {count_radgam}")
 #plt.legend()
 #plt.savefig('selected_P_Pdot.png')
 
+#print(len(P_dot2))
+#print(len(Pa))
+
 condition = [Pdot2 < Pdot3 for Pdot2, Pdot3 in zip(Pdot_line2,Pdot_line3)]
 
 #P-Pdot plot all pulsars
@@ -453,7 +461,7 @@ plt.close()
 #Log(P) histogram
 plt.figure(9)
 plt.hist(log_P,bins=150,range=(-2,1.5),edgecolor='black',color='red',alpha=0.5,label='Simulation')
-plt.hist(log_P2,bins=150,range=(-2,1.5),edgecolor='black',color='blue',alpha=0.5,label='ATNF data')
+plt.hist(log_Pa,bins=150,range=(-2,1.5),edgecolor='black',color='blue',alpha=0.5,label='ATNF data')
 plt.legend()
 plt.xlabel('Log(P) (P in s)')
 plt.ylabel('Frequency')
@@ -529,7 +537,7 @@ plt.hist(PA,bins=121,range=(0,180),edgecolor='black',color='red',alpha=0.5,label
 plt.legend()
 plt.xlabel('spin-velocity angle in degrees')
 plt.ylabel('Frequency')
-plt.yscale('log')
+#plt.yscale('log')
 #plt.title('Histogram of the angle between the velocity vector and the rotation axis of the detected pulsars')
 plt.savefig('histo_spinvelangle.png')
 plt.close()
