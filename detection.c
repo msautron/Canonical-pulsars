@@ -332,6 +332,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 	double Smin_gamma, Smin_radio;
         double glat;
 	//double ratio;
+	//double ratio2;
 	long Ntot;
 	long Nbeam=0;
         int detec;
@@ -355,7 +356,8 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			xi=part->xi[np];
 			B=part->B[np];
 			P=part->period[np];
-			//ratio=B/sq(P);
+			//ratio=B/sq(P); //death line Ruderman & Sutherland 1975
+			//ratio2=sq(B)/sq(sq(P)); death line Chen & Ruderman 1993
 			rho=part->rho[np];
 			alpha=part->alpha[np];
 			P_dot_line=(3.16e-4*pow(T6,4)*sq(part->period[np])*1e-15)/(sq(eta)*b*sq(cos(alpha_l)));

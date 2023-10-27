@@ -178,10 +178,11 @@ for i in range(len(P_death)):
     P_dot_death2+=[10**(P_dot_death[i])]
 
 #B(P,Pdot) computation in order to compare with the decaying Bf
-B_ppdot,v_norm,err_rel_B=[],[],[]
+B_ppdot,v_norm,v0_norm,err_rel_B=[],[],[],[]
 for i in range(len(P)):
     B_ppdot+=[((Inertia*mu_0*(c_light**3)*P_dot[i]*P[i])/(16*(np.pi**3)*(R_NS**6)*(1+(np.sin(np.arccos(cos_alpha[i]))**2))))**0.5]
     v_norm+=[(vx[i]**2+vy[i]**2+vz[i]**2)**0.5]
+    v0_norm+=[(vx0[i]**2+vy0[i]**2+vz0[i]**2)**0.5]
     err_rel_B+=[(np.abs(B_ppdot[i]-Bf[i]))/np.abs(B_ppdot[i])]
 
 #Prep plot period old pulsars and plot old pulsars spin-velocity angle
@@ -252,11 +253,23 @@ Pdot_line5=[Pdot_line[i]*10**(0.4) for i in range(len(Pdot_line))]
 Pdot_line2=[10**np.log10(const_min*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
 Pdot_line3=[10**np.log10(const_max*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
 
+#Plot the death line of the article of Chen & Ruderman (1993)
+const_CR93=10**((43.8-16)/2)*16*(np.pi**3)*(R_NS**6)*(1+(np.sin(alpha_l)**2))/(Inertia*mu_0*(c_light**3))
+P_dot_line_CR93=[10**np.log10(const_CR93*(i**(2))) for i in np.arange(1e-2,1e1,0.001)]
+
+print(P_dot_line_CR93[4000])
+
+#Plot the line with the critical magnetic field 4.4e9 T, distinguishing magnetar from canonical pulsars
+B_crit=4.4e9
+B_linecrit=[10**np.log10(((B_crit/B0)**2)*(i**(-1))) for i in np.arange(1e-2,1e1,0.001)]
+
+
 #Check if the pulsars are really acceptable with the ratio B/P^2 - 0.17e8 or with the Pdot of the death of Mitra et al. (2019)
 Diff=[]
 count_abno=0
 for i in range(len(P)):
     #Diff+=[(Bf[i]/((P[i])**2))]
+    #Diff+=[(Bf[i]**2)/((P[i])**3)]
     #Diff+=[np.log10(Bf[i]) - 2*np.log10(P[i]) - np.log10(0.17) -8.0]
     Diff+=[(3.16e-4*(T_6**4)*1e-15*(P[i]**2))/((eta)**2*b*(np.cos(alpha_l))**2)]
     if Diff[i]>P_dot[i]:
@@ -274,32 +287,32 @@ print(f"The number of pulsars which should be dead is : {count_abno}\nlength lis
 #nb_rm=0
 #for i in range(len(P)):
     #P_dot_line+=[3*np.log10(P[i])+np.log10(((16*(np.pi**3)*(R_NS**6)*(1+((np.sin(45*np.pi/180)**2))))*(17000000**2))/(Inertia*mu_0*(c_light**3)))]
-#    P_dot_line+=[(3.16e-4*(T_6**4)*1e-15*(P[i]**2))/((eta)**2*b*(np.cos(alpha_l))**2)]
+    #P_dot_line+=[(3.16e-4*(T_6**4)*1e-15*(P[i]**2))/((eta)**2*b*(np.cos(alpha_l))**2)]
 
 #for j in range(len(P_dot_line)):
-#    if P_dot_line[j]>P_dot[j-nb_rm]:
-#        del P[j-nb_rm]
-#        del P_dot[j-nb_rm]
-#        del x[j-nb_rm] #Position on the x-absciss relative to the sun in the galactocentric frame in kpc
-#        del y[j-nb_rm] #Position on the y-absciss relative to the sun in the galactocentric frame in kpc
-#        del age[j-nb_rm] #Age of the pulsar in seconds
-#        del error[j-nb_rm] #error on the positions of the pulsars (error computed with the energy)
-#        del distance[j-nb_rm] #Distance to the galactic center in kpc
-#        del longitude[j-nb_rm] #galactic latitude in degrees
-#        del latitude[j-nb_rm] #galactic longitude in degrees
-#        del cos_alpha0[j-nb_rm] #cosinus of the initial inclination angle
-#        del cos_alpha[j-nb_rm] #cosinus of the inclination angle after all the evolution
-#        del Bf[j-nb_rm] #Magnetic field of the pulsar today, in tesla
-#        del z[j-nb_rm] #Position on the z-absciss relative to the sun in the galactocentric frame in kpc
-#        del vx[j-nb_rm] #Velocity on the x-absciss of the pulsar today, in km/s
-#        del vy[j-nb_rm] #Velocity on the y-absciss of the pulsar today, in km/s
-#        del vz[j-nb_rm] #Velocity on the z-absciss of the pulsar today, in km/s
-#        del vx0[j-nb_rm] #Velocity on the x-absciss of the pulsar initially, in km/s
-#        del vy0[j-nb_rm] #Velocity on the y-absciss of the pulsar initially, in km/s
-#        del vz0[j-nb_rm]
-#        del Edot[j-nb_rm]
-#        del type_pulsar[j-nb_rm]
-#        nb_rm+=1
+    #if P_dot_line[j]>P_dot[j-nb_rm]:
+        #del P[j-nb_rm]
+        #del P_dot[j-nb_rm]
+        #del x[j-nb_rm] #Position on the x-absciss relative to the sun in the galactocentric frame in kpc
+        #del y[j-nb_rm] #Position on the y-absciss relative to the sun in the galactocentric frame in kpc
+        #del age[j-nb_rm] #Age of the pulsar in seconds
+        #del error[j-nb_rm] #error on the positions of the pulsars (error computed with the energy)
+        #del distance[j-nb_rm] #Distance to the galactic center in kpc
+        #del longitude[j-nb_rm] #galactic latitude in degrees
+        #del latitude[j-nb_rm] #galactic longitude in degrees
+        #del cos_alpha0[j-nb_rm] #cosinus of the initial inclination angle
+        #del cos_alpha[j-nb_rm] #cosinus of the inclination angle after all the evolution
+        #del Bf[j-nb_rm] #Magnetic field of the pulsar today, in tesla
+        #del z[j-nb_rm] #Position on the z-absciss relative to the sun in the galactocentric frame in kpc
+        #del vx[j-nb_rm] #Velocity on the x-absciss of the pulsar today, in km/s
+        #del vy[j-nb_rm] #Velocity on the y-absciss of the pulsar today, in km/s
+        #del vz[j-nb_rm] #Velocity on the z-absciss of the pulsar today, in km/s
+        #del vx0[j-nb_rm] #Velocity on the x-absciss of the pulsar initially, in km/s
+        #del vy0[j-nb_rm] #Velocity on the y-absciss of the pulsar initially, in km/s
+        #del vz0[j-nb_rm]
+        #del Edot[j-nb_rm]
+        #del type_pulsar[j-nb_rm]
+        #nb_rm+=1
 
 #Display of the statistics on all pulsar
 for i in range(len(Edot)):
@@ -359,7 +372,10 @@ plt.scatter(P2,P_dot2,c='blue',marker='o',s=5,label='ATNF data')
 #plt.plot(P_line,Pdot_line5,c='green',linestyle='-',linewidth=2)
 #plt.plot(P_line,Pdot_line3,c='brown')
 #plt.plot(P_line,Pdot_line2,c='pink')
-plt.plot(P_line,Pdot_line,c='green',label='Death line',linestyle='-',linewidth=2)
+#plt.plot(P_death2,P_dot_death2,c='green',label='Death line',linestyle='-',linewidth=2) #Death line Ruderman & Sutherland 1975 
+plt.plot(P_line,Pdot_line,c='green',label='Death line',linestyle='-',linewidth=2) #Death line Mitra et al. 2019
+#plt.plot(P_line,P_dot_line_CR93,c='green',label='Death line',linestyle='-',linewidth=2) #Death line Chen & Ruderman 1993
+#plt.plot(P_line,B_linecrit,c='blue',label='Critical magnetic field line',linestyle='-',linewidth=2)
 plt.fill_between(P_line,Pdot_line4,Pdot_line5,where=condition,facecolor='green',alpha=0.4,label='Death Valley' )
 plt.xlim(1e-2,1e1)
 plt.ylim(1e-20,1e-10)
@@ -587,10 +603,23 @@ plt.legend()
 plt.savefig('spin_vel_age_plot.png')
 plt.close()
 
+#Initial velocities
+plt.figure(21)
+plt.hist(v0_norm,bins=150,range=(0,1000),edgecolor='black',color='red',alpha=0.5,label='Simulation')
+plt.legend()
+plt.xlabel('Birth kick velocities of the pulsars in km/s')
+plt.ylabel('Frequency')
+#plt.title("Histogram of the velocities of the detected pulsars in the simulation")
+plt.savefig('histo_BK_velocities.png')
+plt.close()
+
 #Death line alone
-#plt.figure(13)
-#plt.plot(P_death2,P_dot_death2)
+#plt.figure(22)
+#plt.plot(P_line,P_dot_line_CR93)
+#plt.xscale('log')
+#plt.yscale('log')
 #plt.savefig("death_line.png")
+#plt.close()
 
 #Binit histogram
 #plt.figure(12)
