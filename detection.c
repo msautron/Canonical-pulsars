@@ -77,8 +77,8 @@ int distrib_init(void *params){
 
                 while(np<part->Npulsars){
                         phi            =  two_pi*gsl_rng_uniform(part->r); // galactocentric azimuth uniformly distributed 
-                        //rz             =  1.0683*pow(4.5,2)*gsl_sf_gamma(2)*gsl_ran_gamma(part->r,2,4.5); // distribution taken from Lorimer 2004 
-                        R              =  gsl_ran_gamma(part->r,2,part->Rexp); // distribution taken from packzinski 
+                        R             =  1.0683*gsl_sf_gamma(2)*gsl_ran_gamma(part->r,2,part->Rexp); // distribution taken from Lorimer 2004 
+                        //R              =  gsl_ran_gamma(part->r,2,part->Rexp); // distribution taken from packzinski 
                         part->z0[np]    =  gsl_ran_exponential(part->r,part->zexp); //kpc
 			rng_0_1=(rand() % 1000000001);rng_0_1_d=rng_0_1;p=rng_0_1_d/1000000000.0;
                         if(p<0.5) part->z0[np] = part->z0[np];
@@ -356,8 +356,8 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			xi=part->xi[np];
 			B=part->B[np];
 			P=part->period[np];
-			//ratio=B/sq(P); //death line Ruderman & Sutherland 1975
-			//ratio2=sq(B)/sq(sq(P)); death line Chen & Ruderman 1993
+			//P_dot_line=(pow(part->period[np],3)*sq(0.17e8)*16*pow(M_PI,3)*pow(R_NS,6)*(1+sq(sin(alpha_l))))/(SI_I*SI_mu0*pow(SI_C,3)); //death line Ruderman & Sutherland 1975
+			//P_dot_line=(sq(part->period[np])*pow(10,13.9)*16*pow(M_PI,3)*pow(R_NS,6)*(1+sq(sin(alpha_l))))/(SI_I*SI_mu0*pow(SI_C,3)); death line Chen & Ruderman 1993
 			rho=part->rho[np];
 			alpha=part->alpha[np];
 			P_dot_line=(3.16e-4*pow(T6,4)*sq(part->period[np])*1e-15)/(sq(eta)*b*sq(cos(alpha_l)));

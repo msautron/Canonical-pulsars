@@ -50,7 +50,7 @@ void initialize(int argc, char *argv[], void *params){
      
        part->tau0_B0            = 	part->k_tau0_B0*7e4*pow(3e8,part->alpha_d)*365*24*3600; //from Vigano
        part->R			=	12000;//m
-       part->zexp               =	0.5; // kpc
+       part->zexp               =	0.075; // kpc
        part->Rexp		=	4.5; //kpc
        part->sigma_v		=	60.; //  km/s 
        part->v_young		=	265.; //  km/s 

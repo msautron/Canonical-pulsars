@@ -166,7 +166,7 @@ for i in range(len(P)):
     log_P+=[(np.log(P[i]))/(np.log(10))]
     log_Pdot+=[(np.log(P_dot[i]))/(np.log(10))]
 
-#Prep death line
+#Prep death line Ruderman & Sutherland 1975
 R_NS=12000
 mu_0=1.25663706212e-6 
 c_light=2.997924858e8
@@ -273,6 +273,7 @@ for i in range(len(P)):
     #Diff+=[np.log10(Bf[i]) - 2*np.log10(P[i]) - np.log10(0.17) -8.0]
     Diff+=[(3.16e-4*(T_6**4)*1e-15*(P[i]**2))/((eta)**2*b*(np.cos(alpha_l))**2)]
     if Diff[i]>P_dot[i]:
+    #if Diff[i]>10**(13.9):
         count_abno+=1
         #print(i)
         #print(Diff[i])
