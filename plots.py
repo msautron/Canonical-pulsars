@@ -240,16 +240,18 @@ T_6_max=2.8
 T_6_min=1.9
 eta=0.15
 alpha_l=45*np.pi/180
-alpha_l_max=30*np.pi/180
-alpha_l_min=0
+alpha_l_max=50*np.pi/180
+alpha_l_min=0*np.pi/180
 b=40
+b_min=60
+b_max=30
 const=(3.16e-4*(T_6**4)*1e-15)/((eta)**2*b*(np.cos(alpha_l))**2)
-const_min=(3.16e-4*(T_6_min**4)*1e-15)/((eta)**2*b*(np.cos(0))**2)
-const_max=(3.16e-4*(T_6_max**4)*1e-15)/((eta)**2*b*(np.cos(alpha_l_max))**2)
+const_min=(3.16e-4*(T_6_min**4)*1e-15)/((eta)**2*b_min*(np.cos(alpha_l_min))**2)
+const_max=(3.16e-4*(T_6_max**4)*1e-15)/((eta)**2*b_max*(np.cos(alpha_l_max))**2)
 P_line=[10**(np.log10(i)) for i in np.arange(1e-2,1e1,0.001)]
 Pdot_line=[10**np.log10(const*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
-Pdot_line4=[Pdot_line[i]*10**(-0.4) for i in range(len(Pdot_line))]
-Pdot_line5=[Pdot_line[i]*10**(0.4) for i in range(len(Pdot_line))]
+Pdot_line4=[Pdot_line[i]*10**(-0.55) for i in range(len(Pdot_line))]
+Pdot_line5=[Pdot_line[i]*10**(0.75) for i in range(len(Pdot_line))]
 Pdot_line2=[10**np.log10(const_min*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
 Pdot_line3=[10**np.log10(const_max*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
 
@@ -371,8 +373,8 @@ plt.scatter(P,P_dot,c='red',marker='o',s=5,label='Simulation data')
 plt.scatter(P2,P_dot2,c='blue',marker='o',s=5,label='ATNF data')
 #plt.plot(P_line,Pdot_line4,c='green',linestyle='-',linewidth=2)
 #plt.plot(P_line,Pdot_line5,c='green',linestyle='-',linewidth=2)
-#plt.plot(P_line,Pdot_line3,c='brown')
-#plt.plot(P_line,Pdot_line2,c='pink')
+plt.plot(P_line,Pdot_line3,c='brown')
+plt.plot(P_line,Pdot_line2,c='pink')
 #plt.plot(P_death2,P_dot_death2,c='green',label='Death line',linestyle='-',linewidth=2) #Death line Ruderman & Sutherland 1975 
 plt.plot(P_line,Pdot_line,c='green',label='Death line',linestyle='-',linewidth=2) #Death line Mitra et al. 2019
 #plt.plot(P_line,P_dot_line_CR93,c='green',label='Death line',linestyle='-',linewidth=2) #Death line Chen & Ruderman 1993
