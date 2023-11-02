@@ -60,9 +60,9 @@ int main(int argc, char **argv){
   
         // Distribution of the pulsars in the Galaxy        
 	distrib_init(&params); // initial distribution of the pulsars
-	//distrib_vinit(&params); // Use when you want to run the simulation with the galactic potential
-        //evol_galac_PEFRL(&params); // Use when you want to run the simulation with the galactic potential
-	kick(&params);//birth kick velocity // Use when you don't want the galactic potential
+	distrib_vinit(&params); // Use when you want to run the simulation with the galactic potential
+        evol_galac_PEFRL(&params); // Use when you want to run the simulation with the galactic potential
+	//kick(&params);//birth kick velocity // Use when you don't want the galactic potential
 
 	printf("##Total number of simulated pulsars: %ld \n",params.Npulsars);
 	/* ISM modelling */
@@ -121,6 +121,7 @@ int main(int argc, char **argv){
         free(params.n_omega_x);
         free(params.n_omega_y);
         free(params.n_omega_z);
+	free(params.PA);
 
 	gsl_rng_free(params.r);
 

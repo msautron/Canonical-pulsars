@@ -257,12 +257,13 @@ void evol_galac_PEFRL(void *params){ //PEFRL integration scheme
     struct func_params *part= (struct func_params*)params;
     double RAD = 180/M_PI;double gbr;double glr;
     const double yr_sec=365*24*3600;long np;
-    double step=1e5*yr_sec;
+    double step;
     FILE *file=NULL;
     const double kpc2km=3.0856775807e16;
     double L0=1.0;double v0=100.0;
     double T0=(L0*kpc2km)/v0;
-    double step_wd=step/T0;
+    //double step_wd=step/T0;
+    double step_wd;
     double xsi=0.1786178958448091;double lambda=-0.2123418310626054;
     double chi=-0.6626458266981849e-01;
     file=fopen("x_y_err_PEFRL.txt","w+");
@@ -273,6 +274,17 @@ void evol_galac_PEFRL(void *params){ //PEFRL integration scheme
 
        double E0=tot_energy(part,np);
        for(double t=TMILKY*yr_sec-part->age_pulsar[np];t<TMILKY*yr_sec;t+=step){
+
+	 if(part->age_pulsar[np]<=1e2*yr_sec) {step=10*yr_sec;}
+	 else if(part->age_pulsar[np]>1e2*yr_sec && part->age_pulsar[np]<=1e3*yr_sec) {step=25*yr_sec;}
+	 else if(part->age_pulsar[np]>1e3*yr_sec && part->age_pulsar[np]<=1e4*yr_sec) {step=5e1*yr_sec;}
+	 else if(part->age_pulsar[np]>1e4*yr_sec && part->age_pulsar[np]<=1e5*yr_sec) {step=5e2*yr_sec;}
+	 else if(part->age_pulsar[np]>1e5*yr_sec && part->age_pulsar[np]<=1e6*yr_sec) {step=2.5e3*yr_sec;}
+	 else if(part->age_pulsar[np]>1e6*yr_sec && part->age_pulsar[np]<=1e7*yr_sec) {step=2.5e4*yr_sec;}
+	 else if(part->age_pulsar[np]>1e7*yr_sec && part->age_pulsar[np]<=1e8*yr_sec) {step=1e5*yr_sec;}
+	 else if(part->age_pulsar[np]>1e8*yr_sec) {step=1e5*yr_sec;}
+
+	 step_wd=step/T0;
 
          double gphi_1[3];
          double gphi_2[3];
