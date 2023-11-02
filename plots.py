@@ -20,7 +20,8 @@ var,var2='',''
 reg_1=re.compile("-*.{12}[|]{1}")
 reg_2=re.compile("[|]{1}.{1}[|]{1}")
 reg_3=re.compile("[-+]?\d*[.]\d*[Ee]*[-+]*\d*")
-#reg_4=re.compile("-*.{12}")
+reg_4=re.compile("-*\d{1}[.]\d{6}[eE]*[+-]*\d{2}")
+#reg_5=re.compile("-*.{12}")
 
 with open("ATNF_data.txt","r") as f:
     data2=re.findall(reg_3,f.read())
@@ -30,6 +31,21 @@ with open("P_Pdot_positions.txt","r") as f:
 
 with open("P_Pdot_positions.txt","r") as f:
     data_type=re.findall(reg_2,f.read())
+
+#with open("xy_coord_dirson22.dat","r") as f :
+#    data1_dirson22=re.findall(reg_4,f.read())
+
+#with open("glat_dirson22.dat","r") as f :
+#    data2_dirson22=re.findall(reg_4,f.read())
+
+#Get the data from Dirson et al. (2022) for xy coord and latitude
+#x_dirson22,y_dirson22,lat_dirson22=[],[],[]
+#for i in range(int(len(data1_dirson22)/2)):
+#    x_dirson22.append(float(data1_dirson22[2*i]))
+#    y_dirson22.append(float(data1_dirson22[2*i+1]))
+
+#for i in range(int(len(data2_dirson22))):
+#    lat_dirson22.append(float(data2_dirson22[i]))
 
 #with open("verif_lognorm.txt","r") as f:
 #    data_lognorm=re.findall(reg_4,f.read())
@@ -432,8 +448,9 @@ plt.close()
 
 #Positions plot
 plt.figure(5)
-plt.scatter(x,y,s=2,c='red',label='Simulation data')
-plt.scatter(x2,y2,s=2,c='blue',label='ATNF data')
+plt.scatter(x,y,s=2,c='red',alpha=0.4,label='Simulation data')
+#plt.scatter(y_dirson22,x_dirson22,s=2,c='green',alpha=0.7,label='Dirson et al.(2022)')
+plt.scatter(x2,y2,s=2,c='blue',alpha=0.5,label='ATNF data')
 plt.scatter([0],[8.5],c='yellow',marker='o',s=20,label='The Sun') #position of the sun
 plt.xlim(-50,30)
 plt.ylim(-30,35)
@@ -469,6 +486,7 @@ plt.close()
 #Latitude histogram
 plt.figure(8)
 plt.hist(latitude,bins=121,range=(-60,60),edgecolor='black',color='red',alpha=0.5,label='Simulation')
+#plt.hist(lat_dirson22,bins=121,range=(-60,60),edgecolor='black',color='green',alpha=0.5,label='Dirson et al.(2022)')
 plt.hist(latitude2,bins=121,range=(-60,60),edgecolor='black',color='blue',alpha=0.5,label='ATNF data')
 plt.legend()
 plt.xlabel('Latitude in degrees')
