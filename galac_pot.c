@@ -17,7 +17,7 @@ void distrib_vinit(void *params){ //Give an initial speed to a pulsar
     struct func_params *part= (struct func_params*)params;
     long np;
     double vx,vy,vz;
-    double v=0;
+    double v=-1;
     double cos_theta;
     double phi;
     double two_pi=2*M_PI;
@@ -41,7 +41,7 @@ void distrib_vinit(void *params){ //Give an initial speed to a pulsar
        part->n_omega_x[np]=sqrt(1-sq(cos_theta))*cos(phi);
        part->n_omega_y[np]=sqrt(1-sq(cos_theta))*sin(phi);
        part->n_omega_z[np]=cos_theta;
-       while (v<=0){
+       while (v<0){
 	       v=sqrt(8.0/M_PI)*part->sigma_v+gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
        }
        //v=sqrt(8.0/M_PI)*part->sigma_v+gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
@@ -53,7 +53,7 @@ void distrib_vinit(void *params){ //Give an initial speed to a pulsar
        part->vx0[np]=vx;part->vx[np]=vx;
        part->vy0[np]=vy;part->vy[np]=vy;
        part->vz0[np]=vz;part->vz[np]=vz;
-       v=0;
+       v=-1;
 
     }
 

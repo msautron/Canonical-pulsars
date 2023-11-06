@@ -106,7 +106,7 @@ FILE *kick(void *params){
     	struct func_params *part= (struct func_params*)params;
     	long np;
 	double two_pi=2*M_PI;
-	double v=0;
+	double v=-1;
 	double cos_theta,phi;
 	double vx,vy,vz;
 	double x_s,y_s,z_s;
@@ -147,15 +147,18 @@ FILE *kick(void *params){
                         part->n_omega_x[np]=sqrt(1-sq(cos_theta))*cos(phi);
 			part->n_omega_y[np]=sqrt(1-sq(cos_theta))*sin(phi);
                         part->n_omega_z[np]=cos_theta;
-			while (v<=0) {
+			while (v<0) {
 				v=sqrt(8.0/M_PI)*part->sigma_v+gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
 			}
                         //v=sqrt(8.0/M_PI)*part->sigma_v+gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
                         vx=v*part->n_omega_x[np];
+			part->vx0[np]=vx;
 			part->vx[np]=vx;
                         vy=v*part->n_omega_y[np];
+			part->vy0[np]=vy;
 			part->vy[np]=vy;
                         vz=v*part->n_omega_z[np];
+			part->vz0[np]=vz;
 			part->vz[np]=vz;
 
 			dx = vx*part->age_pulsar[np]/kpc2km;
@@ -195,7 +198,7 @@ FILE *kick(void *params){
 			 }
 
 			part->gl[np]=glr*RAD;
-			v=0;
+			v=-1;
 
 			//part->gb[np] = RAD*asin(part->z[np]/part->dist[np]);
 			//part->gl[np] = 180*acos(xx/part->dist[np]/M_PI);

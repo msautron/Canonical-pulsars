@@ -32,20 +32,20 @@ with open("P_Pdot_positions.txt","r") as f:
 with open("P_Pdot_positions.txt","r") as f:
     data_type=re.findall(reg_2,f.read())
 
-#with open("xy_coord_dirson22.dat","r") as f :
-#    data1_dirson22=re.findall(reg_4,f.read())
+with open("xy_coord_dirson22.dat","r") as f :
+    data1_dirson22=re.findall(reg_4,f.read())
 
-#with open("glat_dirson22.dat","r") as f :
-#    data2_dirson22=re.findall(reg_4,f.read())
+with open("glat_dirson22.dat","r") as f :
+    data2_dirson22=re.findall(reg_4,f.read())
 
 #Get the data from Dirson et al. (2022) for xy coord and latitude
-#x_dirson22,y_dirson22,lat_dirson22=[],[],[]
-#for i in range(int(len(data1_dirson22)/2)):
-#    x_dirson22.append(float(data1_dirson22[2*i]))
-#    y_dirson22.append(float(data1_dirson22[2*i+1]))
+x_dirson22,y_dirson22,lat_dirson22=[],[],[]
+for i in range(int(len(data1_dirson22)/2)):
+    x_dirson22.append(float(data1_dirson22[2*i]))
+    y_dirson22.append(float(data1_dirson22[2*i+1]))
 
-#for i in range(int(len(data2_dirson22))):
-#    lat_dirson22.append(float(data2_dirson22[i]))
+for i in range(int(len(data2_dirson22))):
+    lat_dirson22.append(float(data2_dirson22[i]))
 
 #with open("verif_lognorm.txt","r") as f:
 #    data_lognorm=re.findall(reg_4,f.read())
@@ -448,12 +448,12 @@ plt.close()
 
 #Positions plot
 plt.figure(5)
-plt.scatter(x,y,s=2,c='red',alpha=0.4,label='Simulation data')
-#plt.scatter(y_dirson22,x_dirson22,s=2,c='green',alpha=0.7,label='Dirson et al.(2022)')
+plt.scatter(x,y,s=2,c='red',alpha=0.4,label='Simulation data',zorder=2)
+plt.scatter(y_dirson22,x_dirson22,s=2,c='green',alpha=0.7,label='Dirson et al.(2022)')
 plt.scatter(x2,y2,s=2,c='blue',alpha=0.5,label='ATNF data')
-plt.scatter([0],[8.5],c='yellow',marker='o',s=20,label='The Sun') #position of the sun
-plt.xlim(-50,30)
-plt.ylim(-30,35)
+plt.scatter([0],[8.5],c='yellow',marker='o',s=20,label='The Sun',zorder=3) #position of the sun
+plt.xlim(-30,30)
+plt.ylim(-30,30)
 #plt.title('Positions of the detected pulsars compared to the sun')
 plt.xlabel('x (kpc)')
 plt.ylabel('y (kpc)')
@@ -485,9 +485,10 @@ plt.close()
 
 #Latitude histogram
 plt.figure(8)
-plt.hist(latitude,bins=121,range=(-60,60),edgecolor='black',color='red',alpha=0.5,label='Simulation')
-#plt.hist(lat_dirson22,bins=121,range=(-60,60),edgecolor='black',color='green',alpha=0.5,label='Dirson et al.(2022)')
-plt.hist(latitude2,bins=121,range=(-60,60),edgecolor='black',color='blue',alpha=0.5,label='ATNF data')
+plt.hist(latitude,bins=121,range=(-60,60),edgecolor='black',color='red',alpha=0.5,label='Simulation',zorder=3)
+plt.hist(lat_dirson22,bins=121,range=(-60,60),edgecolor='black',color='green',alpha=0.5,label='Dirson et al.(2022)',zorder=1)
+plt.hist(latitude2,bins=121,range=(-60,60),edgecolor='black',color='blue',alpha=0.5,label='ATNF data',zorder=2)
+#plt.yscale('log')
 plt.legend()
 plt.xlabel('Latitude in degrees')
 plt.ylabel('Frequency')
@@ -574,7 +575,7 @@ plt.hist(PA,bins=121,range=(0,180),edgecolor='black',color='red',alpha=0.5,label
 plt.legend()
 plt.xlabel('spin-velocity angle in degrees')
 plt.ylabel('Frequency')
-#plt.yscale('log')
+plt.yscale('log')
 #plt.title('Histogram of the angle between the velocity vector and the rotation axis of the detected pulsars')
 plt.savefig('histo_spinvelangle.png')
 plt.close()
@@ -593,6 +594,7 @@ plt.close()
 plt.figure(18)
 plt.hist(PA_young,bins=121,range=(0,180),edgecolor='black',color='red',alpha=0.5,label='Simulation')
 plt.legend()
+plt.yscale('log')
 plt.xlabel('spin-velocity angle in degrees for pulsars younger than 10 Myr')
 plt.ylabel('Frequency')
 #plt.title('Histogram of the angle between the velocity vector and the rotation axis of the detected pulsars')
