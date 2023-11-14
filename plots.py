@@ -38,14 +38,20 @@ with open("xy_coord_dirson22.dat","r") as f :
 with open("glat_dirson22.dat","r") as f :
     data2_dirson22=re.findall(reg_4,f.read())
 
+with open("dist_dirson22.dat","r") as f:
+    data3_dirson22=re.findall(reg_4,f.read())
+
 #Get the data from Dirson et al. (2022) for xy coord and latitude
-x_dirson22,y_dirson22,lat_dirson22=[],[],[]
+x_dirson22,y_dirson22,lat_dirson22,dist_dirson22=[],[],[],[]
 for i in range(int(len(data1_dirson22)/2)):
     x_dirson22.append(float(data1_dirson22[2*i]))
     y_dirson22.append(float(data1_dirson22[2*i+1]))
 
 for i in range(int(len(data2_dirson22))):
     lat_dirson22.append(float(data2_dirson22[i]))
+
+for i in range(int(len(data3_dirson22))):
+    dist_dirson22.append(float(data3_dirson22[i]))
 
 #with open("verif_lognorm.txt","r") as f:
 #    data_lognorm=re.findall(reg_4,f.read())
@@ -79,7 +85,9 @@ for i in range(len(P_dota)):
         E_dot2+=[E_dota[i]]
         B2+=[3.2e15*(Pa[i]*P_dota[i])**0.5]
 
-d_selec,z_selec,x_selec,y_selec,age_selec,E_dot_selec,B_selec,=[],[],[],[],[],[],[]
+d_selec,z_selec,x_selec,y_selec,age_selec,E_dot_selec,B_selec=[],[],[],[],[],[],[]
+d_magne,z_magne,x_magne,y_magne,age_magne,E_dot_magne,B_magne,P_magne,Pdot_magne=[],[],[],[],[],[],[],[],[]
+P_ms,Pdot_ms,d_ms,z_ms,x_ms,y_ms,age_ms,E_dot_ms,B_ms=[],[],[],[],[],[],[],[],[]
 for i in range(len(P_dot2)): #Selection of P and P_dot to get only the pulsars for the optimization program
     if B2[i]<4.4e9 and B2[i]>6e6:
         P_selected+=[P2[i]]
@@ -91,6 +99,26 @@ for i in range(len(P_dot2)): #Selection of P and P_dot to get only the pulsars f
         age_selec.append(age2[i])
         E_dot_selec.append(E_dot2[i])
         B_selec.append(B2[i])
+    elif B2[i]>=4.4e9:
+        P_magne+=[P2[i]]
+        Pdot_magne+=[P_dot2[i]]
+        d_magne.append(d2[i])
+        z_magne.append(z2[i])
+        x_magne.append(x2[i])
+        y_magne.append(y2[i])
+        age_magne.append(age2[i])
+        E_dot_magne.append(E_dot2[i])
+        B_magne.append(B2[i])
+    elif B2[i]<=6e6:
+        P_ms+=[P2[i]]
+        Pdot_ms+=[P_dot2[i]]
+        d_ms.append(d2[i])
+        z_ms.append(z2[i])
+        x_ms.append(x2[i])
+        y_ms.append(y2[i])
+        age_ms.append(age2[i])
+        E_dot_ms.append(E_dot2[i])
+        B_ms.append(B2[i])
 
 with open("data_ATNF_for_c.txt","w") as f:
     for i in range(len(P2)):
@@ -156,6 +184,16 @@ log_P_selec,log_Pdot_selec=[],[]
 for i in range(len(P_selected)):
     log_P_selec+=[np.log10(P_selected[i])]
     log_Pdot_selec+=[np.log10(Pdot_selected[i])]
+
+log_P_ms,log_Pdot_ms=[],[]
+for i in range(len(P_ms)):
+    log_P_ms+=[np.log10(P_ms[i])]
+    log_Pdot_ms+=[np.log10(Pdot_ms[i])]
+
+log_P_magne,log_Pdot_magne=[],[]
+for i in range(len(P_magne)):
+    log_P_magne+=[np.log10(P_magne[i])]
+    log_Pdot_magne+=[np.log10(Pdot_magne[i])]
 
 log_Pa=[]
 for i in range(len(Pa)):
@@ -238,7 +276,7 @@ for i in range(len(P)):
 P_old=[]
 PA_old,PA_young=[],[]
 for i in range(len(log_age)):
-    if log_age[i]>7.7 and log_age[i]<8.7:
+    if log_age[i]>7.5 and log_age[i]<9:
         P_old+=[log_P[i]]
 
 for i in range(len(PA)):
@@ -434,7 +472,9 @@ plt.close()
 plt.figure(1)
 plt.scatter(P,P_dot,c='red',marker='o',s=5,label='Simulation data',zorder=2)
 #plt.scatter(P2,P_dot2,c='blue',marker='o',s=5,label='ATNF data') #whole pop
-plt.scatter(P_selected,Pdot_selected,c='blue',marker='o',s=5,label='ATNF data') #Only canonical pop
+plt.scatter(P_selected,Pdot_selected,c='blue',marker='o',s=5,label='ATNF data : canonical pulsars') #Only canonical pop
+plt.scatter(P_magne,Pdot_magne,c='orange',marker='s',s=5,label='ATNF data : magnetars') #Only magnetars pop
+plt.scatter(P_ms,Pdot_ms,c='purple',marker='^',s=5,label='ATNF data : milliseconds pulsars') #Only ms pop
 #plt.plot(P_line,Pdot_line4,c='green',linestyle='-',linewidth=2)
 #plt.plot(P_line,Pdot_line5,c='green',linestyle='-',linewidth=2)
 #plt.plot(P_line,Pdot_line3,c='brown')
@@ -451,8 +491,8 @@ plt.xscale('log')
 #plt.title("Spin period derivative - Spin period diagram")
 plt.xlabel('Spin period s')
 plt.ylabel('Spin period derivative s.s^-1')
-plt.legend()
-plt.savefig('P_Pdot_plot.png')
+plt.legend(fontsize='x-small')
+plt.savefig('P_Pdot_plot.png',dpi=300)
 plt.close()
 
 #P-Pdot plot radio pulsars only 
@@ -507,19 +547,21 @@ plt.ylim(-30,30)
 plt.xlabel('x (kpc)')
 plt.ylabel('y (kpc)')
 plt.legend()
-plt.savefig('Positions_detected_pulsars.png')
+plt.savefig('Positions_detected_pulsars.png',dpi=300)
 plt.close()
 
 #Distance histogram
 plt.figure(6)
-plt.hist(distance,bins=20,range=(0,25),edgecolor='black',color='red',alpha=0.5,label='Simulation')
+plt.hist(distance,bins=20,range=(0,25),edgecolor='black',color='red',alpha=0.5,label='Simulation',zorder=3)
 #plt.hist(d2,bins=20,range=(0,25),edgecolor='black',color='blue',alpha=0.5,label='ATNF data') #Whole pop
-plt.hist(d_selec,bins=20,range=(0,25),edgecolor='black',color='blue',alpha=0.5,label='ATNF data') #Canonical pop
+plt.hist(d_selec,bins=20,range=(0,25),edgecolor='black',color='blue',alpha=0.5,label='ATNF data',zorder=2) #Canonical pop
+plt.hist(dist_dirson22,bins=20,range=(0,25),edgecolor='black',color='green',alpha=0.8,label='Dirson et al. (2022)')
 plt.legend()
+plt.yscale('log')
 plt.xlabel('d (kpc)')
 plt.ylabel('Frequency')
 #plt.title('Distance to earth of the pulsars')
-plt.savefig('histo_dist.png')
+plt.savefig('histo_dist.png',dpi=300)
 plt.close()
 
 #Age histogram
@@ -531,7 +573,7 @@ plt.legend()
 plt.xlabel('Log(age) (age in yr)')
 plt.ylabel('Frequency')
 #plt.title('Histogram of the age of the detected pulsars')
-plt.savefig('histo_age.png')
+plt.savefig('histo_age.png',dpi=300)
 plt.close()
 
 #Latitude histogram
@@ -545,7 +587,7 @@ plt.legend()
 plt.xlabel('Latitude in degrees')
 plt.ylabel('Frequency')
 #plt.title('Histogram of the latitude of the detected pulsars')
-plt.savefig('histo_latitude.png')
+plt.savefig('histo_latitude.png',dpi=300)
 plt.close()
 
 #Log(P) histogram
@@ -553,11 +595,12 @@ plt.figure(9)
 plt.hist(log_P,bins=20,range=(-2,1.5),edgecolor='black',color='red',alpha=0.5,label='Simulation')
 #plt.hist(log_Pa,bins=20,range=(-2,1.5),edgecolor='black',color='blue',alpha=0.5,label='ATNF data') #Whole pop 
 plt.hist(log_P_selec,bins=20,range=(-2,1.5),edgecolor='black',color='blue',alpha=0.5,label='ATNF data') #Canonical pop
+#plt.hist(P_old,bins=20,range=(-2,1.5),edgecolor='black',color='green',alpha=0.5,label='Old pulsars')
 plt.legend()
 plt.xlabel('Log(P) (P in s)')
 plt.ylabel('Frequency')
 #plt.title('Histogram of the rotation period of the detected pulsars')
-plt.savefig('histo_period.png')
+plt.savefig('histo_period.png',dpi=300)
 plt.close()
 
 #Log(P_dot) histogram
@@ -631,7 +674,7 @@ plt.xlabel('spin-velocity angle in degrees')
 plt.ylabel('Frequency')
 plt.yscale('log')
 #plt.title('Histogram of the angle between the velocity vector and the rotation axis of the detected pulsars')
-plt.savefig('histo_spinvelangle.png')
+plt.savefig('histo_spinvelangle.png',dpi=300)
 plt.close()
 
 #Spin-velocity angle (old pulsars) histogram
@@ -664,7 +707,7 @@ plt.yscale('log')
 plt.xlabel('spin-velocity angle in degrees')
 plt.ylabel('Frequency')
 #plt.title('Histogram of the angle between the velocity vector and the rotation axis of the detected pulsars')
-plt.savefig('histo_spinvelangle_young_and_old.png')
+plt.savefig('histo_spinvelangle_young_and_old.png',dpi=300)
 plt.close()
 
 #Plot age=f(spin-vel angle)
