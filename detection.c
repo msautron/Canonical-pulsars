@@ -65,7 +65,6 @@ int distribution(void *params){
 
 double pdf_density_rho(double r){
 
-        //const double kpc2km=3.0856775807e16;
         double A=37.6;double a=1.64;double b=4.01;double R_1=0.55;double R_sun=8.5;
         double rho=A*pow((r+R_1)/(R_sun+R_1),a)*exp(-b*((r-R_sun)/(R_sun+R_1)));
         return rho;
@@ -74,10 +73,16 @@ double pdf_density_rho(double r){
 
 double theta_arms(double r,int choice){
 
-        double k1=4.25;double r0_1=3.48;double theta0_1=1.57; //Norma arm
+	//Faucher-Giguère & Kaspi (2006)
+        /*double k1=4.25;double r0_1=3.48;double theta0_1=1.57; //Norma arm
         double k2=4.25;double r0_2=3.48;double theta0_2=4.71; //Carina-Sagittarius
         double k3=4.89;double r0_3=4.90;double theta0_3=4.09; //Perseus
-        double k4=4.89;double r0_4=4.90;double theta0_4=0.95; //Crux-Scutum
+        double k4=4.89;double r0_4=4.90;double theta0_4=0.95; //Crux-Scutum */
+	//Yao et al. (2017)
+        double k1=4.95;double r0_1=3.35;double theta0_1=0.77; //Norma arm
+        double k2=5.46;double r0_2=3.56;double theta0_2=3.82; //Carina-Sagittarius
+        double k3=5.77;double r0_3=3.71;double theta0_3=2.09; //Perseus
+        double k4=5.37;double r0_4=3.67;double theta0_4=5.76; //Crux-Scutum
         double theta;
         if (choice==1) {theta=k1*log(r/r0_1)+theta0_1;}
         else if (choice==2) {theta=k2*log(r/r0_2)+theta0_2;}
@@ -87,16 +92,19 @@ double theta_arms(double r,int choice){
 
 }
 
-void correction(double *r,double *theta,double *x,double *y){
+void correction(double *r,double *theta,double *x,double *y,double age){
 
         gsl_rng* rng=gsl_rng_alloc(gsl_rng_default);
+	const double yr_sec=365*24*3600;
         double pi=3.14159265358979323846;double arg_exp=0.35*(*r);double sigma_r=0.07*(*r);
+	double omega_MW=(2*pi)/(250e6); //rotation velocity of the Galaxy
         double theta_corr=2*pi*gsl_rng_uniform(rng)*exp(-arg_exp);
+	double theta_corr_2=omega_MW*age/yr_sec;
         double r_corr_1=gsl_ran_gaussian_ziggurat(rng, sigma_r);
 	*x+=r_corr_1;
         double r_corr_2=gsl_ran_gaussian_ziggurat(rng, sigma_r);
         *y+=r_corr_2;
-        *theta+=theta_corr;
+        *theta+=theta_corr+theta_corr_2;
         gsl_rng_free(rng);
 
 }
@@ -170,7 +178,7 @@ void distrib_init_2(void *params){
                         sample=false;
                         choice=(int)(4*gsl_rng_uniform(part->r)+1);
                         theta[np]=theta_arms(r[np],choice);
-                        correction(&r[np],&theta[np],&part->x[np],&part->y[np]);
+                        correction(&r[np],&theta[np],&part->x[np],&part->y[np],part->age_pulsar[np]);
                         p_plus_or_minus_1=gsl_rng_uniform(part->r);
                         if (p_plus_or_minus_1<0.5) {part->y[np]+=r[np]*tan(theta[np])/pow(1.0+pow(tan(theta[np]),2),0.5);part->x[np]+=pow(pow(r[np],2)-pow(part->y[np],2),0.5);}
                         else {part->y[np]+=-r[np]*tan(theta[np])/pow(1.0+pow(tan(theta[np]),2),0.5);part->x[np]+=-pow(pow(r[np],2)-pow(part->y[np],2),0.5);}

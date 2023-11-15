@@ -1,6 +1,6 @@
 double pdf_density_rho(double r);
 double theta_arms(double r,int choice);
-void correction(double *r,double *theta,double *x,double *y);
+void correction(double *r,double *theta,double *x,double *y,double age);
 FILE *kick(void *params);
 int distrib_init(void *params);
 void distrib_init_2(void *params);
