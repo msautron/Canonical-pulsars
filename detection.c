@@ -65,7 +65,8 @@ int distribution(void *params){
 
 double pdf_density_rho(double r){
 
-        double A=37.6;double a=1.64;double b=4.01;double R_1=0.55;double R_sun=8.5;
+        //double A=37.6;double a=1.64;double b=4.01;double R_1=0.55;double R_sun=8.5; // Yusifov & Kucuk (2004)
+	double A=37.6;double a=1.93;double b=5.06;double R_1=0.55;double R_sun=8.5; // Ahlers et al. (2016)
         double rho=A*pow((r+R_1)/(R_sun+R_1),a)*exp(-b*((r-R_sun)/(R_sun+R_1)));
         return rho;
 
