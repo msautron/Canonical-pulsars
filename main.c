@@ -41,6 +41,8 @@ int main(int argc, char **argv){
 
         initialize(argc, argv, &params); //parameters initialization
 
+	srand((unsigned)time(NULL));
+	gsl_rng_set(params.r, time(NULL));
 
 	printf("## birth_rate (yr) %ld \n",params.birth_rate);
 	printf("## sigma_P (s or log(s)) %e \n",params.sigma_p);
@@ -58,8 +60,9 @@ int main(int argc, char **argv){
 	birth(&params); // generates the pulsar with an initial Pinit, Binit and age
         evolution(&params); //calculates P,Pdot and Edot
   
-        // Distribution of the pulsars in the Galaxy        
-	distrib_init(&params); // initial distribution of the pulsars
+        // Distribution of the pulsars in the Galaxy
+	//distrib_init(&params);    // initial distribution of the pulsars    
+	distrib_init_2(&params); // initial distribution of the pulsars, when they are born in spiral arms
 	//distrib_vinit(&params); // Use when you want to run the simulation with the galactic potential
         //evol_galac_PEFRL(&params); // Use when you want to run the simulation with the galactic potential
 	kick(&params);//birth kick velocity // Use when you don't want the galactic potential

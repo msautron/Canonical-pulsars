@@ -11,6 +11,7 @@
 #include<gsl/gsl_randist.h>
 #include<gsl/gsl_sf_gamma.h>
 #include<time.h>
+#include <stdbool.h>
 
 /*
 
@@ -62,6 +63,43 @@ int distribution(void *params){
 
 */
 
+double pdf_density_rho(double r){
+
+        //const double kpc2km=3.0856775807e16;
+        double A=37.6;double a=1.64;double b=4.01;double R_1=0.55;double R_sun=8.5;
+        double rho=A*pow((r+R_1)/(R_sun+R_1),a)*exp(-b*((r-R_sun)/(R_sun+R_1)));
+        return rho;
+
+}
+
+double theta_arms(double r,int choice){
+
+        double k1=4.25;double r0_1=3.48;double theta0_1=1.57; //Norma arm
+        double k2=4.25;double r0_2=3.48;double theta0_2=4.71; //Carina-Sagittarius
+        double k3=4.89;double r0_3=4.90;double theta0_3=4.09; //Perseus
+        double k4=4.89;double r0_4=4.90;double theta0_4=0.95; //Crux-Scutum
+        double theta;
+        if (choice==1) {theta=k1*log(r/r0_1)+theta0_1;}
+        else if (choice==2) {theta=k2*log(r/r0_2)+theta0_2;}
+        else if (choice==3) {theta=k3*log(r/r0_3)+theta0_3;}
+        else if (choice==4) {theta=k4*log(r/r0_4)+theta0_4;}
+        return theta;
+
+}
+
+void correction(double *r,double *theta,double *x,double *y){
+
+        gsl_rng* rng=gsl_rng_alloc(gsl_rng_default);
+        double pi=3.14159265358979323846;double arg_exp=0.35*(*r);double sigma_r=0.07*(*r);
+        double theta_corr=2*pi*gsl_rng_uniform(rng)*exp(-arg_exp);
+        double r_corr_1=gsl_ran_gaussian_ziggurat(rng, sigma_r);
+	*x+=r_corr_1;
+        double r_corr_2=gsl_ran_gaussian_ziggurat(rng, sigma_r);
+        *y+=r_corr_2;
+        *theta+=theta_corr;
+        gsl_rng_free(rng);
+
+}
 
 int distrib_init(void *params){
 
@@ -70,10 +108,9 @@ int distrib_init(void *params){
         struct func_params *part= (struct func_params*)params;
         long np=0;
         double two_pi=2*M_PI;
-	srand((unsigned)time(NULL));
         double phi,R;double p,rng_0_1_d;int rng_0_1;
-
-
+	FILE *save_coord=NULL;
+	save_coord=fopen("save_coord.txt","w+");
 
                 while(np<part->Npulsars){
                         phi            =  two_pi*gsl_rng_uniform(part->r); // galactocentric azimuth uniformly distributed 
@@ -88,16 +125,65 @@ int distrib_init(void *params){
 			part->x[np]= part->x0[np];
 			part->y[np]= part->y0[np];
 			part->z[np]= part->z0[np];
+			fprintf(save_coord,"%e %e\n",part->x[np],part->y[np]);
 //			printf(" %e %e %e %e \n",R,part->x0[np],part->y0[np],part->z0[np]);
                         np++;
 
 
                 }
+		fclose(save_coord);
 
 return(0);
 
 }
 
+void distrib_init_2(void *params){
+
+
+
+        struct func_params *part= (struct func_params*)params;
+        long np=0;
+        double p,rng_0_1_d;int rng_0_1;
+	FILE *save_coord=NULL;
+        int choice=1;
+        bool sample=false;double *r;double pdf_val;double comp_val;double *theta;
+	r=malloc(sizeof(*r)*part->Npulsars);
+        theta=malloc(sizeof(*theta)*part->Npulsars);
+	double p_plus_or_minus_1;
+        save_coord=fopen("save_coord.txt","w+");
+
+                for(np=0;np<part->Npulsars;np++){
+                        part->z0[np]    =  gsl_ran_exponential(part->r,part->zexp); //kpc
+                        rng_0_1=(rand() % 1000000001);rng_0_1_d=rng_0_1;p=rng_0_1_d/1000000000.0;
+                        if(p<0.5) part->z0[np] = part->z0[np];
+                        else if(p>=0.5)  part->z0[np]  = -part->z0[np];
+			part->x[np]=0;
+			part->y[np]=0;
+                        while (sample==false){
+
+                           r[np]=20*gsl_rng_uniform(part->r);
+                           pdf_val=pdf_density_rho(r[np]);
+                           comp_val=37.6*gsl_rng_uniform(part->r);
+                           if (comp_val<=pdf_val) {sample=true;}
+
+                        }
+                        sample=false;
+                        choice=(int)(4*gsl_rng_uniform(part->r)+1);
+                        theta[np]=theta_arms(r[np],choice);
+                        correction(&r[np],&theta[np],&part->x[np],&part->y[np]);
+                        p_plus_or_minus_1=gsl_rng_uniform(part->r);
+                        if (p_plus_or_minus_1<0.5) {part->y[np]+=r[np]*tan(theta[np])/pow(1.0+pow(tan(theta[np]),2),0.5);part->x[np]+=pow(pow(r[np],2)-pow(part->y[np],2),0.5);}
+                        else {part->y[np]+=-r[np]*tan(theta[np])/pow(1.0+pow(tan(theta[np]),2),0.5);part->x[np]+=-pow(pow(r[np],2)-pow(part->y[np],2),0.5);}
+                        fprintf(save_coord,"%e %e\n",part->x[np],part->y[np]);
+                        }
+                        part->x0[np]= part->x[np];
+                        part->y0[np]= part->y[np];
+                        part->z[np]= part->z0[np];
+			fclose(save_coord);
+			free(r);free(theta);
+
+
+                }
 
 
 
@@ -141,7 +227,6 @@ FILE *kick(void *params){
         		v  = sqrt(vx*vx + vy*vy + vz*vz); // is  v really useful??*/
 
 			//Computation of the velocity if we do not ignore the fact above
-			srand((unsigned)time(NULL));
 			cos_theta   =  2*gsl_rng_uniform(part->r)-1;
                         phi         = two_pi*gsl_rng_uniform(part->r);
                         part->n_omega_x[np]=sqrt(1-sq(cos_theta))*cos(phi);

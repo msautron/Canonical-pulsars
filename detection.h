@@ -1,6 +1,9 @@
+double pdf_density_rho(double r);
+double theta_arms(double r,int choice);
+void correction(double *r,double *theta,double *x,double *y);
 FILE *kick(void *params);
-int distribution(void *params);
 int distrib_init(void *params);
+void distrib_init_2(void *params);
 int motion(void *params);
 void spinvel_angle(void *params);
 int detection(void *params);

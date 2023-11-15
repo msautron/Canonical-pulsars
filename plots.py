@@ -258,7 +258,7 @@ R_NS=12000
 mu_0=1.25663706212e-6 
 c_light=2.997924858e8
 P_dot_death,P_dot_death2=[],[]
-P_death=[np.log10(i) for i in np.arange(1e-2,1e1,0.0001)]
+P_death=[np.log10(i) for i in np.arange(1e-2,3e1,0.01)]
 P_death2=[10**(P_death[i]) for i in range(len(P_death))]
 for i in range(len(P_death)):
     P_dot_death+=[3*P_death[i]+np.log10(((16*(np.pi**3)*(R_NS**6)*(1+((np.sin(45*np.pi/180)**2))))*(17000000**2))/(Inertia*mu_0*(c_light**3)))]
@@ -335,22 +335,20 @@ b_max=30
 const=(3.16e-4*(T_6**4)*1e-15)/((eta)**2*b*(np.cos(alpha_l))**2)
 const_min=(3.16e-4*(T_6_min**4)*1e-15)/((eta)**2*b_min*(np.cos(alpha_l_min))**2)
 const_max=(3.16e-4*(T_6_max**4)*1e-15)/((eta)**2*b_max*(np.cos(alpha_l_max))**2)
-P_line=[10**(np.log10(i)) for i in np.arange(1e-2,1e1,0.001)]
-Pdot_line=[10**np.log10(const*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
+P_line=[10**(np.log10(i)) for i in np.arange(1e-2,3e1,0.01)]
+Pdot_line=[10**np.log10(const*(i**2)) for i in np.arange(1e-2,3e1,0.01)]
 Pdot_line4=[Pdot_line[i]*10**(-0.55) for i in range(len(Pdot_line))]
 Pdot_line5=[Pdot_line[i]*10**(0.75) for i in range(len(Pdot_line))]
-Pdot_line2=[10**np.log10(const_min*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
-Pdot_line3=[10**np.log10(const_max*(i**2)) for i in np.arange(1e-2,1e1,0.001)]
+Pdot_line2=[10**np.log10(const_min*(i**2)) for i in np.arange(1e-2,3e1,0.01)]
+Pdot_line3=[10**np.log10(const_max*(i**2)) for i in np.arange(1e-2,3e1,0.01)]
 
 #Plot the death line of the article of Chen & Ruderman (1993)
 const_CR93=10**((43.8-16)/2)*16*(np.pi**3)*(R_NS**6)*(1+(np.sin(alpha_l)**2))/(Inertia*mu_0*(c_light**3))
-P_dot_line_CR93=[10**np.log10(const_CR93*(i**(2))) for i in np.arange(1e-2,1e1,0.001)]
-
-print(P_dot_line_CR93[4000])
+P_dot_line_CR93=[10**np.log10(const_CR93*(i**(2))) for i in np.arange(1e-2,3e1,0.01)]
 
 #Plot the line with the critical magnetic field 4.4e9 T, distinguishing magnetar from canonical pulsars
 B_crit=4.4e9
-B_linecrit=[10**np.log10(((B_crit/B0)**2)*(i**(-1))) for i in np.arange(1e-2,1e1,0.001)]
+B_linecrit=[10**np.log10(((B_crit/B0)**2)*(i**(-1))) for i in np.arange(1e-2,3e1,0.01)]
 
 
 #Check if the pulsars are really acceptable with the ratio B/P^2 - 0.17e8 or with the Pdot of the death of Mitra et al. (2019)
@@ -484,7 +482,7 @@ plt.plot(P_line,Pdot_line,c='green',label='Death line',linestyle='-',linewidth=2
 #plt.plot(P_line,P_dot_line_CR93,c='green',label='Death line',linestyle='-',linewidth=2) #Death line Chen & Ruderman 1993
 #plt.plot(P_line,B_linecrit,c='blue',label='Critical magnetic field line',linestyle='-',linewidth=2)
 plt.fill_between(P_line,Pdot_line4,Pdot_line5,where=condition,facecolor='green',alpha=0.4,label='Death Valley' )
-plt.xlim(1e-2,1e1)
+plt.xlim(1e-2,3e1)
 plt.ylim(1e-20,1e-10)
 plt.yscale('log')
 plt.xscale('log')
@@ -733,6 +731,22 @@ plt.ylabel('Frequency')
 #plt.title("Histogram of the velocities of the detected pulsars in the simulation")
 plt.savefig('histo_BK_velocities.png')
 plt.close()
+
+#with open("save_coord.txt","r") as f:
+#    data_x_y=re.findall(reg_4,f.read())
+
+#x0_pulsar,y0_pulsar=[],[]
+#for i in range(int(len(data_x_y)/2)):
+#    x0_pulsar.append(float(data_x_y[2*i]))
+#    y0_pulsar.append(float(data_x_y[2*i+1]))
+
+#plt.figure(22)
+#plt.xlim(-20,20)
+#plt.ylim(-20,20)
+#plt.scatter(x0_pulsar,y0_pulsar,c='blue',marker='o',s=0.000001,label='positions of pulsars')
+#plt.scatter(x0_pulsar,y0_pulsar,c='blue',marker='*',s=0.0000001,label='positions of pulsars')
+#plt.savefig("initial_positions_pulsars.png",dpi=300)
+#plt.close()
 
 #Death line alone
 #plt.figure(22)
