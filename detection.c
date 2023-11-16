@@ -102,9 +102,9 @@ void correction(double *r,double *theta,double *x,double *y,double age){
         double theta_corr=2*pi*gsl_rng_uniform(rng)*exp(-arg_exp);
 	double theta_corr_2=omega_MW*age/yr_sec;
         double r_corr_1=gsl_ran_gaussian_ziggurat(rng, sigma_r);
-	*x+=r_corr_1;
+	*x=r_corr_1;
         double r_corr_2=gsl_ran_gaussian_ziggurat(rng, sigma_r);
-        *y+=r_corr_2;
+        *y=r_corr_2;
         *theta+=theta_corr+theta_corr_2;
         gsl_rng_free(rng);
 
@@ -158,6 +158,7 @@ void distrib_init_2(void *params){
         bool sample=false;double *r;double pdf_val;double comp_val;double *theta;
 	r=malloc(sizeof(*r)*part->Npulsars);
         theta=malloc(sizeof(*theta)*part->Npulsars);
+	double x_rd;double y_rd;
 	double p_plus_or_minus_1;
         save_coord=fopen("save_coord.txt","w+");
 
@@ -179,10 +180,11 @@ void distrib_init_2(void *params){
                         sample=false;
                         choice=(int)(4*gsl_rng_uniform(part->r)+1);
                         theta[np]=theta_arms(r[np],choice);
-                        correction(&r[np],&theta[np],&part->x[np],&part->y[np],part->age_pulsar[np]);
+                        correction(&r[np],&theta[np],&x_rd,&y_rd,part->age_pulsar[np]);
                         p_plus_or_minus_1=gsl_rng_uniform(part->r);
-                        if (p_plus_or_minus_1<0.5) {part->y[np]+=r[np]*tan(theta[np])/pow(1.0+pow(tan(theta[np]),2),0.5);part->x[np]+=pow(pow(r[np],2)-pow(part->y[np],2),0.5);}
-                        else {part->y[np]+=-r[np]*tan(theta[np])/pow(1.0+pow(tan(theta[np]),2),0.5);part->x[np]+=-pow(pow(r[np],2)-pow(part->y[np],2),0.5);}
+                        if (p_plus_or_minus_1<0.5) {part->y[np]=r[np]*tan(theta[np])/pow(1.0+pow(tan(theta[np]),2),0.5);part->x[np]=pow(pow(r[np],2)-pow(part->y[np],2),0.5);}
+                        else {part->y[np]=-r[np]*tan(theta[np])/pow(1.0+pow(tan(theta[np]),2),0.5);part->x[np]=-pow(pow(r[np],2)-pow(part->y[np],2),0.5);}
+			part->x[np]+=x_rd;part->y[np]+=y_rd;
                         fprintf(save_coord,"%e %e\n",part->x[np],part->y[np]);
                         }
                         part->x0[np]= part->x[np];
