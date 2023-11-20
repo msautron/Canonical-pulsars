@@ -553,7 +553,7 @@ plt.figure(6)
 plt.hist(distance,bins=20,range=(0,25),edgecolor='black',color='red',alpha=0.5,label='Simulation',zorder=3)
 #plt.hist(d2,bins=20,range=(0,25),edgecolor='black',color='blue',alpha=0.5,label='ATNF data') #Whole pop
 plt.hist(d_selec,bins=20,range=(0,25),edgecolor='black',color='blue',alpha=0.5,label='ATNF data',zorder=2) #Canonical pop
-plt.hist(dist_dirson22,bins=20,range=(0,25),edgecolor='black',color='green',alpha=0.8,label='Dirson et al. (2022)')
+#plt.hist(dist_dirson22,bins=20,range=(0,25),edgecolor='black',color='green',alpha=0.8,label='Dirson et al. (2022)')
 plt.legend()
 plt.yscale('log')
 plt.xlabel('d (kpc)')
