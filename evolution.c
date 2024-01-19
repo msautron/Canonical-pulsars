@@ -178,7 +178,8 @@ int evolution(void *params){
 
 			    if(status!=0) sina=sqrt(1-cos2a0);
 
-			    alpha            =   asin(sina);
+			    if (acos(part->cos_a0[np])>M_PI/2) alpha=M_PI-asin(sina);
+			    else alpha            =   asin(sina);
 			    part->alpha[np]  =   alpha;
 			    omega            =   omega_0*(cos2a0*sina)/((sqrt(1-cos2a0))*sq(cos(alpha)));
 			    part->period[np] = two_pi/omega;

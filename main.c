@@ -61,8 +61,8 @@ int main(int argc, char **argv){
         evolution(&params); //calculates P,Pdot and Edot
   
         // Distribution of the pulsars in the Galaxy
-	//distrib_init(&params);    // initial distribution of the pulsars    
-	distrib_init_2(&params); // initial distribution of the pulsars, when they are born in spiral arms
+	distrib_init(&params);    // initial distribution of the pulsars    
+	//distrib_init_2(&params); // initial distribution of the pulsars, when they are born in spiral arms
 	//distrib_vinit(&params); // Use when you want to run the simulation with the galactic potential
         //evol_galac_PEFRL(&params); // Use when you want to run the simulation with the galactic potential
 	kick(&params);//birth kick velocity // Use when you don't want the galactic potential

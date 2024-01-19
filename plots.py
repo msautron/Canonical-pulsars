@@ -335,20 +335,20 @@ b_max=30
 const=(3.16e-4*(T_6**4)*1e-15)/((eta)**2*b*(np.cos(alpha_l))**2)
 const_min=(3.16e-4*(T_6_min**4)*1e-15)/((eta)**2*b_min*(np.cos(alpha_l_min))**2)
 const_max=(3.16e-4*(T_6_max**4)*1e-15)/((eta)**2*b_max*(np.cos(alpha_l_max))**2)
-P_line=[10**(np.log10(i)) for i in np.arange(1e-2,3e1,0.01)]
-Pdot_line=[10**np.log10(const*(i**2)) for i in np.arange(1e-2,3e1,0.01)]
+P_line=[10**(np.log10(i)) for i in np.arange(1e-3,3e1,0.01)]
+Pdot_line=[10**np.log10(const*(i**2)) for i in np.arange(1e-3,3e1,0.01)]
 Pdot_line4=[Pdot_line[i]*10**(-0.55) for i in range(len(Pdot_line))]
 Pdot_line5=[Pdot_line[i]*10**(0.75) for i in range(len(Pdot_line))]
-Pdot_line2=[10**np.log10(const_min*(i**2)) for i in np.arange(1e-2,3e1,0.01)]
-Pdot_line3=[10**np.log10(const_max*(i**2)) for i in np.arange(1e-2,3e1,0.01)]
+Pdot_line2=[10**np.log10(const_min*(i**2)) for i in np.arange(1e-3,3e1,0.01)]
+Pdot_line3=[10**np.log10(const_max*(i**2)) for i in np.arange(1e-3,3e1,0.01)]
 
 #Plot the death line of the article of Chen & Ruderman (1993)
 const_CR93=10**((43.8-16)/2)*16*(np.pi**3)*(R_NS**6)*(1+(np.sin(alpha_l)**2))/(Inertia*mu_0*(c_light**3))
-P_dot_line_CR93=[10**np.log10(const_CR93*(i**(2))) for i in np.arange(1e-2,3e1,0.01)]
+P_dot_line_CR93=[10**np.log10(const_CR93*(i**(2))) for i in np.arange(1e-3,3e1,0.01)]
 
 #Plot the line with the critical magnetic field 4.4e9 T, distinguishing magnetar from canonical pulsars
 B_crit=4.4e9
-B_linecrit=[10**np.log10(((B_crit/B0)**2)*(i**(-1))) for i in np.arange(1e-2,3e1,0.01)]
+B_linecrit=[10**np.log10(((B_crit/B0)**2)*(i**(-1))) for i in np.arange(1e-3,3e1,0.01)]
 
 
 #Check if the pulsars are really acceptable with the ratio B/P^2 - 0.17e8 or with the Pdot of the death of Mitra et al. (2019)
@@ -472,7 +472,7 @@ plt.scatter(P,P_dot,c='red',marker='o',s=5,label='Simulation data',zorder=2)
 #plt.scatter(P2,P_dot2,c='blue',marker='o',s=5,label='ATNF data') #whole pop
 plt.scatter(P_selected,Pdot_selected,c='blue',marker='o',s=5,label='ATNF data : canonical pulsars') #Only canonical pop
 plt.scatter(P_magne,Pdot_magne,c='orange',marker='s',s=5,label='ATNF data : magnetars') #Only magnetars pop
-plt.scatter(P_ms,Pdot_ms,c='purple',marker='^',s=5,label='ATNF data : milliseconds pulsars') #Only ms pop
+plt.scatter(P_ms,Pdot_ms,c='purple',marker='^',s=5,label='ATNF data : millisecond pulsars') #Only ms pop
 #plt.plot(P_line,Pdot_line4,c='green',linestyle='-',linewidth=2)
 #plt.plot(P_line,Pdot_line5,c='green',linestyle='-',linewidth=2)
 #plt.plot(P_line,Pdot_line3,c='brown')
@@ -482,13 +482,13 @@ plt.plot(P_line,Pdot_line,c='green',label='Death line',linestyle='-',linewidth=2
 #plt.plot(P_line,P_dot_line_CR93,c='green',label='Death line',linestyle='-',linewidth=2) #Death line Chen & Ruderman 1993
 #plt.plot(P_line,B_linecrit,c='blue',label='Critical magnetic field line',linestyle='-',linewidth=2)
 plt.fill_between(P_line,Pdot_line4,Pdot_line5,where=condition,facecolor='green',alpha=0.4,label='Death Valley' )
-plt.xlim(1e-2,3e1)
-plt.ylim(1e-20,1e-10)
+plt.xlim(1e-3,3e1)
+plt.ylim(1e-21,1e-10)
 plt.yscale('log')
 plt.xscale('log')
 #plt.title("Spin period derivative - Spin period diagram")
-plt.xlabel('Spin period s')
-plt.ylabel('Spin period derivative s.s^-1')
+plt.xlabel('spin period (s)')
+plt.ylabel('derivative of the spin period (s.s^-1)')
 plt.legend(fontsize='x-small')
 plt.savefig('P_Pdot_plot.png',dpi=300)
 plt.close()
@@ -615,8 +615,8 @@ plt.close()
 
 #cos(alpha0) and cos(alpha) histogram
 plt.figure(11)
-plt.hist(cos_alpha,bins=20,range=(0,1),edgecolor='black',color='red',alpha=0.5,label='cos(alpha)')
-plt.hist(cos_alpha0,bins=20,range=(0,1),edgecolor='black',color='blue',alpha=0.5,label='cos(alpha0)')
+plt.hist(cos_alpha,bins=20,range=(-1,1),edgecolor='black',color='red',alpha=0.5,label='cos(alpha)')
+plt.hist(cos_alpha0,bins=20,range=(-1,1),edgecolor='black',color='blue',alpha=0.5,label='cos(alpha0)')
 plt.legend()
 plt.xlabel('cos(alpha) and cos(alpha0)')
 plt.ylabel('Frequency')

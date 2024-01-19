@@ -379,10 +379,10 @@ int geometry(void *params){ // calculated the geometry of the pulsar (i.e xi, an
 
 
 			/* calculates the width of the radio beam w_r, from eq 22 of our paper */ 
-				if(fabs(alpha-xi)<= rho && alpha >= rho && xi < M_PI/2){ 
+				if(fabs(alpha-xi)<= rho && alpha >= rho){ 
 					ratio=(cos(rho)-cos(alpha)*cos(xi))/(sin(alpha)*sin(xi));
 					part->w_r[np]=2*acos(ratio);
-				} else if(fabs(xi-(M_PI-alpha))<=rho && alpha >= rho && xi > M_PI/2){ 
+				} else if(fabs(xi-(M_PI-alpha))<=rho && alpha >= rho){ 
 					alpha=M_PI-alpha;
 					ratio=(cos(rho)-cos(alpha)*cos(xi))/(sin(alpha)*sin(xi));
 					part->w_r[np]=2*acos(ratio);		
@@ -477,7 +477,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			if (part->NenuFAR==1 ) S_N = part->flux_low_freq[np]/Smin_radio; // nenuphar
 			else S_N = part->Fr[np]/part->Smin[np];
 
-                        if (S_N > S_Nmin) detec = 1;
+                        if (S_N > S_Nmin && part->Smin[np]!=0) detec = 1;//printf("Fr=%e,Smin=%e,w_r=%e\n",part->Fr[np],part->Smin[np],part->w_r[np]);}
 				else detec  = 0;
                  
 
@@ -514,8 +514,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 					} else Smin_gamma=16e-15;
 				//Smin_gamma=5e-12;
                 			if(part->Fg[np]>Smin_gamma) {Ng=1;part->detec[np]=1;part->detec_gam[np]=1; }  
-				}  else continue; 
-
+				}  //else continue; 
 
 				if(Ng==1 && Nr==1){  //both radio and gamma are detected
 				        if (P_dot_line>part->Pdot[np]) {Ng=0;Nr=0;part->detec_rg[np]=0;part->detec[np]=0;part->detec_rad[np]=0;part->detec_gam[np]=0;}
@@ -650,6 +649,7 @@ int radio_flux(void *params){ // returns Smin and radio flux Fr in mJy
 			//part->Smin[np]=0.1;
 			Fj             =  fabs(gsl_ran_gaussian_ziggurat(part->r,0.2)); 
                     	part->Fr[np]   =(9.0/sq(part->dist[np]))*(pow((part->Edot[np]*1e7),0.25)/1e9)*pow(10,Fj); // (From Johnston's paper) in mJy .1e7 to get Edot in erg.s-1
+			//printf("Smin=%e, Fr=%e\n",part->Smin[np],part->Fr[np]);
 			//printf("Fr %e dist %e Edot %e \n",part->Fr[np],part->dist[np],part->Edot[np]);
 			//printf("S_0 %e Smin %e Fr %e sqrt %e wtilde %e P %e \n",S_0,part->Smin[np],part->Fr[np],sqrt(wtilde/((part->period[np])-wtilde)),wtilde,part->period[np]);
 //			printf("S_0 %e Smin %e sqrt %e wtilde %e P %e \n",S_0,part->Smin[np],sqrt(wtilde/((part->period[np])-wtilde)),wtilde,part->period[np]);
