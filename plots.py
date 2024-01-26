@@ -324,21 +324,21 @@ for i in range(len(P)):
 #Plot the death line of the article from Mitra et al. (2019)
 T_6=2
 T_6_max=2.8
-T_6_min=1.9
+T_6_min=1.0
 eta=0.15
 alpha_l=45*np.pi/180
-alpha_l_max=50*np.pi/180
+alpha_l_max=65*np.pi/180
 alpha_l_min=0*np.pi/180
 b=40
-b_min=60
+b_min=80
 b_max=30
 const=(3.16e-4*(T_6**4)*1e-15)/((eta)**2*b*(np.cos(alpha_l))**2)
 const_min=(3.16e-4*(T_6_min**4)*1e-15)/((eta)**2*b_min*(np.cos(alpha_l_min))**2)
 const_max=(3.16e-4*(T_6_max**4)*1e-15)/((eta)**2*b_max*(np.cos(alpha_l_max))**2)
 P_line=[10**(np.log10(i)) for i in np.arange(1e-3,3e1,0.01)]
 Pdot_line=[10**np.log10(const*(i**2)) for i in np.arange(1e-3,3e1,0.01)]
-Pdot_line4=[Pdot_line[i]*10**(-0.55) for i in range(len(Pdot_line))]
-Pdot_line5=[Pdot_line[i]*10**(0.75) for i in range(len(Pdot_line))]
+Pdot_line4=[Pdot_line[i]*10**(-1.80) for i in range(len(Pdot_line))]
+Pdot_line5=[Pdot_line[i]*10**(1.15) for i in range(len(Pdot_line))]
 Pdot_line2=[10**np.log10(const_min*(i**2)) for i in np.arange(1e-3,3e1,0.01)]
 Pdot_line3=[10**np.log10(const_max*(i**2)) for i in np.arange(1e-3,3e1,0.01)]
 
@@ -432,6 +432,15 @@ print(f"Number of radio pulsars : {count_rad}")
 print(f"Number of gamma pulsars : {count_gam}")
 print(f"Number of radio-gamma pulsars : {count_radgam}")
 
+histSIM,xsim_edges,ysim_edges=np.histogram2d(log_P,log_Pdot,bins=(20,20))
+histobs,xobs_edges,yobs_edges=np.histogram2d(log_P_selec,log_Pdot_selec,bins=(20,20))
+histSIM=np.rot90(histSIM)
+#histSIM=np.rot90(histSIM)
+histobs=np.rot90(histobs)
+#histobs=np.rot90(histobs)
+
+hist_diff=(histSIM-histobs)/((histSIM+histobs)**0.5)
+
 #Make the plots
 #test
 #plt.figure(12)
@@ -482,8 +491,8 @@ plt.plot(P_line,Pdot_line,c='green',label='Death line',linestyle='-',linewidth=2
 #plt.plot(P_line,P_dot_line_CR93,c='green',label='Death line',linestyle='-',linewidth=2) #Death line Chen & Ruderman 1993
 #plt.plot(P_line,B_linecrit,c='blue',label='Critical magnetic field line',linestyle='-',linewidth=2)
 plt.fill_between(P_line,Pdot_line4,Pdot_line5,where=condition,facecolor='green',alpha=0.4,label='Death Valley' )
-plt.xlim(1e-3,3e1)
-plt.ylim(1e-21,1e-10)
+plt.xlim(1e-2,3e1)
+plt.ylim(1e-20,1e-10)
 plt.yscale('log')
 plt.xscale('log')
 #plt.title("Spin period derivative - Spin period diagram")
@@ -491,6 +500,19 @@ plt.xlabel('spin period (s)')
 plt.ylabel('derivative of the spin period (s.s^-1)')
 plt.legend(fontsize='x-small')
 plt.savefig('P_Pdot_plot.png',dpi=300)
+plt.close()
+
+#2D histogram P-Pdot
+plt.figure(31)
+#plt.figure(figsize=(6,6))
+plt.imshow((histSIM-histobs)/((histSIM+histobs)**0.5),extent=[-2, 1.5, -18.5, -11], cmap='RdBu',aspect='auto')
+#plt.hist2d(xsim_edges[:-1],ysim_edges[:-1],bins=(xsim_edges,ysim_edges),cmap='RdBu',weights=hist_diff.flatten())
+#plt.hist2d(log_P,log_Pdot,bins=(30,30),range=((-2,1.5),(-20,-10)),cmap='twilight')
+plt.colorbar()
+#plt.gca().set_aspect('equal')
+plt.xlabel('Log P (P in s)')
+plt.ylabel('Log Pdot (Pdot in s.s^-1)')
+plt.savefig('2D P_Pdot_plot.png',dpi=300)
 plt.close()
 
 #P-Pdot plot radio pulsars only 

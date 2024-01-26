@@ -35,6 +35,7 @@ int birth(void *params){//generates Npulsars with an initial period, B and age
 
                         part->Binit[np]=pow(10,log10(part->b_mean)+gsl_ran_gaussian_ziggurat(part->r,part->sigma_b));
 	//	        printf("%e %e %e %ld \n",part->Binit[np],part->Pinit[np],part->age_pulsar[np],np);
+		        //part->age_pulsar[np]=13.8e9*gsl_rng_uniform(part->r)*365*24*3600;
 		        part->age_pulsar[np]  =   part->birth_rate*np*365*24*3600; //s          
 
 /* would be better to print in a file to save time */
