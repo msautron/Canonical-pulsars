@@ -25,7 +25,7 @@ void initialize(int argc, char *argv[], void *params){
          part->Npulsars         =  	10000000;
          //part->Npulsars         =  	10000;
 	 part->k_tau0_B0        =       5;
-         part->birth_rate	= 	70;
+         part->birth_rate	= 	50;
          part->b_mean		= 	2.5e8; //Tesla usual value used 
 	 //part->b_mean           =       275422870.33381635; //Tesla, value used in Igoshev et al. (2022)
          //part->p_mean		= 	60e-3;// usual value used in seconds (normal distribution)
@@ -47,8 +47,11 @@ void initialize(int argc, char *argv[], void *params){
   //       part->n_init=0.;
          }
 
-     
-       part->tau0_B0            = 	part->k_tau0_B0*7e4*pow(3e8,part->alpha_d)*365*24*3600; //from Vigano
+    
+       
+       part->tau0_B0            =       part->k_tau0_B0*2e6*pow(1e9,part->alpha_d)*365*24*3600; //from Vigano
+       part->tau0_B0_2          =       part->k_tau0_B0*1e5*pow(5e8,part->alpha_d)*365*24*3600; //from Vigano
+       part->tau0_B0_3          = 	part->k_tau0_B0*2e5*pow(1e8,part->alpha_d)*365*24*3600; //from Vigano
        part->R			=	12000;//m
        part->zexp               =	0.075; // kpc
        part->Rexp		=	4.5; //kpc

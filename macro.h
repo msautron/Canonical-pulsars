@@ -71,6 +71,8 @@ struct func_params{
         double *cos_a0; //a0= initial inclination angle
  	double tau_MHD_al;
  	double tau0_B0;
+	double tau0_B0_2;
+	double tau0_B0_3;
 	long k_tau0_B0;
  	double alpha_d; // dB/dt = -a B^(1+alpha_d)
 	double tau_vac_al;

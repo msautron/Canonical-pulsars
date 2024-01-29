@@ -116,8 +116,11 @@ int evolution(void *params){
 		double cos2a0     =    cosa0*cosa0 ;
 		omega_0           =    two_pi/(part->Pinit[np]);
 		part->tau_MHD_al  =    tau_0*(1.0-cos2a0)/(cos2a0*cos2a0);
-		part->tau_vac_al  =    1.5*tau_0 / cos2a0 ;
-                part->tau_d       =    part->tau0_B0*pow(part->Binit[np],-part->alpha_d);
+		part->tau_vac_al  =    1.5*tau_0 / cos2a0;
+		double pdecay     =    gsl_rng_uniform(part->r);
+                if (pdecay< 0.3) part->tau_d       =    part->tau0_B0*pow(part->Binit[np],-part->alpha_d);
+		else if (pdecay>= 0.3 && pdecay <0.5) part->tau_d       =    part->tau0_B0_2*pow(part->Binit[np],-part->alpha_d);
+		else if (pdecay>= 0.5) part->tau_d       =    part->tau0_B0_3*pow(part->Binit[np],-part->alpha_d);
 
 			if(part->ff_evol){  	//evolution of the angle alpha in the MHD case
   				double x_lo = 1.0e-17, x_hi = sqrt(1-cos2a0);
