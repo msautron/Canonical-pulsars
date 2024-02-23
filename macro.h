@@ -2,6 +2,7 @@
 #define _MACRO_DEFINED
 #include<gsl/gsl_rng.h>
 #include<gsl/gsl_randist.h>
+#include<stdbool.h>
 #define cube(a) ((a)*(a)*(a))
 #define maximum(a,b) ((a)>(b)?(a):(b))
 #define minimum(a,b) ((a)<(b)?(a):(b))
@@ -73,6 +74,7 @@ struct func_params{
  	double tau0_B0;
 	double tau0_B0_2;
 	double tau0_B0_3;
+	//double tau0_B0_4;
 	long k_tau0_B0;
  	double alpha_d; // dB/dt = -a B^(1+alpha_d)
 	double tau_vac_al;
