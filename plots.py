@@ -32,26 +32,26 @@ with open("P_Pdot_positions.txt","r") as f:
 with open("P_Pdot_positions.txt","r") as f:
     data_type=re.findall(reg_2,f.read())
 
-with open("xy_coord_dirson22.dat","r") as f :
-    data1_dirson22=re.findall(reg_4,f.read())
+#with open("xy_coord_dirson22.dat","r") as f :
+#    data1_dirson22=re.findall(reg_4,f.read())
 
-with open("glat_dirson22.dat","r") as f :
-    data2_dirson22=re.findall(reg_4,f.read())
+#with open("glat_dirson22.dat","r") as f :
+#    data2_dirson22=re.findall(reg_4,f.read())
 
-with open("dist_dirson22.dat","r") as f:
-    data3_dirson22=re.findall(reg_4,f.read())
+#with open("dist_dirson22.dat","r") as f:
+#    data3_dirson22=re.findall(reg_4,f.read())
 
 #Get the data from Dirson et al. (2022) for xy coord and latitude
-x_dirson22,y_dirson22,lat_dirson22,dist_dirson22=[],[],[],[]
-for i in range(int(len(data1_dirson22)/2)):
-    x_dirson22.append(float(data1_dirson22[2*i]))
-    y_dirson22.append(float(data1_dirson22[2*i+1]))
+#x_dirson22,y_dirson22,lat_dirson22,dist_dirson22=[],[],[],[]
+#for i in range(int(len(data1_dirson22)/2)):
+#    x_dirson22.append(float(data1_dirson22[2*i]))
+#    y_dirson22.append(float(data1_dirson22[2*i+1]))
 
-for i in range(int(len(data2_dirson22))):
-    lat_dirson22.append(float(data2_dirson22[i]))
+#for i in range(int(len(data2_dirson22))):
+#    lat_dirson22.append(float(data2_dirson22[i]))
 
-for i in range(int(len(data3_dirson22))):
-    dist_dirson22.append(float(data3_dirson22[i]))
+#for i in range(int(len(data3_dirson22))):
+#    dist_dirson22.append(float(data3_dirson22[i]))
 
 #with open("verif_lognorm.txt","r") as f:
 #    data_lognorm=re.findall(reg_4,f.read())
@@ -432,8 +432,8 @@ print(f"Number of radio pulsars : {count_rad}")
 print(f"Number of gamma pulsars : {count_gam}")
 print(f"Number of radio-gamma pulsars : {count_radgam}")
 
-histSIM,xsim_edges,ysim_edges=np.histogram2d(log_P,log_Pdot,bins=(30,30))
-histobs,xobs_edges,yobs_edges=np.histogram2d(log_P_selec,log_Pdot_selec,bins=(30,30))
+histSIM,xsim_edges,ysim_edges=np.histogram2d(log_P,log_Pdot,bins=(20,20))
+histobs,xobs_edges,yobs_edges=np.histogram2d(log_P_selec,log_Pdot_selec,bins=(20,20))
 histSIM=np.rot90(histSIM)
 #histSIM=np.rot90(histSIM)
 histobs=np.rot90(histobs)
@@ -588,7 +588,7 @@ plt.close()
 #Positions plot
 plt.figure(5)
 plt.scatter(x,y,s=2,c='red',alpha=0.4,label='Simulation data',zorder=2)
-plt.scatter(y_dirson22,x_dirson22,s=2,c='green',alpha=0.7,label='Dirson et al.(2022)')
+#plt.scatter(y_dirson22,x_dirson22,s=2,c='green',alpha=0.7,label='Dirson et al.(2022)')
 #plt.scatter(x2,y2,s=2,c='blue',alpha=0.5,label='ATNF data') #Whole pop
 plt.scatter(x_selec,y_selec,s=2,c='blue',alpha=0.5,label='ATNF data') #Canonical pop
 plt.scatter([0],[8.5],c='yellow',marker='o',s=20,label='The Sun',zorder=3) #position of the sun
@@ -630,7 +630,7 @@ plt.close()
 #Latitude histogram
 plt.figure(8)
 plt.hist(latitude,bins=20,range=(-60,60),edgecolor='black',color='red',alpha=0.5,label='Simulation',zorder=3)
-plt.hist(lat_dirson22,bins=20,range=(-60,60),edgecolor='black',color='green',alpha=0.5,label='Dirson et al.(2022)',zorder=1)
+#plt.hist(lat_dirson22,bins=20,range=(-60,60),edgecolor='black',color='green',alpha=0.5,label='Dirson et al.(2022)',zorder=1)
 #plt.hist(latitude2,bins=20,range=(-60,60),edgecolor='black',color='blue',alpha=0.5,label='ATNF data',zorder=2) #Whole pop
 plt.hist(latitude_selec,bins=20,range=(-60,60),edgecolor='black',color='blue',alpha=0.5,label='ATNF data',zorder=2) #Canonical pop
 plt.yscale('log')

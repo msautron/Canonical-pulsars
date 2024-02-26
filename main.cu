@@ -130,7 +130,7 @@ __global__ void evol_galac_PEFRL(double *gx,double *gy,double *gz, double *gvx,d
     //for(np=start;np<end;np++){
     while(count<size){
 
-       printf("Count=%d\n",count);
+       //printf("Count=%d\n",count);
        if (count%2==0) np=(long)((idx*size+count)/2);
        else if (count%2==1) np=(long)(10000000-((idx*size+count+1)/2));
 

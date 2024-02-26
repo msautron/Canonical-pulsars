@@ -352,7 +352,8 @@ int geometry(void *params){ // calculated the geometry of the pulsar (i.e xi, an
            	for (np=0;np<Npulsars;np++){ 
 
 			part->np       = np;
-                        alpha          = part->alpha[np]; // just to make it easier to read                         
+                        if (part->alpha[np]<=M_PI/2) alpha=part->alpha[np]; // just to make it easier to read    
+                        else if (part->alpha[np]>M_PI/2) alpha=M_PI-part->alpha[np];			
 			//rho            = 3*sqrt(M_PI*hem/(2*part->period[np]*SI_C)); // replace by a numeric value
 			rho            = k/sqrt(part->period[np]); // 3*sqrt((PI*hem)/2*P*c) Equation 2 of Johnston et al. (2020)
 			part->rho[np]  = rho;
@@ -375,6 +376,8 @@ int geometry(void *params){ // calculated the geometry of the pulsar (i.e xi, an
 			/* angle between vectors n and n_omega	*/
 		        xi=acos(part->n_omega_x[np]*n[0]+part->n_omega_y[np]*n[1]+part->n_omega_z[np]*n[2]); 
 			part->xi[np]=xi;
+			if (part->xi[np]<=M_PI/2) xi=part->xi[np]; // just to make it easier to read
+                        else if (part->xi[np]>M_PI/2) xi=M_PI-part->xi[np];
 
 
 
@@ -383,7 +386,7 @@ int geometry(void *params){ // calculated the geometry of the pulsar (i.e xi, an
 					ratio=(cos(rho)-cos(alpha)*cos(xi))/(sin(alpha)*sin(xi));
 					part->w_r[np]=2*acos(ratio);
 				} else if(fabs(xi-(M_PI-alpha))<=rho && alpha >= rho){ 
-					alpha=M_PI-alpha;
+					//alpha=M_PI-alpha;
 					ratio=(cos(rho)-cos(alpha)*cos(xi))/(sin(alpha)*sin(xi));
 					part->w_r[np]=2*acos(ratio);		
 				}	
@@ -460,7 +463,9 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			//P_dot_line=(pow(part->period[np],3)*sq(0.17e8)*16*pow(M_PI,3)*pow(R_NS,6)*(1+sq(sin(alpha_l))))/(SI_I*SI_mu0*pow(SI_C,3)); //death line Ruderman & Sutherland 1975
 			//P_dot_line=(sq(part->period[np])*pow(10,13.9)*16*pow(M_PI,3)*pow(R_NS,6)*(1+sq(sin(alpha_l))))/(SI_I*SI_mu0*pow(SI_C,3)); death line Chen & Ruderman 1993
 			rho=part->rho[np];
-			alpha=part->alpha[np];
+			//alpha=part->alpha[np];
+			if (part->alpha[np]<=M_PI/2) alpha=part->alpha[np]; // just to make it easier to read
+                        else if (part->alpha[np]>M_PI/2) alpha=M_PI-part->alpha[np];
 			P_dot_line=(3.16e-4*pow(T6,4)*sq(part->period[np])*1e-15)/(sq(eta)*b*sq(cos(alpha_l)));
 			if (P_dot_line/part->Pdot[np] >= pow(10,-0.55) && P_dot_line/part->Pdot[np] <= pow(10,1.15)) {
 				alpha_l2=65*(M_PI/180)*gsl_rng_uniform(part->r);
