@@ -91,6 +91,7 @@ int evolution(void *params){
         double height_pi2 =  8*M_PI*M_PI;   
         //double k1 = 5.277e-33 ; // en 1/s (8*M_PI*pow(part->R,6))/(3*SI_mu0*cube(SI_C)*SI_I);
 	double k1 = 7.388120797268824e-33; // en 1/s (8*M_PI*pow(part->R,6))/(3*SI_mu0*cube(SI_C)*SI_I);
+	double k2 = pow(R_NS,6.0)/(SI_I*cube(SI_C)); //R^6/Ic^3
         double tau_0;
         double sina; 
         double alpha;
@@ -120,11 +121,11 @@ int evolution(void *params){
 		double pdecay     =    gsl_rng_uniform(part->r);
 		/*part->tau0_B0     =    part->k_tau0_B0*exp(log(1e7-1e5)*pdecay+log(1e5))*pow(2.5e8,part->alpha_d)*365*24*3600; //from Vigano
 		part->tau_d       =    part->tau0_B0*pow(part->Binit[np],-part->alpha_d);*/
-                if (pdecay< 0.1) part->tau_d       =    part->tau0_B0*pow(part->Binit[np],-part->alpha_d);
-		else if (pdecay>= 0.1 && pdecay <0.4) {
+                if (pdecay< 0.31) part->tau_d       =    part->tau0_B0*pow(part->Binit[np],-part->alpha_d);
+		else if (pdecay>= 0.31 && pdecay <0.55) {
 			part->tau_d       =    part->tau0_B0_2*pow(part->Binit[np],-part->alpha_d);
 		}
-		else if (pdecay>= 0.4) part->tau_d       =    part->tau0_B0_3*pow(part->Binit[np],-part->alpha_d);
+		else if (pdecay>= 0.55) part->tau_d       =    part->tau0_B0_3*pow(part->Binit[np],-part->alpha_d);
 		//else if (pdecay>=0.8) part->tau_d       =    part->tau0_B0_4*pow(part->Binit[np],-part->alpha_d);
 
 			if(part->ff_evol){  	//evolution of the angle alpha in the MHD case

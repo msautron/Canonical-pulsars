@@ -112,7 +112,7 @@ __device__ void phi_kepler(double *gx,double *gy,double *gz,double phi_k[3],int 
 
 }
 
-__global__ void evol_galac_PEFRL(double *gx,double *gy,double *gz, double *gvx,double *gvy,double *gvz,double *gage_pulsar,int *gsize,double *error_rel,double *gtmilky){ //PEFRL integration scheme
+__global__ void evol_galac_PEFRL(double *gx,double *gy,double *gz, double *gvx,double *gvy,double *gvz,double *gage_pulsar,int *gsize,double *error_rel,double *gtmilky,double *ggl,double *ggb){ //PEFRL integration scheme
 
     const double yr_sec=365*24*3600;int np;
     double step;
@@ -126,13 +126,14 @@ __global__ void evol_galac_PEFRL(double *gx,double *gy,double *gz, double *gvx,d
     int size=*gsize;
     int start=idx*size;int end=start+size;
     int count=0;
+    double x_s;double y_s;double dist;double z_s;
     //printf("Bonjour I'm thread %d in block %d, with absolute %d\n",threadIdx.x,blockIdx.x,idx);
     //for(np=start;np<end;np++){
     while(count<size){
 
        //printf("Count=%d\n",count);
        if (count%2==0) np=(long)((idx*size+count)/2);
-       else if (count%2==1) np=(long)(10000000-((idx*size+count+1)/2));
+       else if (count%2==1) np=(long)(1000000-((idx*size+count+1)/2));
 
        //printf("Computation for pulsar nb=%d in thread %d in block %d, with absolute %d\n",np,threadIdx.x,blockIdx.x,idx);
        //No dimension for the variables
@@ -257,6 +258,34 @@ __global__ void evol_galac_PEFRL(double *gx,double *gy,double *gz, double *gvx,d
       gx[np]=gx[np]*L0;gy[np]=gy[np]*L0;gz[np]=gz[np]*L0;
       gvx[np]=gvx[np]*v0;gvy[np]=gvy[np]*v0;gvz[np]=gvz[np]*v0;
 
+      x_s= gx[np]; // shift center of the Galaxy to the Sun
+      y_s= gy[np]-8.5;
+      z_s= gz[np]-0.015;
+      dist= sqrt(sq(x_s)+sq(y_s)+sq(z_s));
+      double r= sqrt(sq(x_s)+sq(y_s));
+      double gbr;double glr;double RAD=180/M_PI;
+      if(dist<1e-15){
+      		gbr=0;
+                }
+      else{
+                gbr=asin(z_s/dist);
+                }
+      ggb[np]=gbr*RAD;
+
+      if(r<1e-15){
+                glr=0;
+                  }
+      else{
+                if(x_s>=0){
+                      glr=acos(-y_s/r);
+                      }
+                else{
+                      glr=acos(y_s/r)+M_PI;
+                    }
+                }
+
+      ggl[np]=glr*RAD;
+
       count+=1;
     }
     printf("The thread %d in block %d, with absolute %d has finished\n",threadIdx.x,blockIdx.x,idx);
@@ -308,12 +337,12 @@ int main(int argc, char **argv){
         evolution(&params); //calculates P,Pdot and Edot
   
         // Distribution of the pulsars in the Galaxy
-	distrib_init(&params);    // initial distribution of the pulsars    
-	//distrib_init_2(&params); // initial distribution of the pulsars, when they are born in spiral arms
+	//distrib_init(&params);    // initial distribution of the pulsars    
+	distrib_init_2(&params); // initial distribution of the pulsars, when they are born in spiral arms
 	distrib_vinit(&params); // Use when you want to run the simulation with the galactic potential
 	
-	double *gvx;double *gvy;double *gvz;double *gx;double *gy;double *gz;double *gage_pulsar;int *gsize;double *error_rel;double *gtmilky;
-	double *x_bis;double *y_bis;double *z_bis;double *vx_bis;double *vy_bis;double *vz_bis;double *error_bis;double tmilky;
+	double *gvx;double *gvy;double *gvz;double *gx;double *gy;double *gz;double *gage_pulsar;int *gsize;double *error_rel;double *gtmilky;double *ggl;double *ggb;
+	double *x_bis;double *y_bis;double *z_bis;double *vx_bis;double *vy_bis;double *vz_bis;double *error_bis;double *gl_bis;double *gb_bis;double tmilky;
 	const double yr_sec=365*24*3600;tmilky=TMILKY*yr_sec;
 	int size=params.Npulsars/(NBLOCK*NTHREAD);
         cudaMalloc((void**)&gvx,sizeof(double)*params.Npulsars);
@@ -322,6 +351,8 @@ int main(int argc, char **argv){
 	cudaMalloc((void**)&gx,sizeof(double)*params.Npulsars);
  	cudaMalloc((void**)&gy,sizeof(double)*params.Npulsars);
 	cudaMalloc((void**)&gz,sizeof(double)*params.Npulsars);
+	cudaMalloc((void**)&ggl,sizeof(double)*params.Npulsars);
+	cudaMalloc((void**)&ggb,sizeof(double)*params.Npulsars);
 	cudaMalloc((void**)&gage_pulsar,sizeof(double)*params.Npulsars);
 	cudaMalloc((void**)&gsize,sizeof(int));
 	cudaMalloc((void**)&error_rel,sizeof(double)*params.Npulsars);
@@ -334,6 +365,8 @@ int main(int argc, char **argv){
 	vy_bis=(double *)calloc(params.Npulsars,sizeof(double));
 	vz_bis=(double *)calloc(params.Npulsars,sizeof(double));
 	error_bis=(double *)calloc(params.Npulsars,sizeof(double));
+	gl_bis=(double *)calloc(params.Npulsars,sizeof(double));
+	gb_bis=(double *)calloc(params.Npulsars,sizeof(double));
 
         cudaMemcpy(gvx,params.vx,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
 	cudaMemcpy(gvy,params.vy,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
@@ -341,22 +374,26 @@ int main(int argc, char **argv){
 	cudaMemcpy(gx,params.x,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
 	cudaMemcpy(gy,params.y,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
 	cudaMemcpy(gz,params.z,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
+	cudaMemcpy(ggl,params.gl,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
+	cudaMemcpy(ggb,params.gb,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
 	cudaMemcpy(gage_pulsar,params.age_pulsar,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
 	cudaMemcpy(gsize,&size,sizeof(int),cudaMemcpyHostToDevice);
 	cudaMemcpy(gtmilky,&tmilky,sizeof(double),cudaMemcpyHostToDevice);
 
-        evol_galac_PEFRL<<<dimgrid,dimblock>>>(gx,gy,gz,gvx,gvy,gvz,gage_pulsar,gsize,error_rel,gtmilky); // Use when you want to run the simulation with the galactic potential
+        evol_galac_PEFRL<<<dimgrid,dimblock>>>(gx,gy,gz,gvx,gvy,gvz,gage_pulsar,gsize,error_rel,gtmilky,ggl,ggb); // Use when you want to run the simulation with the galactic potential
 	cudaDeviceSynchronize();
 
 	cudaMemcpy(x_bis,gx,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
 	cudaMemcpy(y_bis,gy,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
 	cudaMemcpy(z_bis,gz,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
+	cudaMemcpy(gl_bis,ggl,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
+	cudaMemcpy(gb_bis,ggb,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
 	cudaMemcpy(vx_bis,gvx,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
 	cudaMemcpy(vy_bis,gvy,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
 	cudaMemcpy(vz_bis,gvz,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
 	cudaMemcpy(error_bis,error_rel,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
 
-	cudaFree(gvx);cudaFree(gvy);cudaFree(gvz);cudaFree(gx);cudaFree(gy);cudaFree(gz);cudaFree(gage_pulsar);cudaFree(gsize);cudaFree(error_rel);cudaFree(gtmilky);
+	cudaFree(gvx);cudaFree(gvy);cudaFree(gvz);cudaFree(gx);cudaFree(gy);cudaFree(gz);cudaFree(gage_pulsar);cudaFree(gsize);cudaFree(error_rel);cudaFree(gtmilky);cudaFree(ggb);cudaFree(ggl);
 
 	for (int i=0;i<params.Npulsars;i++){
 		params.x[i]=x_bis[i];
@@ -366,35 +403,15 @@ int main(int argc, char **argv){
 		params.vy[i]=vy_bis[i];
 		params.vz[i]=vz_bis[i];
 		params.err_rel_g[i]=error_bis[i];
+		params.gl[i]=gl_bis[i];
+		params.gb[i]=gb_bis[i];
 
                 params.x_s[i]= params.x[i]; // shift center of the Galaxy to the Sun
                 params.y_s[i]= params.y[i]-8.5;
                 params.z_s[i]= params.z[i]-0.015;
                 params.dist[i]= sqrt(sq(params.x_s[i])+sq(params.y_s[i])+sq(params.z_s[i]));
-                double r= sqrt(sq(params.x_s[i])+sq(params.y_s[i]));
-	        double gbr;double glr;double RAD=180/M_PI;
-                if(params.dist[i]<1e-15){
-                   gbr=0;
-                }else{
-                   gbr=asin(params.z_s[i]/params.dist[i]);
-                }
-                params.gb[i]=gbr*RAD;
-
-                if(r<1e-15){
-                   glr=0;
-                  }
-                else{
-                    if(params.x_s[i]>=0){
-                         glr=acos(-params.y_s[i]/r);
-                                 }
-                    else{
-                         glr=acos(params.y_s[i]/r)+M_PI;
-                    }
-                }
-
-                params.gl[i]=glr*RAD;
 	}
-	free(x_bis);free(y_bis);free(z_bis);free(vx_bis);free(vy_bis);free(vz_bis);free(error_bis);
+	free(x_bis);free(y_bis);free(z_bis);free(vx_bis);free(vy_bis);free(vz_bis);free(error_bis);free(gl_bis);free(gb_bis);
 	cudaStatus = cudaGetLastError();
         if (cudaStatus != cudaSuccess) {
                 fprintf(stderr, "Erreur CUDA : %s\n", cudaGetErrorString(cudaStatus));
@@ -411,6 +428,7 @@ int main(int argc, char **argv){
 
 	/* Detection */
 	geometry(&params); // calculates the angles xi and w_r
+	pulse_profile_complete(&params); //Computes the pulse profile taking into account the DM + scattering + instrument
 	radio_flux(&params); //calculates the radio flux of each pulsar
 	gamma_flux(&params); //idem for gamma flux
 	radio_flux_low_freq(&params);

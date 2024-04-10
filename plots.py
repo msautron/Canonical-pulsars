@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import re
 from mpl_toolkits import mplot3d
+from scipy.stats import kstest
+from scipy.stats import mannwhitneyu
 
 #Variable initialization
 P,P_dot,x,y,age,error,type_pulsar,distance,latitude,longitude,cos_alpha0,cos_alpha,Bf,z,vx,vy,vz,vx0,vy0,vz0,PA=[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[] #Refers to the simulation data
@@ -35,23 +37,23 @@ with open("P_Pdot_positions.txt","r") as f:
 #with open("xy_coord_dirson22.dat","r") as f :
 #    data1_dirson22=re.findall(reg_4,f.read())
 
-#with open("glat_dirson22.dat","r") as f :
-#    data2_dirson22=re.findall(reg_4,f.read())
+with open("glat_dirson22.dat","r") as f :
+    data2_dirson22=re.findall(reg_4,f.read())
 
-#with open("dist_dirson22.dat","r") as f:
-#    data3_dirson22=re.findall(reg_4,f.read())
+with open("dist_dirson22.dat","r") as f:
+    data3_dirson22=re.findall(reg_4,f.read())
 
 #Get the data from Dirson et al. (2022) for xy coord and latitude
-#x_dirson22,y_dirson22,lat_dirson22,dist_dirson22=[],[],[],[]
+x_dirson22,y_dirson22,lat_dirson22,dist_dirson22=[],[],[],[]
 #for i in range(int(len(data1_dirson22)/2)):
 #    x_dirson22.append(float(data1_dirson22[2*i]))
 #    y_dirson22.append(float(data1_dirson22[2*i+1]))
 
-#for i in range(int(len(data2_dirson22))):
-#    lat_dirson22.append(float(data2_dirson22[i]))
+for i in range(int(len(data2_dirson22))):
+    lat_dirson22.append(float(data2_dirson22[i]))
 
-#for i in range(int(len(data3_dirson22))):
-#    dist_dirson22.append(float(data3_dirson22[i]))
+for i in range(int(len(data3_dirson22))):
+    dist_dirson22.append(float(data3_dirson22[i]))
 
 #with open("verif_lognorm.txt","r") as f:
 #    data_lognorm=re.findall(reg_4,f.read())
@@ -237,6 +239,16 @@ for i in range(int(len(data)/20)):
     vy0+=[data[20*i+17]] #Velocity on the y-absciss of the pulsar initially, in km/s
     vz0+=[data[20*i+18]] #Velocity on the z-absciss of the pulsar initially, in km/s
     PA+=[(180/np.pi)*np.arccos(data[20*i+19])]
+
+P_new,P_dot_new,age_new=[],[],[]
+log_P_new,log_P_dot_new=[],[]
+for i in range(len(P)):
+    if age[i]<5e7*365*24*3600:
+        P_new+=[P[i]]
+        P_dot_new+=[P_dot[i]]
+        age_new+=[age[i]]
+        log_P_new+=[np.log10(P_new[i])]
+        log_P_dot_new+=[np.log10(P_dot_new[i])]
 
 #Edot computation 
 Edot=[]
@@ -432,6 +444,7 @@ print(f"Number of radio pulsars : {count_rad}")
 print(f"Number of gamma pulsars : {count_gam}")
 print(f"Number of radio-gamma pulsars : {count_radgam}")
 
+#Make histograms to prepare for the 2D plot of comparison with observations
 histSIM,xsim_edges,ysim_edges=np.histogram2d(log_P,log_Pdot,bins=(20,20))
 histobs,xobs_edges,yobs_edges=np.histogram2d(log_P_selec,log_Pdot_selec,bins=(20,20))
 histSIM=np.rot90(histSIM)
@@ -443,8 +456,92 @@ hist_diff=((histSIM/len(log_P))-(histobs/len(log_P_selec)))/(((histSIM/len(log_P
 chi2_tab=(histSIM-histobs)**2/histobs
 chi2_tab=np.where(np.isfinite(chi2_tab), chi2_tab, 0)
 chi2=np.nansum(chi2_tab)
-print(chi2)
-print(np.shape(chi2_tab))
+
+#Make histograms to compute the CDF
+counts,bin_edges=np.histogram(log_P,bins=20,density=False)
+counts_2,bin_edges_2=np.histogram(log_Pdot,bins=20,density=False)
+counts_3,bin_edges_3=np.histogram(log_P_selec,bins=20,density=False)
+counts_4,bin_edges_4=np.histogram(log_Pdot_selec,bins=20,density=False)
+
+cum_counts=np.cumsum(counts)
+cum_counts_2=np.cumsum(counts_2)
+cum_counts_3=np.cumsum(counts_3)
+cum_counts_4=np.cumsum(counts_4)
+
+total_count=cum_counts[-1]
+total_count2=cum_counts_2[-1]
+total_count3=cum_counts_3[-1]
+total_count4=cum_counts_4[-1]
+
+cdf1=cum_counts/total_count
+cdf2=cum_counts_2/total_count2
+cdf3=cum_counts_3/total_count3
+cdf4=cum_counts_4/total_count4
+
+#Computing the D-value for the 1D KS test
+diff_cdf_log_p=np.abs(cdf1-cdf3)
+max_diff_cdf_log_p_val=np.max(diff_cdf_log_p)
+max_diff_cdf_log_p_index=np.argmax(diff_cdf_log_p)
+pt_logP_abs=bin_edges[max_diff_cdf_log_p_index]
+print(f"For the spin period : D-val={max_diff_cdf_log_p_val} for log_P={pt_logP_abs}")
+
+diff_cdf_log_pdot=np.abs(cdf2-cdf4)
+max_diff_cdf_log_pdot_val=np.max(diff_cdf_log_pdot)
+max_diff_cdf_log_pdot_index=np.argmax(diff_cdf_log_pdot)
+pt_logPdot_abs=bin_edges_2[max_diff_cdf_log_pdot_index]
+print(f"For Pdot : D-val={max_diff_cdf_log_pdot_val} for log_Pdot={pt_logPdot_abs}")
+
+#Computing the P-value
+p_val_P,p_val_Pdot=0,0
+Neff_P=(len(log_P)*len(log_P_selec)/(len(log_P)+len(log_P_selec)))**0.5
+Neff_Pdot=(len(log_Pdot)*len(log_Pdot_selec)/(len(log_Pdot)+len(log_Pdot_selec)))**0.5
+#Neff_P=(2073)**0.5
+#Neff_P=(2073*500/(2073+500))**0.5
+Neff_Pdot=Neff_P
+#print(Neff_P)
+#print(Neff_Pdot)
+for i in range(1,100000):
+    p_val_P+=2*(-1)**(i-1)*np.exp(-2*(Neff_P*max_diff_cdf_log_p_val*i)**2)
+    p_val_Pdot+=2*(-1)**(i-1)*np.exp(-2*(Neff_Pdot*max_diff_cdf_log_pdot_val*i)**2)
+
+#print(f"P_val for the spin period : {p_val_P} P_val for the spin period derivative : {p_val_Pdot}")
+
+#KS test 1D python 
+KS_test=kstest(P_dot,Pdot_selected)
+test_stat=KS_test.statistic
+p_value=KS_test.pvalue
+print(f"p_value of Pdot={p_value}")
+
+KS_test=kstest(P,P_selected)
+test_stat=KS_test.statistic
+p_value=KS_test.pvalue
+print(f"p_value of P={p_value}")
+#print(test_stat)
+
+#Mann-Whitney U test 
+stats_u,p_val=mannwhitneyu(P,P_selected)
+print(f"P_val Mann-Whitney U test on P = {p_val}")
+stats_u,p_val=mannwhitneyu(P_dot,Pdot_selected)
+print(f"P_val Mann-Whitney U test on Pdot = {p_val}")
+
+#Plot the CDF
+plt.plot(bin_edges[1:], cdf1, marker='o', linestyle='-',label='Simulation data')
+plt.plot(bin_edges_3[1:], cdf3, marker='o', linestyle='-',label='ATNF data')
+plt.xlabel('Log(P) (P in s)')
+plt.ylabel('CDF of Log(P)')
+plt.legend()
+plt.savefig('CDF_log_P.png')
+plt.close()
+
+#Plot the CDF of log(P_dot)
+plt.plot(bin_edges_2[1:], cdf2, marker='o', linestyle='-',label='Simulation data')
+plt.plot(bin_edges_4[1:], cdf4, marker='o', linestyle='-',label='ATNF data')
+plt.xlabel('Log(Pdot) (Pdot in s.s^-1)')
+plt.ylabel('CDF of Log(Pdot)')
+plt.legend()
+plt.savefig('CDF_log_Pdot.png')
+plt.close()
+
 
 #Make the plots
 #test
@@ -469,15 +566,17 @@ condition = [Pdot2 < Pdot3 for Pdot2, Pdot3 in zip(Pdot_line2,Pdot_line3)]
 #P-Pdot plot only canonical population
 plt.figure(30)
 plt.scatter(P_selected,Pdot_selected,c='blue',marker='o',s=10,label='ATNF data')
+plt.plot(P_line,Pdot_line,c='green',label='Death line',linestyle='-',linewidth=2) #Death line Mitra et al. 2019
+plt.fill_between(P_line,Pdot_line4,Pdot_line5,where=condition,facecolor='green',alpha=0.4,label='Death Valley')
 plt.legend()
-plt.xlim(1e-2,1e1)
-plt.ylim(1e-20,1e-10)
+plt.xlim(1e-2,3e1)
+plt.ylim(1e-18,1e-11)
 plt.yscale('log')
 plt.xscale('log')
 #plt.title("Spin period derivative - Spin period diagram for radio pulsars only")
 plt.xlabel('Spin period s')
 plt.ylabel('Spin period derivative s.s^-1')
-plt.savefig('P_Pdot_plot_selected.png')
+plt.savefig('P_Pdot_plot_selected.png',dpi=300)
 plt.close()
 
 #P-Pdot plot all pulsars
@@ -485,19 +584,19 @@ plt.figure(1)
 plt.scatter(P,P_dot,c='red',marker='o',s=5,label='Simulation data',zorder=2)
 #plt.scatter(P2,P_dot2,c='blue',marker='o',s=5,label='ATNF data') #whole pop
 plt.scatter(P_selected,Pdot_selected,c='blue',marker='o',s=5,label='ATNF data : canonical pulsars') #Only canonical pop
-plt.scatter(P_magne,Pdot_magne,c='orange',marker='s',s=5,label='ATNF data : magnetars') #Only magnetars pop
-plt.scatter(P_ms,Pdot_ms,c='purple',marker='^',s=5,label='ATNF data : millisecond pulsars') #Only ms pop
+#plt.scatter(P_magne,Pdot_magne,c='orange',marker='s',s=5,label='ATNF data : magnetars') #Only magnetars pop
+#plt.scatter(P_ms,Pdot_ms,c='purple',marker='^',s=5,label='ATNF data : millisecond pulsars') #Only ms pop
 #plt.plot(P_line,Pdot_line4,c='green',linestyle='-',linewidth=2)
 #plt.plot(P_line,Pdot_line5,c='green',linestyle='-',linewidth=2)
-plt.plot(P_line,Pdot_line3,c='brown')
-plt.plot(P_line,Pdot_line2,c='pink')
+#plt.plot(P_line,Pdot_line3,c='brown')
+#plt.plot(P_line,Pdot_line2,c='pink')
 #plt.plot(P_death2,P_dot_death2,c='green',label='Death line',linestyle='-',linewidth=2) #Death line Ruderman & Sutherland 1975 
 plt.plot(P_line,Pdot_line,c='green',label='Death line',linestyle='-',linewidth=2) #Death line Mitra et al. 2019
 #plt.plot(P_line,P_dot_line_CR93,c='green',label='Death line',linestyle='-',linewidth=2) #Death line Chen & Ruderman 1993
 #plt.plot(P_line,B_linecrit,c='blue',label='Critical magnetic field line',linestyle='-',linewidth=2)
 plt.fill_between(P_line,Pdot_line4,Pdot_line5,where=condition,facecolor='green',alpha=0.4,label='Death Valley' )
 plt.xlim(1e-2,3e1)
-plt.ylim(1e-20,1e-10)
+plt.ylim(1e-18,1e-10)
 plt.yscale('log')
 plt.xscale('log')
 #plt.title("Spin period derivative - Spin period diagram")
@@ -603,10 +702,11 @@ plt.close()
 
 #Distance histogram
 plt.figure(6)
-plt.hist(distance,bins=20,range=(0,25),edgecolor='black',color='red',alpha=0.5,label='Simulation',zorder=3)
+#plt.hist([distance,d_selec,dist_dirson22],bins=20,range=(0,25),edgecolor='white',color=['red','blue','green'],label=['Simulation','ATNF data','Dirson et al. (2022)'])
+plt.hist(distance,bins=20,range=(0,25),edgecolor='red',color='white',label='Simulation',alpha=1,zorder=1,histtype='step')
 #plt.hist(d2,bins=20,range=(0,25),edgecolor='black',color='blue',alpha=0.5,label='ATNF data') #Whole pop
-plt.hist(d_selec,bins=20,range=(0,25),edgecolor='black',color='blue',alpha=0.5,label='ATNF data',zorder=2) #Canonical pop
-#plt.hist(dist_dirson22,bins=20,range=(0,25),edgecolor='black',color='green',alpha=0.8,label='Dirson et al. (2022)')
+plt.hist(d_selec,bins=20,range=(0,25),edgecolor='blue',color='white',label='ATNF data',alpha=1,zorder=1,histtype='step') #Canonical pop
+plt.hist(dist_dirson22,bins=20,range=(0,25),edgecolor='green',color='white',alpha=1,label='Dirson et al. (2022)',zorder=1,histtype='step')
 plt.legend()
 plt.yscale('log')
 plt.xlabel('d (kpc)')
@@ -617,9 +717,9 @@ plt.close()
 
 #Age histogram
 plt.figure(7)
-plt.hist(log_age,bins=20,range=(1,11),edgecolor='black',color='red',alpha=0.5,label='Simulation')
+plt.hist(log_age,bins=20,range=(1,11),edgecolor='red',color='red',alpha=1,label='Simulation',histtype='step')
 #plt.hist(log_age2,bins=20,range=(1,11),edgecolor='black',color='blue',alpha=0.5,label='ATNF data') #Whole pop
-plt.hist(log_age_selec,bins=20,range=(1,11),edgecolor='black',color='blue',alpha=0.5,label='ATNF data') #Canonical pop
+plt.hist(log_age_selec,bins=20,range=(1,11),edgecolor='blue',color='blue',alpha=1,label='ATNF data',histtype='step') #Canonical pop
 plt.legend()
 plt.xlabel('Log(age) (age in yr)')
 plt.ylabel('Frequency')
@@ -629,10 +729,10 @@ plt.close()
 
 #Latitude histogram
 plt.figure(8)
-plt.hist(latitude,bins=20,range=(-60,60),edgecolor='black',color='red',alpha=0.5,label='Simulation',zorder=3)
-#plt.hist(lat_dirson22,bins=20,range=(-60,60),edgecolor='black',color='green',alpha=0.5,label='Dirson et al.(2022)',zorder=1)
+plt.hist(latitude,bins=20,range=(-60,60),edgecolor='red',color='red',alpha=1,label='Simulation',zorder=3,histtype='step')
+plt.hist(lat_dirson22,bins=20,range=(-60,60),edgecolor='green',color='green',alpha=1,label='Dirson et al.(2022)',zorder=1,histtype='step')
 #plt.hist(latitude2,bins=20,range=(-60,60),edgecolor='black',color='blue',alpha=0.5,label='ATNF data',zorder=2) #Whole pop
-plt.hist(latitude_selec,bins=20,range=(-60,60),edgecolor='black',color='blue',alpha=0.5,label='ATNF data',zorder=2) #Canonical pop
+plt.hist(latitude_selec,bins=20,range=(-60,60),edgecolor='blue',color='blue',alpha=1,label='ATNF data',zorder=2,histtype='step') #Canonical pop
 plt.yscale('log')
 plt.legend()
 plt.xlabel('Latitude in degrees')
@@ -643,9 +743,9 @@ plt.close()
 
 #Log(P) histogram
 plt.figure(9)
-plt.hist(log_P,bins=20,range=(-2,1.5),edgecolor='black',color='red',alpha=0.5,label='Simulation')
+plt.hist(log_P,bins=20,range=(-2,1.5),edgecolor='red',color='red',alpha=1,label='Simulation',histtype='step')
 #plt.hist(log_Pa,bins=20,range=(-2,1.5),edgecolor='black',color='blue',alpha=0.5,label='ATNF data') #Whole pop 
-plt.hist(log_P_selec,bins=20,range=(-2,1.5),edgecolor='black',color='blue',alpha=0.5,label='ATNF data') #Canonical pop
+plt.hist(log_P_selec,bins=20,range=(-2,1.5),edgecolor='blue',color='blue',alpha=1,label='ATNF data',histtype='step') #Canonical pop
 #plt.hist(P_old,bins=20,range=(-2,1.5),edgecolor='black',color='green',alpha=0.5,label='Old pulsars')
 plt.legend()
 plt.xlabel('Log(P) (P in s)')
@@ -656,9 +756,9 @@ plt.close()
 
 #Log(P_dot) histogram
 plt.figure(10)
-plt.hist(log_Pdot,bins=20,range=(-20,-10),edgecolor='black',color='red',alpha=0.5,label='Simulation')
+plt.hist(log_Pdot,bins=20,range=(-20,-10),edgecolor='red',color='red',alpha=1,label='Simulation',histtype='step')
 #plt.hist(log_Pdot2,bins=20,range=(-20,-10),edgecolor='black',color='blue',alpha=0.5,label='ATNF data') #Whole pop
-plt.hist(log_Pdot_selec,bins=20,range=(-20,-10),edgecolor='black',color='blue',alpha=0.5,label='ATNF data') #Canonical pop
+plt.hist(log_Pdot_selec,bins=20,range=(-20,-10),edgecolor='blue',color='blue',alpha=1,label='ATNF data',histtype='step') #Canonical pop
 plt.legend()
 plt.xlabel('Log(Pdot)')
 plt.ylabel('Frequency')
@@ -751,8 +851,8 @@ plt.close()
 
 #Spin-velocity angle (young pulsars and old) histogram
 plt.figure(19)
-plt.hist(PA_young,bins=20,range=(0,180),edgecolor='black',color='blue',alpha=0.5,label='Age < 10Myr',zorder=2)
-plt.hist(PA_old,bins=20,range=(0,180),edgecolor='black',color='red',alpha=0.5,label='Age > 10Myr')
+plt.hist(PA_young,bins=20,range=(0,180),edgecolor='blue',color='blue',alpha=1,label='Age < 10Myr',zorder=2,histtype='step')
+plt.hist(PA_old,bins=20,range=(0,180),edgecolor='red',color='red',alpha=1,label='Age > 10Myr',histtype='step')
 plt.legend()
 plt.yscale('log')
 plt.xlabel('spin-velocity angle in degrees')

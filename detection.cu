@@ -330,7 +330,54 @@ return fp_gal;
 */
 }
 
+void pulse_profile_complete(void *params){
 
+	struct func_params *part= (struct func_params*)params;
+	double wint;double tau_samp=64e-6;
+	double e=1.6e-19;//electronic charge in C
+        double m_e=9.1e-31; //electron mass in kg
+        double f=1.352e9; //Frequency of survey HTRU mid
+        double deltaf=390.625e3; //bandwitdh of observation of HTRU mid
+	double tau_dm;
+	double tau_scat;
+	//Variables declaration for YMW16 programm
+	int ndir=2;
+	char command[100];
+	FILE *file;
+	double DM;double log_tau_sc;
+	char line[1000];
+	file=fopen("data_DM.txt","r");
+	for(int np=0;np<part->Npulsars;np++){
+		wint=part->w_r[np]*part->period[np]/(2*M_PI);
+		//Code to obtain DM and tau_scat from the YMW16 programm
+		sprintf(command,"./ymw16 Gal %e %e %e %d > data_DM.txt",part->gl[np],part->gb[np],part->dist[np],ndir);
+		system(command);
+		while (fgets(line,sizeof(line),file)){
+
+                char *ptr = strstr(line, "DM:");
+                if (ptr != NULL) {
+                // Si la sous-chaîne est trouvée, extraire la valeur après "DM:"
+                        sscanf(ptr + strlen("DM:"), "%lf", &DM);
+                }
+
+                // Vérifier si la ligne contient la sous-chaîne "log(tau_sc):"
+                ptr = strstr(line, "log(tau_sc):");
+                if (ptr != NULL) {
+                // Si la sous-chaîne est trouvée, extraire la valeur après "log(tau_sc):"
+                        sscanf(ptr + strlen("log(tau_sc):"), "%lf", &log_tau_sc);
+                }
+
+        }
+
+        tau_scat=exp(log_tau_sc);
+	tau_dm=(sq(e)*deltaf*DM)/(M_PI*m_e*SI_C*cube(f));
+	part->w_r[np]=sqrt(sq(wint)+sq(tau_samp)+sq(tau_dm)+sq(tau_scat))*((2*M_PI)/(part->period[np]));
+	printf("pulse profile of pulsar nb %d with value %e rad computed \n",np,part->w_r[np]);
+
+	}
+	fclose(file);
+
+}
 
 int geometry(void *params){ // calculated the geometry of the pulsar (i.e xi, and rho) 
 
@@ -689,6 +736,7 @@ int gamma_flux(void *params){
 	const double kpc2m=3.0856775807e19; //kpc to m
 	fac=1./(4*M_PI*cg);
 	//fac=0.3;
+	double alpha;double xi;
 	long np=0;
 
            	for (np=0;np<part->Npulsars;np++){ 
@@ -697,8 +745,12 @@ int gamma_flux(void *params){
 
                         //lgamma = 1e15*pow(part->B[np]*1e4,0.11)*pow(part->Edot[np]*1e7,0.51); 
                         lgamma = pow(10,26.15)*pow(part->B[np]/1e8,0.11)*pow(part->Edot[np]/1e26,0.51); //(W) from Kalapotharakos et al 2019
+			if (part->alpha[np]<=M_PI/2) alpha=part->alpha[np];
+                        else if (part->alpha[np]>M_PI/2) alpha=M_PI-part->alpha[np];
+                        if (part->xi[np]<=M_PI/2) xi=part->xi[np]; // just to make it easier to read
+                        else if (part->xi[np]>M_PI/2) xi=M_PI-part->xi[np];
 		    
-	        	if(part->alpha[np]<-part->xi[np]+0.6109) cg=1.9; //the correction factor cg (or f_omega)
+	        	if(alpha<-xi+0.6109) cg=1.9; //the correction factor cg (or f_omega)
 		   		else cg=1.;
       			part->Fg[np]=fac/(sq(part->dist[np]*kpc2m))*lgamma; // gamma flux in W.m-2
 			//printf("Fg %e np %ld dist %e \n",part->Fg[np],np,part->dist[np]);		

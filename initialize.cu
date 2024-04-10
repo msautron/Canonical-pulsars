@@ -22,20 +22,20 @@ void initialize(int argc, char *argv[], void *params){
 //                part->n_init= (long) strtod(argv[2],(char **)NULL);
          }
          else{
-         part->Npulsars         =  	10000000;
+         part->Npulsars         =  	1000000;//10000000;
          //part->Npulsars         =  	10000;
 	 part->k_tau0_B0        =       5;
-         part->birth_rate	= 	70;
-         part->b_mean		= 	2.5e8; //Tesla usual value used 
-	 //part->b_mean           =       275422870.33381635; //Tesla, value used in Igoshev et al. (2022)
+         part->birth_rate	= 	47;
+         //part->b_mean		= 	2.5e8; //Tesla usual value used 
+	 part->b_mean           =       275422870.33381635; //Tesla, value used in Igoshev et al. (2022)
          //part->p_mean		= 	60e-3;// usual value used in seconds (normal distribution)
-	 part->p_mean           =       1.174898e-1;// value used in Igoshev et al. (2022) in seconds (log normal distribution)
+	 part->p_mean           =       100e-3;//1.174898e-1;// value used in Igoshev et al. (2022) in seconds (log normal distribution)
          //part->sigma_p		= 	0.010;//usual value used in s (normal distribution)
-	 part->sigma_p          =       0.47; // value used in Igoshev et al. (2022) (log normal distribution)
+	 part->sigma_p          =       0.45; // value used in Igoshev et al. (2022) (log normal distribution)
          part->alpha_d          = 	1.5;
          //part->sigma_b		= 	0.5;//usual value used
 	 part->sigma_b          =       0.5; //value used in Igoshev et al. (2022)
-         part->v_old            =	75.; //  km/s 
+         part->v_old            =	265.0;//75.; //  km/s 
 /*
          part->birth_rate	= 	300;
          part->b_mean		= 	1.2e8; //Tesla
@@ -48,9 +48,9 @@ void initialize(int argc, char *argv[], void *params){
          }
 
      
-       part->tau0_B0            =       part->k_tau0_B0*5e6*pow(1e9,part->alpha_d)*365*24*3600; //from Vigano
-       part->tau0_B0_2          =       part->k_tau0_B0*1e7*pow(5e8,part->alpha_d)*365*24*3600; //from Vigano
-       part->tau0_B0_3          = 	part->k_tau0_B0*1e6*pow(1e8,part->alpha_d)*365*24*3600; //from Vigano 
+       part->tau0_B0            =       part->k_tau0_B0*5e5*pow(3e9,part->alpha_d)*365*24*3600; //from Vigano
+       part->tau0_B0_2          =       part->k_tau0_B0*5e4*pow(1e8,part->alpha_d)*365*24*3600; //from Vigano
+       part->tau0_B0_3          = 	part->k_tau0_B0*7e4*pow(3e8,part->alpha_d)*365*24*3600; //from Vigano 
        //part->tau0_B0_4          =       part->k_tau0_B0*7e4*pow(3e8,part->alpha_d)*365*24*3600; //from Vigano
        part->R			=	12000;//m
        part->zexp               =	0.075; // kpc

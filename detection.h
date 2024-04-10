@@ -7,6 +7,7 @@ void distrib_init_2(void *params);
 int motion(void *params);
 void spinvel_angle(void *params);
 int detection(void *params);
+void pulse_profile_complete(void *params);
 int geometry(void *params);
 int radio_flux(void *params);
 int gamma_flux(void *params);
