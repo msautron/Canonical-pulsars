@@ -9,3 +9,4 @@ __device__ void phi_kepler(void *params,double phi_k[3],long np);
 //void evol_galac_pot_verlet(void *params);
 //void evol_galac_PEFRL(void *params);
 void send_data(void *params);
+void nb_orbit(void *params);

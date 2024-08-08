@@ -26,6 +26,9 @@ struct func_params{
         double b_mean; // idem for b
         double sigma_b;//idem
         double *age_pulsar; // stores the age of the pulsar (in s)
+	double *DM; //Stores the dispersion measure of the pulsar in cm^-3.pc
+	double *Nb_orb; //Estimation of the number of orbits done by the NS 
+	double *S_N;
 	double Bfield_const;
 	long Bfield_var;
         double *x; //kpc  x coordinate in the Galctocentric frame

@@ -276,13 +276,13 @@ __global__ void evol_galac_PEFRL(double *gx,double *gy,double *gz, double *gvx,d
                 glr=0;
                   }
       else{
-                if(x_s>=0){
+      		if(x_s>=0){
                       glr=acos(-y_s/r);
                       }
                 else{
                       glr=acos(y_s/r)+M_PI;
                     }
-                }
+          }
 
       ggl[np]=glr*RAD;
 
@@ -426,6 +426,9 @@ int main(int argc, char **argv){
 	/* ISM modelling */
 //        get_dispersion_measure(&params); 
 
+	/* Computation of the number of orbits made by each NS  */
+	nb_orbit(&params);
+
 	/* Detection */
 	geometry(&params); // calculates the angles xi and w_r
 	pulse_profile_complete(&params); //Computes the pulse profile taking into account the DM + scattering + instrument
@@ -481,6 +484,9 @@ int main(int argc, char **argv){
         free(params.n_omega_y);
         free(params.n_omega_z);
 	free(params.PA);
+	free(params.DM);
+	free(params.S_N);
+	free(params.Nb_orb);
 
 	gsl_rng_free(params.r);
 

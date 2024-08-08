@@ -25,11 +25,11 @@ void initialize(int argc, char *argv[], void *params){
          part->Npulsars         =  	1000000;//10000000;
          //part->Npulsars         =  	10000;
 	 part->k_tau0_B0        =       5;
-         part->birth_rate	= 	47;
+         part->birth_rate	= 	41;
          //part->b_mean		= 	2.5e8; //Tesla usual value used 
 	 part->b_mean           =       275422870.33381635; //Tesla, value used in Igoshev et al. (2022)
          //part->p_mean		= 	60e-3;// usual value used in seconds (normal distribution)
-	 part->p_mean           =       100e-3;//1.174898e-1;// value used in Igoshev et al. (2022) in seconds (log normal distribution)
+	 part->p_mean           =       129e-3;//1.174898e-1;// value used in Igoshev et al. (2022) in seconds (log normal distribution)
          //part->sigma_p		= 	0.010;//usual value used in s (normal distribution)
 	 part->sigma_p          =       0.45; // value used in Igoshev et al. (2022) (log normal distribution)
          part->alpha_d          = 	1.5;
@@ -48,14 +48,14 @@ void initialize(int argc, char *argv[], void *params){
          }
 
      
-       part->tau0_B0            =       part->k_tau0_B0*5e5*pow(3e9,part->alpha_d)*365*24*3600; //from Vigano
+       part->tau0_B0            =       part->k_tau0_B0*5e5*pow(2e9,part->alpha_d)*365*24*3600; //from Vigano
        part->tau0_B0_2          =       part->k_tau0_B0*5e4*pow(1e8,part->alpha_d)*365*24*3600; //from Vigano
        part->tau0_B0_3          = 	part->k_tau0_B0*7e4*pow(3e8,part->alpha_d)*365*24*3600; //from Vigano 
        //part->tau0_B0_4          =       part->k_tau0_B0*7e4*pow(3e8,part->alpha_d)*365*24*3600; //from Vigano
        part->R			=	12000;//m
-       part->zexp               =	0.075; // kpc
+       part->zexp               =	0.18; // kpc
        part->Rexp		=	4.5; //kpc
-       part->sigma_v		=	60.; //  km/s 
+       part->sigma_v		=	265.; //  km/s 
        part->v_young		=	265.; //  km/s 
        part->vacuum		=	0;
        part->vacuum_evol	=	0;
@@ -157,5 +157,11 @@ void initialize(int argc, char *argv[], void *params){
                 if (part->n_omega_x== NULL) printf("n_omega_x: allocation failed"); // check if allocation succeeded
        part->PA= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
                 if (part->PA== NULL) printf("n_omega_x: allocation failed");
+       part->DM= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->DM== NULL) printf("n_omega_x: allocation failed");
+       part->S_N= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->S_N== NULL) printf("S_N: allocation failed");
+       part->Nb_orb= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->Nb_orb== NULL) printf("Nb_orb: allocation failed");
 
 }

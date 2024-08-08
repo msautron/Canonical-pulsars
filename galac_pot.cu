@@ -21,6 +21,7 @@ void distrib_vinit(void *params){ //Give an initial speed to a pulsar
     double cos_theta;
     double phi;
     double two_pi=2*M_PI;
+    double p_align_or_anti;
     double age_pulsar_yr;
     const double yr_sec=365*24*3600;
 
@@ -44,11 +45,17 @@ void distrib_vinit(void *params){ //Give an initial speed to a pulsar
        while (v<0){
 	       v=sqrt(8.0/M_PI)*part->sigma_v+gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
        }
-       //v=sqrt(8.0/M_PI)*part->sigma_v+gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
-       vx=v*part->n_omega_x[np];
-       vy=v*part->n_omega_y[np];
-       vz=v*part->n_omega_z[np];
-
+       p_align_or_anti=gsl_rng_uniform(part->r);
+       if(p_align_or_anti<0.5){
+               vx=v*part->n_omega_x[np];
+               vy=v*part->n_omega_y[np];
+               vz=v*part->n_omega_z[np];
+       }
+       else if(p_align_or_anti>=0.5){
+	       vx=-v*part->n_omega_x[np];
+               vy=-v*part->n_omega_y[np];
+               vz=-v*part->n_omega_z[np];
+       }
 
        part->vx0[np]=vx;part->vx[np]=vx;
        part->vy0[np]=vy;part->vy[np]=vy;
@@ -446,4 +453,23 @@ void send_data(void *params){
      fclose(file);
 
 
+}
+
+void nb_orbit(void *params){
+
+	struct func_params *part= (struct func_params*)params;
+	long np;
+	const double kpc2km=3.0856775807e16;
+	const double yr_sec=365*24*3600;
+	double Mh=12474*2.325*1e7*MSUN;
+	double ah=7.7*kpc2km;
+	double r_km;
+	double r2_dphi_dr;
+	double P_orb;
+	for(np=0;np<part->Npulsars;np++){
+		r_km=sqrt(sq(part->x0[np])+sq(part->y0[np])+sq(part->z0[np]))*kpc2km;
+		r2_dphi_dr=G_grav*Mh*(((1.0/r_km)*log(1.0+r_km/ah))-1.0/(r_km+ah));
+		P_orb=(M_PI*2*sqrt(sq(r_km)/r2_dphi_dr))/(yr_sec);
+		part->Nb_orb[np]=(part->age_pulsar[np]/yr_sec)/P_orb;
+	}
 }
