@@ -431,7 +431,7 @@ int main(int argc, char **argv){
 
 	/* Detection */
 	geometry(&params); // calculates the angles xi and w_r
-	pulse_profile_complete(&params); //Computes the pulse profile taking into account the DM + scattering + instrument
+        pulse_profile_complete(&params); //Computes the pulse profile taking into account the DM + scattering + instrument
 	radio_flux(&params); //calculates the radio flux of each pulsar
 	gamma_flux(&params); //idem for gamma flux
 	radio_flux_low_freq(&params);

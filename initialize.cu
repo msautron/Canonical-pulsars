@@ -26,7 +26,7 @@ void initialize(int argc, char *argv[], void *params){
          //part->Npulsars         =  	10000;
 	 part->k_tau0_B0        =       5;
          part->birth_rate	= 	41;
-         //part->b_mean		= 	2.5e8; //Tesla usual value used 
+         //part->b_mean		= 	3.25e8; //Tesla usual value used 
 	 part->b_mean           =       275422870.33381635; //Tesla, value used in Igoshev et al. (2022)
          //part->p_mean		= 	60e-3;// usual value used in seconds (normal distribution)
 	 part->p_mean           =       129e-3;//1.174898e-1;// value used in Igoshev et al. (2022) in seconds (log normal distribution)

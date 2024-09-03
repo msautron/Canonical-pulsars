@@ -301,10 +301,14 @@ for i in range(int(len(data)/20)):
     PA+=[(180/np.pi)*np.arccos(data[20*i+19])]
 
 #Computation of characteristic age
-charac_age,log_charac_age=[],[]
+charac_age,log_charac_age,P_old_charac=[],[],[]
 for i in range(len(P)):
     charac_age.append((P[i]/(2*P_dot[i]))/(365*24*3600))
     log_charac_age.append(np.log10(charac_age[i]))
+
+for i in range(len(P)):
+    if charac_age[i]>=1e8:
+        P_old_charac.append(np.log10(P[i]))
 
 v0=[]
 for i in range(len(vx0)):
@@ -490,23 +494,23 @@ P_dot_B1e9=[(1e9/3.2e15)**2*(1/P_line[i]) for i in range(len(P_line))]
 #Display of the statistics on all pulsar
 for i in range(len(Edot)):
     if Edot[i] > 1e31 and type_pulsar[i]==1:
-        count_rad_E_bigbig+=1
+        count_rad_E_bigbig+=1.0
     if Edot[i] > 1e31 and type_pulsar[i]==2:
-        count_gam_E_bigbig+=1
+        count_gam_E_bigbig+=1.0
     if Edot[i] > 1e31 and type_pulsar[i]==3:
-        count_radgam_E_bigbig+=1
+        count_radgam_E_bigbig+=1.0
     if Edot[i] > 1e28 and type_pulsar[i]==1:
-        count_rad_E_big+=1
+        count_rad_E_big+=1.0
     if Edot[i] > 1e28 and type_pulsar[i]==2:
-        count_gam_E_big+=1
+        count_gam_E_big+=1.0
     if Edot[i] > 1e28 and type_pulsar[i]==3:
-        count_radgam_E_big+=1
+        count_radgam_E_big+=1.0
     if type_pulsar[i]==1:
-        count_rad+=1
+        count_rad+=1.0
     if type_pulsar[i]==2:
-        count_gam+=1
+        count_gam+=1.0
     if type_pulsar[i]==3:
-        count_radgam+=1
+        count_radgam+=1.0
 
 print(f"Number of radio pulsars with Edot > 1e31 W : {count_rad_E_bigbig}\nNumber of gamma pulsars with Edot > 1e31 W : {count_gam_E_bigbig}")
 print(f"Number of radio-gamma pulsars with Edot > 1e31 W : {count_radgam_E_bigbig}")
@@ -516,6 +520,8 @@ print(f"Number of radio-gamma pulsars with Edot > 1e28 W : {count_radgam_E_big}"
 print(f"Number of radio pulsars : {count_rad}")
 print(f"Number of gamma pulsars : {count_gam}")
 print(f"Number of radio-gamma pulsars : {count_radgam}")
+count_tot=count_rad+count_gam+count_radgam
+print(f"Number of total pulsars : {count_tot}")
 
 #Make histograms to prepare for the 2D plot of comparison with observations
 histSIM,xsim_edges,ysim_edges=np.histogram2d(log_P,log_Pdot,bins=(20,20))
@@ -553,23 +559,23 @@ cdf4=cum_counts_4/total_count4
 
 #KS test 1D python (all the data)
 KS_test=kstest(P_dot,P_dota)
-test_stat=KS_test.statistic
-p_value=KS_test.pvalue
+test_stat_all1=KS_test.statistic
+p_value_all1=KS_test.pvalue
 print("----ALL THE DATA----\n")
-print(f"d_value of Pdot KS test = {test_stat}")
-print(f"p_value of Pdot={p_value}")
+print(f"d_value of Pdot KS test = {test_stat_all1}")
+print(f"p_value of Pdot={p_value_all1}")
 
 KS_test=kstest(P,Pa)
-test_stat=KS_test.statistic
-p_value=KS_test.pvalue
-print(f"d_value of P KS test = {test_stat}")
-print(f"p_value of P={p_value}")
+test_stat_all2=KS_test.statistic
+p_value_all2=KS_test.pvalue
+print(f"d_value of P KS test = {test_stat_all2}")
+print(f"p_value of P={p_value_all2}")
 
 #KS test 1D python (gamma-ray population)
 KS_test=kstest(P_dot_gamma_or_rg,P_dota_gall)
 test_stat=KS_test.statistic
 p_value=KS_test.pvalue
-print("----GAMMA PULSARS----\n")
+print("----ALL GAMMA PULSARS----\n")
 print(f"d_value of Pdot KS test for all the gamma pulsars= {test_stat}")
 print(f"p_value of Pdot for all the gamma pulsars={p_value}")
 
@@ -578,6 +584,48 @@ test_stat=KS_test.statistic
 p_value=KS_test.pvalue
 print(f"d_value of P KS test for all the gamma pulsars= {test_stat}")
 print(f"p_value of P for all the gamma pulsars={p_value}")
+
+#KS test 1D python (gamma-ray only population)
+KS_test=kstest(P_dot_gamma,P_dota_gamma)
+test_stat=KS_test.statistic
+p_value=KS_test.pvalue
+print("----GAMMA ONLY PULSARS----\n")
+print(f"d_value of Pdot KS test for the gamma only pulsars= {test_stat}")
+print(f"p_value of Pdot for the gamma only pulsars={p_value}")
+
+KS_test=kstest(P_gamma,Pa_gamma)
+test_stat=KS_test.statistic
+p_value=KS_test.pvalue
+print(f"d_value of P KS test for the gamma only pulsars= {test_stat}")
+print(f"p_value of P for the gamma only pulsars={p_value}")
+
+#KS test 1D python (radio/gamma-ray population)
+KS_test=kstest(P_dot_radio_gamma,P_dota_rg)
+test_stat=KS_test.statistic
+p_value=KS_test.pvalue
+print("----ALL RADIO/GAMMA PULSARS----\n")
+print(f"d_value of Pdot KS test for the radio/gamma pulsars= {test_stat}")
+print(f"p_value of Pdot for the radio/gamma pulsars={p_value}")
+
+KS_test=kstest(P_radio_gamma,Pa_rg)
+test_stat=KS_test.statistic
+p_value=KS_test.pvalue
+print(f"d_value of P KS test for the radio/gamma pulsars= {test_stat}")
+print(f"p_value of P for the radio/gamma pulsars={p_value}")
+
+#KS test 1D python (radio population)
+KS_test=kstest(P_dot_radio,P_dota_r)
+test_stat=KS_test.statistic
+p_value=KS_test.pvalue
+print("----ALL RADIO ONLY PULSARS----\n")
+print(f"d_value of Pdot KS test for the radio only pulsars= {test_stat}")
+print(f"p_value of Pdot for the radio only pulsars={p_value}")
+
+KS_test=kstest(P_radio,Pa_r)
+test_stat=KS_test.statistic
+p_value=KS_test.pvalue
+print(f"d_value of P KS test for the radio only pulsars= {test_stat}")
+print(f"p_value of P for the radio only pulsars={p_value}")
 
 #Plot the CDF
 plt.plot(bin_edges[1:], cdf1, marker='o', linestyle='-',label='Simulation data')
@@ -832,8 +880,6 @@ plt.ylabel('Frequency')
 plt.savefig('histo_age.png',dpi=300)
 plt.close()
 
-print(len(log_charac_age))
-
 #Age histogram (charac age OBS VS charac age SIM)
 plt.figure(100)
 plt.hist(log_charac_age,bins=20,range=(1,11),edgecolor='red',color='red',alpha=1,label='Simulation',histtype='step')
@@ -875,7 +921,7 @@ plt.close()
 plt.figure(9)
 plt.hist(log_P,bins=20,range=(-2,1.5),edgecolor='red',color='red',alpha=1,label='Simulation',histtype='step')
 plt.hist(log_Pa,bins=20,range=(-2,1.5),edgecolor='blue',color='blue',alpha=1,label='ATNF data',histtype='step') #Canonical pop
-#plt.hist(P_old,bins=20,range=(-2,1.5),edgecolor='green',color='green',alpha=1,label='Old pulsars',histtype='step')
+#plt.hist(P_old_charac,bins=20,range=(-2,1.5),edgecolor='green',color='green',alpha=1,label='Old pulsars',histtype='step')
 plt.legend()
 plt.xlabel(r'Log($P$) ($P$ in s)')
 plt.ylabel('Frequency')
@@ -1103,3 +1149,8 @@ cbar.set_label('Initial velocity (km/s)')
 plt.legend()
 plt.savefig('spinvel_init_vel_plot.png',dpi=300)
 plt.close()
+
+#"Optimisation save in file" 
+line=[f"{count_tot} {count_rad} {count_gam} {count_radgam} {test_stat_all2} {p_value_all2} {test_stat_all1} {p_value_all1}\n"]
+with open("data_opt_04sigp.txt","a") as f:
+    f.writelines(line)
