@@ -25,10 +25,10 @@ Jumei Yao (yaojumei@xao.ac.cn), Richard N Manchester
 */
 
 #include "cn.h"
-double tsc(double dm){
+__host__ __device__ double tsc(double dm){
   return 4.1e-11*pow(dm, 2.2)*(1+0.00194*dm*dm);
 }
-void dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int np, int vbs, char *dirname, char *text)
+__host__  __device__ void dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int np, int vbs, char *dirname, char *text, double *dmpsr_f,double *tau_sc_f)
 {
   double ne0=0;
   double ne=0;
@@ -45,7 +45,7 @@ void dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int np
   double dist, xx, yy, zz, r, glr, gbr, sl, cl, sb, cb, hh;
 
   double nstep, dstep, dmstep;
-  static double dd, dtest, dmpsr, rr;
+  double dd, dmpsr, dtest, rr;
   double dmm=0;
   double dm=0;
   double DM_MC=0;
@@ -69,7 +69,7 @@ void dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int np
   int WFB=0;
   int nk, uu, nn;
 
-  static int i, ncount;
+  int i, ncount;
   int w_lmc=0;
   int w_smc=0;
   int umc=1;
@@ -365,8 +365,10 @@ void dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int np
           }
           tau_sc=tsc(dmpsr);
           tau_MC_sc=MAX(tau_Gal, tau_MC);
-          if(np==0)printf(" DM:%8.2f log(tau_sc):%7.3f %s\n", dmpsr,log10(tau_MC_sc),text);
-          if(np==1)printf(" DM:%8.2f log(tau_sc):%7.3f %s\n", dmpsr, log10(tau_sc),text);
+          *tau_sc_f=tau_sc;
+          *dmpsr_f=dmpsr;
+          //if(np==0)printf(" DM:%8.2f log(tau_sc):%7.3f %s\n", dmpsr,log10(tau_MC_sc),text);
+          //if(np==1)printf(" DM:%8.2f log(tau_sc):%7.3f %s\n", dmpsr, log10(tau_sc),text);
         }
 	
 	if(i==nk&&np==-1){
@@ -395,8 +397,10 @@ void dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int np
 	  printf(" DM_MC:%8.2f", DM_MC);
 	}
 	tau_sc=tsc(dmpsr);
-	if(np==0)printf(" DM:%8.2f log(tau_sc):%7.3f %s\n", dmpsr,log10(tau_MC_sc),text);
-	if(np==1)printf(" DM:%8.2f log(tau_sc):%7.3f %s\n", dmpsr, log10(tau_sc),text);
+	*tau_sc_f=tau_sc;
+        *dmpsr_f=dmpsr;
+	//if(np==0)printf(" DM:%8.2f log(tau_sc):%7.3f %s\n", dmpsr,log10(tau_MC_sc),text);
+	//if(np==1)printf(" DM:%8.2f log(tau_sc):%7.3f %s\n", dmpsr, log10(tau_sc),text);
 	break;
       }
     }    

@@ -25,7 +25,7 @@ Jumei Yao (yaojumei@xao.ac.cn), Richard N Manchester
 */
 #include "cn.h"
 #define Rlb 110
-void localbubble(double xx, double yy, double zz, double gl,double gb, double *ne6, double *WW, struct LB t6)
+__host__ __device__ void localbubble(double xx, double yy, double zz, double gl,double gb, double *ne6, double *WW, struct LB t6)
 {
   double m_3=0;
   double ww=1;

@@ -24,7 +24,7 @@ Jumei Yao (yaojumei@xao.ac.cn), Richard N Manchester
 (dick.manchester@csiro.au), Na Wang (na.wang@xao.ac.cn).
 */
 #include"cn.h"
-void lmc(double l, double b, double d, int *w_lmc, double *ne8, struct LMC t9)
+__host__ __device__ void lmc(double l, double b, double d, int *w_lmc, double *ne8, struct LMC t9)
 {
 //coordinate system
   double X, Y, Z;

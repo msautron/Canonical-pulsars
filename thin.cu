@@ -23,38 +23,21 @@ authors. Please provide an example illustrating the problem.
 Jumei Yao (yaojumei@xao.ac.cn), Richard N Manchester
 (dick.manchester@csiro.au), Na Wang (na.wang@xao.ac.cn).
 */
-#include"cn.h"
-void smc(double xx, double yy, double zz, int  *w_smc, double *ne10, struct SMC t11)
+#include "cn.h"
+__host__ __device__ void thin(double xx, double yy, double zz, double gd, double *ne2, double rr, struct Thin t2)
 {
-  double rad=57.295779;
-  double R=8.3;//kpc
-  double ls=303.728914;
-  double bs=-44.299212;
-  double ds=59700;//pc
-  double Asmc=3000;//pc
-  int gsmc;
-  double xc, yc, zc, sls, cls, sbs, cbs, rgals, Rsmc;
-  sls=sin(ls/rad);
-  cls=cos(ls/rad);
-  sbs=sin(bs/rad);
-  cbs=cos(bs/rad);
-  rgals=ds*cbs;
-  xc=rgals*sls;
-  yc=R*1000-rgals*cls;
-  zc=ds*sbs;
-  Rsmc=sqrt((xx-xc)*(xx-xc)+(yy-yc)*(yy-yc)+(zz-zc)*(zz-zc));
-  if(Rsmc>(mc*Asmc))
+  double g2, Hg, ex1, ex2, g3, HH;
+  Hg=32+0.0016*rr+0.0000004*pow(rr, 2);
+  HH=t2.K2*Hg;
+  if((rr-t2.B2)>(mc*t2.A2)||(fabs(zz)>(mc*HH))) 
   {
-  	*ne10=0;
-  	return;
+  	*ne2=0;
+  	return;	
   }
-  else 
+  else
   {
-   gsmc=1;
-   *w_smc=1; 
+    g3=(rr-t2.B2)/t2.A2;
+    g2=pow(2/(exp(-g3)+exp(g3)), 2);
   }
-    
-  
-  *ne10=(t11.nsmc)*gsmc*exp(-(Rsmc*Rsmc)/(Asmc*Asmc));
+  *ne2=t2.n2*gd*g2*pow(2/(exp(-zz/HH)+exp(zz/HH)), 2);
 }
-

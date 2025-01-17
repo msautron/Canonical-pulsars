@@ -24,22 +24,33 @@ Jumei Yao (yaojumei@xao.ac.cn), Richard N Manchester
 (dick.manchester@csiro.au), Na Wang (na.wang@xao.ac.cn).
 */
 #include "cn.h"
-
-void thick(double xx, double yy, double zz, double *gd, double *ne1, double rr, struct Thick t1){
+__host__ __device__ void nps(double xx,double yy,double zz,double *ne7, int *WLI, struct LI t7)
+{
+  double x_c, y_c, z_c;
+  double gLI;
+  double theta_LI;
+  double m_3=0;
+  double ww=1;
+  double m_5=0;
+  double m_6=0;
+  double m_7=0;
   
-  double gdd,gg;
-
-  if(fabs(zz)> mc*t1.H1 || (rr-t1.Bd)> mc*t1.Ad){
-    *ne1=0;
-    return;
-  }else{
-    if(rr<t1.Bd){
-      gdd=1;
-    }else{ 
-      gg=exp(-(rr-t1.Bd)/t1.Ad)+exp((rr-t1.Bd)/t1.Ad);
-      gdd=pow(2/gg,2);
-    }
+  if(m_7>=1)return;
+  
+  theta_LI=(t7.thetaLI)/RAD;
+  x_c=-10.156;
+  y_c=8106.206;
+  z_c=10.467;
+  double rr,theta;
+  rr=sqrt((xx-x_c)*(xx-x_c)+(yy-y_c)*(yy-y_c)+(zz-z_c)*(zz-z_c));
+  theta=acos(((xx-x_c)*(cos(theta_LI))+(zz-z_c)*(sin(theta_LI)))/rr)*RAD;
+  *WLI=1;
+  if(fabs(rr-t7.RLI)>(mc*t7.WLI)||fabs(theta)>(mc*t7.detthetaLI)) 
+  { if(rr>500)m_7++;
+  	*ne7=0;
+  	return;
   }
-  *ne1=t1.n1*gdd*pow(2/(exp(-fabs(zz)/t1.H1)+exp(fabs(zz)/t1.H1)), 2);
-  *gd=gdd;
+  else gLI=1;
+  *ne7=gLI*(t7.nLI)*exp(-((rr-(t7.RLI))*(rr-(t7.RLI)))/((t7.WLI)*(t7.WLI)))*exp((-theta*theta)/((t7.detthetaLI)*(t7.detthetaLI)));
 }
+

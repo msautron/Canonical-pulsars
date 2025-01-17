@@ -24,7 +24,7 @@ Jumei Yao (yaojumei@xao.ac.cn), Richard N Manchester
 (dick.manchester@csiro.au), Na Wang (na.wang@xao.ac.cn).
 */
 #include "cn.h"
-void fermibubble(double xx, double yy, double zz, int *wfb)
+__host__ __device__ void fermibubble(double xx, double yy, double zz, int *wfb)
 {
   double fbnz, fbsz, na, nb, sa, sb, N, S;
 //center of Fermi bubble

@@ -24,7 +24,7 @@ Jumei Yao (yaojumei@xao.ac.cn), Richard N Manchester
 (dick.manchester@csiro.au), Na Wang (na.wang@xao.ac.cn).
 */
 #include"cn.h"
-void dora(double l, double b, double d, double *ne9, struct Dora t10)
+__host__ __device__ void dora(double l, double b, double d, double *ne9, struct Dora t10)
 {
   //coordinate system
   double X, Y, Z;

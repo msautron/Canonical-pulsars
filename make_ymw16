@@ -1,6 +1,6 @@
 rm *.o rm *.a
-gcc -g -c dmdtau.c dora.c fermibubble.c frb_d.c galcen.c gum.c lmc.c localbubble.c ne_crd.c nps.c smc.c spiral.c thick.c thin.c ymw16par.c
+nvcc -rdc=true -g -c dmdtau.cu dora.cu fermibubble.cu frb_d.cu galcen.cu gum.cu lmc.cu localbubble.cu ne_crd.cu nps.cu smc.cu spiral.cu thick.cu thin.cu ymw16par.cu
 ar -rvs ymw16.a *.o   
-gcc -g ymw16.c ymw16.a  -o ymw16 -lm
-gcc -g ymw16_ne.c ymw16.a  -o ymw16_ne -lm
+nvcc -rdc=true -g ymw16.cu ymw16.a  -o ymw16 -lm
+nvcc -rdc=true -g ymw16_ne.cu ymw16.a  -o ymw16_ne -lm
 rm *.o

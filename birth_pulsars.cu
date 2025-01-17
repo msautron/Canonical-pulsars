@@ -18,8 +18,8 @@ int birth(void *params){//generates Npulsars with an initial period, B and age
 
         struct func_params *part= (struct func_params*)params;
 	bool sample=false;
-	double J=1.2;
-	double K=14.5;
+	double J=0.92;
+	double K=9.6;
 	double P0;
 	double pdf_val,comp_val;
         long np=0;
@@ -34,9 +34,9 @@ int birth(void *params){//generates Npulsars with an initial period, B and age
 
 		        //Weibull distribution for the spin period Du et al. (2024) 
 		        /*while (sample==false){
-                                P0=(200e-3-5e-3)*gsl_rng_uniform(part->r)+5e-3;
+                                P0=(200e-3-1e-3)*gsl_rng_uniform(part->r)+1e-3;
                                 pdf_val=f_weibull_P0(P0,J,K);
-                                comp_val=f_weibull_P0(5e-3,J,K);
+                                comp_val=f_weibull_P0(1e-3,J,K);
                                 if (comp_val<=pdf_val) {sample=true;}
                         }
                         sample=false;

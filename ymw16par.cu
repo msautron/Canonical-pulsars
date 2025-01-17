@@ -24,7 +24,7 @@ Jumei Yao (yaojumei@xao.ac.cn), Richard N Manchester
 (dick.manchester@csiro.au), Na Wang (na.wang@xao.ac.cn).
 */
 #include "cn.h"
-int ymw16par(struct Warp_Sun *t0, struct Thick *t1, struct Thin *t2, struct Spiral *t3, struct GC *t4, struct Gum *t5,struct LB *t6,  struct LI *t7, struct FB *t8, struct  LMC *t9, struct Dora *t10, struct SMC *t11, char *dirname){
+/*__host__ __device__ int ymw16par(struct Warp_Sun *t0, struct Thick *t1, struct Thin *t2, struct Spiral *t3, struct GC *t4, struct Gum *t5,struct LB *t6,  struct LI *t7, struct FB *t8, struct  LMC *t9, struct Dora *t10, struct SMC *t11, char *dirname){
 
   FILE *fptr =NULL;
   char key[40], *cstr, filen[256];
@@ -225,5 +225,82 @@ int ymw16par(struct Warp_Sun *t0, struct Thick *t1, struct Thin *t2, struct Spir
   fclose(fptr);
   free(cstr);
   return 0;
-}
+}*/
 
+
+
+__host__ __device__ int ymw16par(struct Warp_Sun *t0, struct Thick *t1, struct Thin *t2, struct Spiral *t3, struct GC *t4, struct Gum *t5,struct LB *t6,  struct LI *t7, struct FB *t8, struct  LMC *t9, struct Dora *t10, struct SMC *t11, char *dirname){
+
+	//Warp_Sun
+	t0->Gamma_w=0.14;
+	t0->z_Sun=6.0;
+
+	//Thick disk
+	t1->Ad=2500;
+	t1->Bd=15000;
+	t1->n1=0.01132;
+	t1->H1=1673;
+
+	//Thin disk
+	t2->A2=1200;
+	t2->B2=4000;
+	t2->n2=0.404;
+	t2->K2=1.54;
+
+	//Spiral arm
+	t3->B2s=4000;
+	t3->Ka=5.015;
+	t3->narm[0]=0.135000;t3->narm[1]=0.129000;t3->narm[2]=0.103000;t3->narm[3]=0.116000;t3->narm[4]=0.005700;
+	t3->warm[0]=300;t3->warm[1]=500;t3->warm[2]=300;t3->warm[3]=500;t3->warm[4]=300;
+	t3->Aa=11680;
+	t3->ncn=2.4;
+	t3->wcn=8.2;
+	t3->thetacn=109;
+	t3->nsg=0.626;
+	t3->wsg=20;
+	t3->thetasg=75.8;
+
+	//GC
+	t4->ngc=6.2;
+	t4->Agc=160;
+	t4->Hgc=35;
+
+	//Gum nebula
+	t5->ngn=1.84;
+	t5->Wgn=15.1;
+	t5->Agn=125.8;
+	t5->Kgn=1.4;
+
+	//Local Enhancement
+	t6->J_LB=0.480;
+	t6->nlb1=1.094;
+	t6->detlb1=28.4;
+	t6->wlb1=14.2;
+	t6->hlb1=112.9;
+	t6->nlb2=2.33;
+	t6->detlb2=14.7;
+	t6->wlb2=15.6;
+	t6->hlb2=43.6;
+	t6->thetalb2=278.2;
+
+	//LI
+	t7->nLI=1.907;
+	t7->RLI=80;
+	t7->WLI=15;
+	t7->detthetaLI=30;
+	t7->thetaLI=40;
+
+	//Fermi Bubble
+	t8->J_FB=1;
+
+	//LMC
+	t9->nlmc=0.066;
+
+	//30 Doradus
+	t10->n30D=0.32;
+
+	//SMC
+	t11->nsmc=0.045;
+
+	return 0;
+}

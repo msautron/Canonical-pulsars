@@ -24,7 +24,7 @@ Jumei Yao (yaojumei@xao.ac.cn), Richard N Manchester
 (dick.manchester@csiro.au), Na Wang (na.wang@xao.ac.cn).
 */
 #include "cn.h"
-void spiral(double xx,  double yy,  double zz,  double gd, double *ne3,  double rr,  struct Spiral t3, char *filedir)
+__host__ __device__ void spiral(double xx,  double yy,  double zz,  double gd, double *ne3,  double rr,  struct Spiral t3, char *filedir)
 {
   double m_3=0;
   double ww=1;
@@ -32,7 +32,7 @@ void spiral(double xx,  double yy,  double zz,  double gd, double *ne3,  double 
   double m_6=0;
   double m_7=0;
   int i, which_arm;
-  static double rmin[5], thmin[5], tpitch[5], cspitch[5], sspitch[5];
+  double rmin[5], thmin[5], tpitch[5], cspitch[5], sspitch[5];
   double detrr=1e10;
   double armr1, armr2, smin, sminmin, saxis, uu, Aaa, HH, Hg;
   double ne3s=0;
@@ -40,22 +40,27 @@ void spiral(double xx,  double yy,  double zz,  double gd, double *ne3,  double 
   double sech2=0;
   double ga=0;
   double g1=0;
-  char filen[256];
-  FILE *fp;
+  //char filen[256];
+  //FILE *fp;
 
   if(m_3>=1)return;
 
   Hg=32+0.0016*rr+0.0000004*pow(rr, 2);
   HH=t3.Ka*Hg;
   if(ww==1){
-    strcpy(filen,filedir);
-    strcat(filen,"/spiral.txt");
-    fp=fopen(filen,"r");
+    //strcpy(filen,filedir);
+    //strcat(filen,"/spiral.txt");
+    //fp=fopen(filen,"r");
     
-    for(i=0;i<=4;i++){
-      fscanf(fp, "%lf %lf %lf %lf %lf", &rmin[i], &thmin[i], &tpitch[i], &cspitch[i], &sspitch[i]);
-    }
-    fclose(fp);
+    //for(i=0;i<=4;i++){
+      //fscanf(fp, "%lf %lf %lf %lf %lf", &rmin[i], &thmin[i], &tpitch[i], &cspitch[i], &sspitch[i]);
+    //}
+    //fclose(fp);
+    rmin[0]=3.3500e+03;thmin[0]=7.7000e-01;tpitch[0]=2.0200e-01;cspitch[0]=9.8000e-01;sspitch[0]=1.9800e-01;
+    rmin[1]=3.7070e+03;thmin[1]=2.0930e+00;tpitch[1]=1.7300e-01;cspitch[1]=9.8500e-01;sspitch[1]=1.7090e-01;
+    rmin[2]=3.5600e+03;thmin[2]=3.8100e+00;tpitch[2]=1.8300e-01;cspitch[2]=9.8360e-01;sspitch[2]=1.8020e-01;
+    rmin[3]=3.6700e+03;thmin[3]=5.7600e+00;tpitch[3]=1.8600e-01;cspitch[3]=9.8300e-01;sspitch[3]=1.8290e-01;
+    rmin[4]=8.2100e+03;thmin[4]=9.6000e-01;tpitch[4]=4.8300e-02;cspitch[4]=9.9880e-01;sspitch[4]=4.8300e-02;
     ww++;
   }
 

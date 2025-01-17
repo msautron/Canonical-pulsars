@@ -15,6 +15,7 @@ struct func_params{
 	double *n_omega_y;
 	double *n_omega_z;
 	double *PA;
+	double *delta; //Stores the gamma-ray peak separation
         long birth_rate;
         double R; //Radius of the neutron star
         double *alpha;//angle between the magnetic field and the rotation axis
@@ -30,6 +31,7 @@ struct func_params{
 	double *Nb_orb; //Estimation of the number of orbits done by the NS 
 	double *S_N;
 	double Bfield_const;
+	double tau_nu;
 	long Bfield_var;
         double *x; //kpc  x coordinate in the Galctocentric frame
         double *y;//idem 
@@ -99,5 +101,6 @@ struct func_params{
 #define SI_mu0 1.25663706212e-6 /* vacuum permeability in H/m */
 #define G_grav 6.67430e-20 //gravitational constant km^-3 kg^-1 s^-2
 #define MSUN 1.98847e30 //Solar mass kg
+#define SI_eps0 8.85418782e-12 //Vacuum permittivity in F/m
 #endif
 

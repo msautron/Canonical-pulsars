@@ -5,6 +5,8 @@ from mpl_toolkits import mplot3d
 from scipy.stats import kstest,ks_2samp
 from scipy.stats import mannwhitneyu
 from matplotlib.colors import LogNorm
+from astropy.table import Table
+import pandas as pd
 
 #Variable initialization
 P,P_dot,x,y,age,error,type_pulsar,distance,latitude,longitude,cos_alpha0,cos_alpha,Bf,z,vx,vy,vz,vx0,vy0,vz0,PA=[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[] #Refers to the simulation data
@@ -25,7 +27,6 @@ reg_1=re.compile("-*.{12}[|]{1}")
 reg_2=re.compile("[|]{1}.{1}[|]{1}")
 reg_3=re.compile("[-+]?\d*[.]\d*[Ee]*[-+]*\d*")
 reg_4=re.compile("-*\d{1}[.]\d{6}[eE]*[+-]*\d{2}")
-#reg_5=re.compile("-*.{12}")
 
 with open("ATNF_canonical_pulsars_gamma.txt","r") as f:
     data_only_gamma=re.findall(reg_3,f.read())
@@ -57,8 +58,40 @@ with open("dist_dirson22.dat","r") as f:
 with open("Fg_flux.txt","r") as f:
     fg_data=re.findall(reg_4,f.read())
 
+with open("gamma_peak_sep.txt","r") as f:
+    g_peak_sep_data=re.findall(reg_4,f.read())
+
 with open("nb_orbit.txt","r") as f:
     nb_orbit_data=re.findall(reg_4,f.read())
+
+with open("lat_dist_noISM.txt","r") as f :
+    lines = f.readlines()
+
+df=pd.read_excel('/home/matteo.sautron/Documents/cuda/canonical_pulsars/pulsar_population_repo/3PC_Catalog_20230803.xls')
+data_3PC=Table.from_pandas(df)
+
+#Get the flux from the 3PC catalog for the canonical pulsars
+flux_3PC_cano,g_peak_sep_obs=[],[]
+for i in range(len(data_3PC['G100'])):
+    B_3PC=3.2e15*np.sqrt(data_3PC['P0'][i]*data_3PC['P1'][i])
+    if B_3PC<=4.4e9 and B_3PC>=6e6 and data_3PC['G100'][i]!='*':
+        flux_3PC_cano.append(float(data_3PC['G100'][i])*1e-3)
+    if B_3PC<=4.4e9 and B_3PC>=6e6 and data_3PC['PKSEP'][i]!='*':
+        if data_3PC['PKSEP'][i] <= 0.5: 
+            g_peak_sep_obs.append(float(data_3PC['PKSEP'][i]))
+        else:
+            g_peak_sep_obs.append(1.0-float(data_3PC['PKSEP'][i]))
+
+print(f'Number of canonical gamma pulsars : {len(g_peak_sep_obs)}\n')
+
+#Get the data of distance and latitude when the ISM is not taken into account
+lat_noISM,dist_noISM,x_noISM,y_noISM=[],[],[],[]
+for i,line in enumerate(lines):
+    values=line.strip().split()
+    lat_noISM.append(float(values[0]))
+    dist_noISM.append(float(values[1]))
+    x_noISM.append(float(values[2]))
+    y_noISM.append(float(values[3]))
 
 #Get the data from Dirson et al. (2022) for xy coord and latitude
 x_dirson22,y_dirson22,lat_dirson22,dist_dirson22=[],[],[],[]
@@ -76,6 +109,11 @@ for i in range(int(len(data3_dirson22))):
 Fg_flux=[]
 for i in range(int(len(fg_data))):
     Fg_flux.append(float(fg_data[i]))
+
+#Get the data about the gamma-ray peak separation
+g_peak_sep_sim=[]
+for i in range(int(len(g_peak_sep_data))):
+    g_peak_sep_sim.append(float(g_peak_sep_data[i]))
 
 #Get the info about the nb of orbits made by each NS (approximately) 
 nb_orbit=[]
@@ -143,6 +181,12 @@ ya_gall=ya_rg+ya_gamma
 agea_gall=agea_rg+agea_gamma
 E_dota_gall=E_dota_rg+E_dota_gamma
 Ba_gall=Ba_rg+Ba_gamma
+
+Pa_gall_no5,P_dota_gall_no5=[],[]
+for i in range(len(Pa_gall)):
+    if (Pa_gall[i]<5):
+        Pa_gall_no5+=[Pa_gall[i]]
+        P_dota_gall_no5+=[P_dota_gall[i]]
 
 #Data we are really using, getting rid of lines where we miss a single info
 P2_g,P_dot2_g,d2_g,z2_g,x2_g,y2_g,age2_g,E_dot2_g,B2_g=[],[],[],[],[],[],[],[],[]
@@ -299,6 +343,10 @@ for i in range(int(len(data)/20)):
     vy0+=[data[20*i+17]] #Velocity on the y-absciss of the pulsar initially, in km/s
     vz0+=[data[20*i+18]] #Velocity on the z-absciss of the pulsar initially, in km/s
     PA+=[(180/np.pi)*np.arccos(data[20*i+19])]
+
+#with open("lat_dist_noISM.txt","w+")as f:
+#    for i in range(len(latitude)):
+#        f.write(f'{latitude[i]} {distance[i]} {x[i]} {y[i]}\n')
 
 #Computation of characteristic age
 charac_age,log_charac_age,P_old_charac=[],[],[]
@@ -482,14 +530,18 @@ B_crit=4.4e9
 B_linecrit=[10**np.log10(((B_crit/B0)**2)*(i**(-1))) for i in np.arange(1e-2,3e1,0.01)]
 
 #Plot the Edot lines
-P_dot_Edot1e23W=[(1e23*(P_line[i])**3)/(4*np.pi**2*Inertia) for i in range(len(P_line))]
+P_dot_Edot1e22W=[(1e22*(P_line[i])**3)/(4*np.pi**2*Inertia) for i in range(len(P_line))]
+P_dot_Edot1e25W=[(1e25*(P_line[i])**3)/(4*np.pi**2*Inertia) for i in range(len(P_line))]
 P_dot_Edot1e28W=[(1e28*(P_line[i])**3)/(4*np.pi**2*Inertia) for i in range(len(P_line))]
 P_dot_Edot1e31W=[(1e31*(P_line[i])**3)/(4*np.pi**2*Inertia) for i in range(len(P_line))]
 
 #Plot the B lines
+P_dot_B1e6=[(1e6/3.2e15)**2*(1/P_line[i]) for i in range(len(P_line))]
 P_dot_B5e6=[(5e6/3.2e15)**2*(1/P_line[i]) for i in range(len(P_line))]
+P_dot_B1e7=[(1e7/3.2e15)**2*(1/P_line[i]) for i in range(len(P_line))]
 P_dot_B1e8=[(1e8/3.2e15)**2*(1/P_line[i]) for i in range(len(P_line))]
 P_dot_B1e9=[(1e9/3.2e15)**2*(1/P_line[i]) for i in range(len(P_line))]
+P_dot_B4_4e9=[(4.4e9/3.2e15)**2*(1/P_line[i]) for i in range(len(P_line))]
 
 #Display of the statistics on all pulsar
 for i in range(len(Edot)):
@@ -627,6 +679,22 @@ p_value=KS_test.pvalue
 print(f"d_value of P KS test for the radio only pulsars= {test_stat}")
 print(f"p_value of P for the radio only pulsars={p_value}")
 
+#KS test without the outliers
+KS_test=kstest(P_dot_gamma_or_rg,P_dota_gall_no5)
+test_stat=KS_test.statistic
+p_value=KS_test.pvalue
+print("----ALL GAMMA PULSARS WITHOUT THE OUTLIERS----\n")
+print(f"d_value of Pdot KS test for all the gamma pulsars= {test_stat}")
+print(f"p_value of Pdot for all the gamma pulsars={p_value}")
+
+KS_test=kstest(P_gamma_or_rg,Pa_gall_no5)
+test_stat=KS_test.statistic
+p_value=KS_test.pvalue
+print(f"d_value of P KS test for all the gamma pulsars= {test_stat}")
+print(f"p_value of P for all the gamma pulsars={p_value}")
+
+print(len(Pa_gall)-len(Pa_gall_no5))
+
 #Plot the CDF
 plt.plot(bin_edges[1:], cdf1, marker='o', linestyle='-',label='Simulation data')
 plt.plot(bin_edges_3[1:], cdf3, marker='o', linestyle='-',label='ATNF data')
@@ -654,21 +722,29 @@ plt.plot(P_line,Pdot_line,c='green',label='Death line',linestyle='-',linewidth=2
 plt.fill_between(P_line,Pdot_line4,Pdot_line5,where=condition,facecolor='green',alpha=0.4,label='Death Valley')
 
 #Plot the Edot lines
-plt.plot(P_line,P_dot_Edot1e23W,linestyle='dotted',c='orange',zorder=0)
-plt.text(P_line[1500]*0.85,P_dot_Edot1e23W[1500]*1.05,r'$\dot{E} = 10^{23}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+plt.plot(P_line,P_dot_Edot1e22W,linestyle='dotted',c='orange',zorder=0)
+plt.text(P_line[1800]*0.85,P_dot_Edot1e22W[1800]*1.05,r'$\dot{E} = 10^{22}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+plt.plot(P_line,P_dot_Edot1e25W,linestyle='dotted',c='orange',zorder=0)
+plt.text(P_line[800]*0.85,P_dot_Edot1e25W[800]*1.05,r'$\dot{E} = 10^{25}$W',fontsize=7,color='orange',rotation=45,zorder=3)
 plt.plot(P_line,P_dot_Edot1e28W,linestyle='dotted',c='orange',zorder=0)
 plt.text(P_line[77]*0.85,P_dot_Edot1e28W[77]*1.05,r'$\dot{E} = 10^{28}$W',fontsize=7,color='orange',rotation=45,zorder=3)
 plt.plot(P_line,P_dot_Edot1e31W,linestyle='dotted',c='orange',zorder=0)
 plt.text(P_line[7]*0.85,P_dot_Edot1e31W[7]*1.05,r'$\dot{E} = 10^{31}$W',fontsize=7,color='orange',rotation=45,zorder=3)
 #Plot the B lines
-plt.plot(P_line,P_dot_B5e6,linestyle='dotted',c='black',zorder=0)
-plt.text(P_line[1500]*0.6,P_dot_B5e6[1500]*0.75,r'$B =5\times10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+plt.plot(P_line,P_dot_B1e6,linestyle='dotted',c='black',zorder=0)
+plt.text(P_line[80]*0.6,P_dot_B1e6[80]*0.95,r'$B =10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+#plt.plot(P_line,P_dot_B5e6,linestyle='dotted',c='black',zorder=0)
+#plt.text(P_line[1500]*0.6,P_dot_B5e6[1500]*0.75,r'$B =5\times10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+plt.plot(P_line,P_dot_B1e7,linestyle='dotted',c='black',zorder=0)
+plt.text(P_line[2000]*0.6,P_dot_B1e7[2000]*0.95,r'$B= 10^{7}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 plt.plot(P_line,P_dot_B1e8,linestyle='dotted',c='black',zorder=0)
-plt.text(P_line[2000]*0.6,P_dot_B1e8[2000]*0.95,r'$B= 10^{8}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+plt.text(P_line[2300]*0.6,P_dot_B1e8[2300]*0.95,r'$B= 10^{8}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 plt.plot(P_line,P_dot_B1e9,linestyle='dotted',c='black',zorder=0)
 plt.text(P_line[2500]*0.6,P_dot_B1e9[2500]*0.95,r'$B= 10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+#plt.plot(P_line,P_dot_B4_4e9,linestyle='dotted',c='black',zorder=0)
+#plt.text(P_line[2500]*0.6,P_dot_B4_4e9[2500]*0.95,r'$B= 4.4\times10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 
-plt.legend()
+plt.legend(loc='lower left')
 plt.xlim(1e-2,3e1)
 plt.ylim(1e-19,1e-11)
 plt.yscale('log')
@@ -695,19 +771,27 @@ plt.plot(P_line,Pdot_line,c='green',label='Death line',linestyle='-',linewidth=1
 plt.fill_between(P_line,Pdot_line4,Pdot_line5,where=condition,facecolor='green',alpha=0.4,label='Death Valley' )
 
 #Plot the Edot lines
-plt.plot(P_line,P_dot_Edot1e23W,linestyle='dotted',c='orange',zorder=0)
-plt.text(P_line[1500]*0.85,P_dot_Edot1e23W[1500]*1.05,r'$\dot{E} = 10^{23}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+plt.plot(P_line,P_dot_Edot1e22W,linestyle='dotted',c='orange',zorder=0)
+plt.text(P_line[1800]*0.85,P_dot_Edot1e22W[1800]*1.05,r'$\dot{E} = 10^{22}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+plt.plot(P_line,P_dot_Edot1e25W,linestyle='dotted',c='orange',zorder=0)
+plt.text(P_line[800]*0.85,P_dot_Edot1e25W[800]*1.05,r'$\dot{E} = 10^{25}$W',fontsize=7,color='orange',rotation=45,zorder=3)
 plt.plot(P_line,P_dot_Edot1e28W,linestyle='dotted',c='orange',zorder=0)
 plt.text(P_line[77]*0.85,P_dot_Edot1e28W[77]*1.05,r'$\dot{E} = 10^{28}$W',fontsize=7,color='orange',rotation=45,zorder=3)
 plt.plot(P_line,P_dot_Edot1e31W,linestyle='dotted',c='orange',zorder=0)
 plt.text(P_line[7]*0.85,P_dot_Edot1e31W[7]*1.05,r'$\dot{E} = 10^{31}$W',fontsize=7,color='orange',rotation=45,zorder=3)
 #Plot the B lines
-plt.plot(P_line,P_dot_B5e6,linestyle='dotted',c='black',zorder=0)
-plt.text(P_line[1500]*0.6,P_dot_B5e6[1500]*0.75,r'$B =5\times10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+plt.plot(P_line,P_dot_B1e6,linestyle='dotted',c='black',zorder=0)
+plt.text(P_line[80]*0.6,P_dot_B1e6[80]*0.95,r'$B =10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+#plt.plot(P_line,P_dot_B5e6,linestyle='dotted',c='black',zorder=0)
+#plt.text(P_line[1500]*0.6,P_dot_B5e6[1500]*0.75,r'$B =5\times10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+plt.plot(P_line,P_dot_B1e7,linestyle='dotted',c='black',zorder=0)
+plt.text(P_line[2000]*0.6,P_dot_B1e7[2000]*0.95,r'$B= 10^{7}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 plt.plot(P_line,P_dot_B1e8,linestyle='dotted',c='black',zorder=0)
-plt.text(P_line[2000]*0.6,P_dot_B1e8[2000]*0.95,r'$B= 10^{8}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+plt.text(P_line[2300]*0.6,P_dot_B1e8[2300]*0.95,r'$B= 10^{8}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 plt.plot(P_line,P_dot_B1e9,linestyle='dotted',c='black',zorder=0)
 plt.text(P_line[2500]*0.6,P_dot_B1e9[2500]*0.95,r'$B= 10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+#plt.plot(P_line,P_dot_B4_4e9,linestyle='dotted',c='black',zorder=0)
+#plt.text(P_line[2500]*0.6,P_dot_B4_4e9[2500]*0.95,r'$B= 4.4\times10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 
 plt.xlim(1e-2,3e1)
 plt.ylim(1e-19,1e-11)
@@ -716,7 +800,7 @@ plt.xscale('log')
 #plt.title("Spin period derivative - Spin period diagram")
 plt.xlabel(r'$P$ (s)')
 plt.ylabel(r'$\dot{P} \ (s.s^{-1})$')
-plt.legend(fontsize='x-small')
+plt.legend(loc='lower left',fontsize='x-small')
 plt.savefig('P_Pdot_plot.png',dpi=300)
 plt.close()
 
@@ -810,19 +894,27 @@ plt.scatter(P_gamma_or_rg,P_dot_gamma_or_rg,c='green',marker='o',s=10,label='Sim
 plt.scatter(Pa_gall,P_dota_gall,c='blue',marker='o',s=10,label='ATNF data')
 
 #Plot the Edot lines
-plt.plot(P_line,P_dot_Edot1e23W,linestyle='dotted',c='orange',zorder=0)
-plt.text(P_line[1500]*0.85,P_dot_Edot1e23W[1500]*1.05,r'$\dot{E} = 10^{23}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+plt.plot(P_line,P_dot_Edot1e22W,linestyle='dotted',c='orange',zorder=0)
+plt.text(P_line[1800]*0.85,P_dot_Edot1e22W[1800]*1.05,r'$\dot{E} = 10^{22}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+plt.plot(P_line,P_dot_Edot1e25W,linestyle='dotted',c='orange',zorder=0)
+plt.text(P_line[800]*0.85,P_dot_Edot1e25W[800]*1.05,r'$\dot{E} = 10^{25}$W',fontsize=7,color='orange',rotation=45,zorder=3)
 plt.plot(P_line,P_dot_Edot1e28W,linestyle='dotted',c='orange',zorder=0)
 plt.text(P_line[77]*0.85,P_dot_Edot1e28W[77]*1.05,r'$\dot{E} = 10^{28}$W',fontsize=7,color='orange',rotation=45,zorder=3)
 plt.plot(P_line,P_dot_Edot1e31W,linestyle='dotted',c='orange',zorder=0)
 plt.text(P_line[7]*0.85,P_dot_Edot1e31W[7]*1.05,r'$\dot{E} = 10^{31}$W',fontsize=7,color='orange',rotation=45,zorder=3)
 #Plot the B lines
-plt.plot(P_line,P_dot_B5e6,linestyle='dotted',c='black',zorder=0)
-plt.text(P_line[1500]*0.6,P_dot_B5e6[1500]*0.75,r'$B =5\times10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+plt.plot(P_line,P_dot_B1e6,linestyle='dotted',c='black',zorder=0)
+plt.text(P_line[80]*0.6,P_dot_B1e6[80]*0.95,r'$B =10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+#plt.plot(P_line,P_dot_B5e6,linestyle='dotted',c='black',zorder=0)
+#plt.text(P_line[1500]*0.6,P_dot_B5e6[1500]*0.75,r'$B =5\times10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+plt.plot(P_line,P_dot_B1e7,linestyle='dotted',c='black',zorder=0)
+plt.text(P_line[2000]*0.6,P_dot_B1e7[2000]*0.95,r'$B= 10^{7}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 plt.plot(P_line,P_dot_B1e8,linestyle='dotted',c='black',zorder=0)
-plt.text(P_line[2000]*0.6,P_dot_B1e8[2000]*0.95,r'$B= 10^{8}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+plt.text(P_line[2300]*0.6,P_dot_B1e8[2300]*0.95,r'$B= 10^{8}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 plt.plot(P_line,P_dot_B1e9,linestyle='dotted',c='black',zorder=0)
 plt.text(P_line[2500]*0.6,P_dot_B1e9[2500]*0.95,r'$B= 10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+#plt.plot(P_line,P_dot_B4_4e9,linestyle='dotted',c='black',zorder=0)
+#plt.text(P_line[2500]*0.6,P_dot_B4_4e9[2500]*0.95,r'$B= 4.4\times10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 
 plt.legend()
 plt.xlim(1e-2,3e1)
@@ -836,30 +928,31 @@ plt.savefig('P_Pdot_plot_all_gamma.png',dpi=300)
 plt.close()
 
 #Positions plot
-
-plt.scatter(x,y,s=2,c='red',alpha=0.4,label='Simulation data',zorder=2)
-plt.scatter(y_dirson22,x_dirson22,s=2,c='green',alpha=0.7,label='Dirson et al.(2022)')
-#plt.scatter(x2,y2,s=2,c='blue',alpha=0.5,label='ATNF data') #Whole pop
+plt.figure(1000)
+plt.scatter(x,y,s=2,c='red',alpha=0.4,label='Simulation with the ISM',zorder=2)
 plt.scatter(x2,y2,s=2,c='blue',alpha=0.5,label='ATNF data') #Canonical pop
+plt.scatter(y_dirson22,x_dirson22,s=2,c='green',alpha=0.7,label='Dirson et al.(2022)')
+plt.scatter(x_noISM,y_noISM,s=2,c='black',alpha=0.4,label='Simulation without the ISM',zorder=0)
 plt.scatter([0],[8.5],c='yellow',marker='o',s=20,label='The Sun',zorder=3) #position of the sun
 plt.xlim(-20,20)
 plt.ylim(-20,20)
-plt.gca().set_aspect('equal', adjustable='box')
+#plt.gca().set_aspect('equal', adjustable='box')
 #plt.axis('equal')
 #plt.title('Positions of the detected pulsars compared to the sun')
 plt.xlabel('x (kpc)')
 plt.ylabel('y (kpc)')
-plt.legend()
+plt.legend(fontsize='small')
 plt.savefig('Positions_detected_pulsars.png',dpi=300)
 plt.close()
 
 #Distance histogram
 plt.figure(6)
 #plt.hist([distance,d_selec,dist_dirson22],bins=20,range=(0,25),edgecolor='white',color=['red','blue','green'],label=['Simulation','ATNF data','Dirson et al. (2022)'])
-plt.hist(distance,bins=20,range=(0,25),edgecolor='red',color='white',label='Simulation',alpha=1,zorder=1,histtype='step')
+plt.hist(distance,bins=20,range=(0,25),edgecolor='red',color='white',label='Simulation with the ISM',alpha=1,zorder=1,histtype='step')
 #plt.hist(d2,bins=20,range=(0,25),edgecolor='black',color='blue',alpha=0.5,label='ATNF data') #Whole pop
 plt.hist(d2,bins=20,range=(0,25),edgecolor='blue',color='white',label='ATNF data',alpha=1,zorder=1,histtype='step') #Canonical pop
 plt.hist(dist_dirson22,bins=20,range=(0,25),edgecolor='green',color='white',alpha=1,label='Dirson et al. (2022)',zorder=1,histtype='step')
+plt.hist(dist_noISM,bins=20,range=(0,25),edgecolor='black',color='white',alpha=1,label='Simulation without the ISM',zorder=1,histtype='step')
 plt.legend()
 plt.yscale('log')
 plt.xlabel('d (kpc)')
@@ -905,10 +998,10 @@ plt.close()
 
 #Latitude histogram
 plt.figure(8)
-plt.hist(latitude,bins=20,range=(-60,60),edgecolor='red',color='red',alpha=1,label='Simulation',zorder=3,histtype='step')
-plt.hist(lat_dirson22,bins=20,range=(-60,60),edgecolor='green',color='green',alpha=1,label='Dirson et al.(2022)',zorder=1,histtype='step')
-#plt.hist(latitude2,bins=20,range=(-60,60),edgecolor='black',color='blue',alpha=0.5,label='ATNF data',zorder=2) #Whole pop
+plt.hist(latitude,bins=20,range=(-60,60),edgecolor='red',color='red',alpha=1,label='Simulation with the ISM',zorder=3,histtype='step')
 plt.hist(latitude2,bins=20,range=(-60,60),edgecolor='blue',color='blue',alpha=1,label='ATNF data',zorder=2,histtype='step') #Canonical pop
+plt.hist(lat_dirson22,bins=20,range=(-60,60),edgecolor='green',color='green',alpha=1,label='Dirson et al.(2022)',zorder=1,histtype='step')
+plt.hist(lat_noISM,bins=20,range=(-60,60),edgecolor='black',color='green',alpha=1,label='Simulation without the ISM',zorder=0,histtype='step')
 plt.yscale('log')
 plt.legend()
 plt.xlabel('Latitude in degrees')
@@ -1126,9 +1219,11 @@ for i in range(len(age)):
 
 #Plot spin-vel angle=f(nb_orbit)
 plt.figure(40)
-scatter=plt.scatter(PA,nb_orbit,c=age,cmap='plasma',marker='o',s=5,label='Simulation data')
-plt.ylim(0,10)
+scatter=plt.scatter(PA,nb_orbit,c=age,cmap='plasma',marker='o',s=5,label='Simulation data')#,norm=LogNorm(vmin=1e2,vmax=5e7))
+#plt.ylim(0,10)
 plt.xlim(0,180)
+plt.yscale('log')
+#plt.xscale('log')
 plt.xlabel('Spin-velocity angle in degrees')
 plt.ylabel('Number of orbits in the Galaxy')
 plt.legend()
@@ -1150,7 +1245,48 @@ plt.legend()
 plt.savefig('spinvel_init_vel_plot.png',dpi=300)
 plt.close()
 
+Fg_flux_log=[]
+for i in range(len(Fg_flux)):
+    Fg_flux_log.append(np.log10(Fg_flux[i]))
+
+flux_3PC_cano_log=[]
+for i in range(len(flux_3PC_cano)):
+    flux_3PC_cano_log.append(np.log10(flux_3PC_cano[i]))
+
+#Comparison flux 3PC and simulation (gamma-ray pulsars)
+plt.figure(42)
+plt.hist(Fg_flux_log,bins=20,range=(-15,-11),edgecolor='red',color='red',alpha=1,label='Simulation',zorder=3,histtype='step')
+plt.hist(flux_3PC_cano_log,bins=20,range=(-15,-11),edgecolor='blue',color='blue',alpha=1,label='3PC data',zorder=2,histtype='step') #Canonical pop
+plt.legend()
+plt.yscale('log')
+plt.xlabel(r'Gamma-ray flux in log space (W.m$^{-2}$)')
+plt.ylabel('Frequency')
+plt.savefig('histo_fgamma.png',dpi=300)
+plt.close()
+
+weights_obs=np.ones_like(g_peak_sep_obs) / len(g_peak_sep_obs)
+weights_sim=np.ones_like(g_peak_sep_sim) / len(g_peak_sep_sim)
+
+#Comparison gamma-ray peak separation 3PC and simulation
+plt.figure(43)
+plt.hist(g_peak_sep_sim,bins=10,weights=weights_sim,range=(0,0.5),edgecolor='red',color='red',alpha=1,label='Simulation',zorder=3,histtype='step')
+plt.hist(g_peak_sep_obs,bins=10,weights=weights_obs,range=(0,0.5),edgecolor='blue',color='blue',alpha=1,label='3PC data',zorder=2,histtype='step') #Canonical pop
+plt.legend()
+#plt.yscale('log')
+plt.xlabel(r'Gamma-ray peak separation')
+plt.ylabel('p.d.f value')
+plt.savefig('histo_gpeaksep.png',dpi=300)
+plt.close()
+
+#KS test without the outliers
+KS_test=kstest(Fg_flux_log,flux_3PC_cano_log)
+test_stat=KS_test.statistic
+p_value=KS_test.pvalue
+print("----ALL GAMMA PULSARS FLUX----\n")
+print(f"d_value of Fg KS test for all the gamma pulsars= {test_stat}")
+print(f"p_value of Fg for all the gamma pulsars={p_value}")
+
 #"Optimisation save in file" 
-line=[f"{count_tot} {count_rad} {count_gam} {count_radgam} {test_stat_all2} {p_value_all2} {test_stat_all1} {p_value_all1}\n"]
-with open("data_opt_04sigp.txt","a") as f:
-    f.writelines(line)
+#line=[f"{count_tot} {count_rad} {count_gam} {count_radgam} {test_stat_all2} {p_value_all2} {test_stat_all1} {p_value_all1}\n"]
+#with open("data_opt_04sigp.txt","a") as f:
+#    f.writelines(line)

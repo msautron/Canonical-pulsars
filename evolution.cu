@@ -37,36 +37,6 @@ double func_angle_mhd(double x, void *params){ // function for which we want to 
       return result= 0.5 /sq(x) + log(x) - k;
 
 }
-/*
-
-my_f(double x, void *params){
-
-
-
-}
-
-double my_df(double x, void *params)
-{
-  struct func_params *part= (struct func_params*)params;
-  return -1./(x*x*x)+1./x; 
-
-}
-
-void my_fdf(double x, void *params, double *f,double *df){
-
-  struct func_params *part= (struct func_params*)params;
-  double cosa0 = part->cos_a0 ;
-  double sin2a0 = 1.0-sq(cosa0) ;
-
-  double k=part->age_pulsar[part->np]/part->tau_MHD_al + 0.5/sin2a0 + log(sqrt(sin2a0));
-  double t  = 0.5 /sq(x) + log(x) - k;
-  *f        = t;
-  *df       = -1./(x*x*x)+1./x;
-
-
-}
-
-*/
 
 /*****************************************************************  Temporal evolution of the pulsars *********************************************************************/
 
@@ -75,23 +45,18 @@ int evolution(void *params){
         struct func_params *part= (struct func_params*)params;
   
         FILE *fp;
-        if ( ( fp = fopen("pulsar_properties.dat","w+")) == NULL){
+        if ( ( fp = fopen("/home/matteo.sautron/Documents/cuda/canonical_pulsars/SBI/pop_synthesis/pulsar_properties.dat","w+")) == NULL){
       	     printf("Couldn't open file pulsar_properties.dat \n");
 	     exit(-1);
          }
-        /*char *fname;
-        fname=malloc(50);
-        sprintf(fname,"population_init%.0ld.dat",part->Npulsars);
-        */
         long np;
-        //long count=0;
         double k;
         double four_pi2 = 4*M_PI*M_PI;   
         double two_pi = 2*M_PI;   
         double height_pi2 =  8*M_PI*M_PI;   
         //double k1 = 5.277e-33 ; // en 1/s (8*M_PI*pow(part->R,6))/(3*SI_mu0*cube(SI_C)*SI_I);
 	double k1 = 7.388120797268824e-33; // en 1/s (8*M_PI*pow(part->R,6))/(3*SI_mu0*cube(SI_C)*SI_I);
-	double k2 = pow(R_NS,6.0)/(SI_I*cube(SI_C)); //R^6/Ic^3
+	double k2 = 4*M_PI*pow(R_NS,6.0)/(SI_mu0*SI_I*pow(SI_C,3.0)); //K used for equation 19 of Dirson et al. (2022) and 12 of Sautron et al. (2024)
         double tau_0;
         double sina; 
         double alpha;
@@ -104,23 +69,20 @@ int evolution(void *params){
         int iter = 0;
         const gsl_root_fsolver_type *R;
         gsl_root_fsolver *s;
-       //const gsl_root_fdfsolver_type *R;
-      //gsl_root_fdfsolver *s;
-  
   
 	  for(np=0;np<part->Npulsars;np++){
 
 		part->np = np; 
 	        tau_0             =    1.0/k1 * sq(1.0/part->Binit[np])*sq(0.5*part->Pinit[np]/M_PI); //s-1
-		part->cos_a0[np]  =    2*gsl_rng_uniform(part->r)-1.0; // uniform between 0 and 1
+		part->cos_a0[np]  =    2*gsl_rng_uniform(part->r)-1.0; // uniform between -1 and 1
 		double cosa0      =    part->cos_a0[np] ;
 		double cos2a0     =    cosa0*cosa0 ;
 		omega_0           =    two_pi/(part->Pinit[np]);
-		part->tau_MHD_al  =    tau_0*(1.0-cos2a0)/(cos2a0*cos2a0);
-		part->tau_vac_al  =    1.5*tau_0 / cos2a0;
+		part->tau_MHD_al  =    (2.0/3.0)*tau_0*(1.0-cos2a0)/(cos2a0*cos2a0);
+		part->tau_vac_al  =    tau_0 / cos2a0;
 		double pdecay     =    gsl_rng_uniform(part->r);
-		/*part->tau0_B0     =    part->k_tau0_B0*exp(log(1e7-1e5)*pdecay+log(1e5))*pow(2.5e8,part->alpha_d)*365*24*3600; //from Vigano
-		part->tau_d       =    part->tau0_B0*pow(part->Binit[np],-part->alpha_d);*/
+		//part->tau0_B0     =    part->k_tau0_B0*exp(log(1e7-1e5)*pdecay+log(1e5))*pow(2.5e8,part->alpha_d)*365*24*3600; //from Vigano
+		//part->tau_d       =    part->tau0_B0*pow(part->Binit[np],-part->alpha_d);
                 if (pdecay< 0.31) part->tau_d       =    part->tau0_B0*pow(part->Binit[np],-part->alpha_d);
 		else if (pdecay>= 0.31 && pdecay <0.54) {
 			part->tau_d       =    part->tau0_B0_2*pow(part->Binit[np],-part->alpha_d);

@@ -9,22 +9,15 @@ void initialize(int argc, char *argv[], void *params){
 
 
 	 if (argc>1){
-                part->Npulsars   = (long) strtod(argv[1],(char **)NULL);
-                part->sigma_b    = (double) strtod(argv[2],(char **)NULL);
-                part->b_mean     = (double) strtod(argv[3],(char **)NULL);
-                part->p_mean     = (double) strtod(argv[4],(char **)NULL);
-                part->sigma_p    = (double) strtod(argv[5],(char **)NULL);
-                part->alpha_d    = (double) strtod(argv[6],(char **)NULL);
-                part->k_tau0_B0  = (double) strtod(argv[7],(char **)NULL);
-                part->birth_rate = (double) strtod(argv[8],(char **)NULL);
-                part->v_old      = (double) strtod(argv[9],(char **)NULL);
-		//printf("sigma_b %e \n",part->sigma_b);
-//                part->n_init= (long) strtod(argv[2],(char **)NULL);
+                part->sigma_b    = (double) strtod(argv[1],(char **)NULL);
+                part->b_mean     = (double) strtod(argv[2],(char **)NULL);
+                part->p_mean     = (double) strtod(argv[3],(char **)NULL);
+                part->sigma_p    = (double) strtod(argv[4],(char **)NULL);
+                part->birth_rate = (double) strtod(argv[5],(char **)NULL);
+		//part->tau_d = (double) strtod(argv[6],(char **)NULL);
+		//part->alpha_d = (double) strtod(argv[7],(char **)NULL);
          }
          else{
-         part->Npulsars         =  	1000000;//10000000;
-         //part->Npulsars         =  	10000;
-	 part->k_tau0_B0        =       5;
          part->birth_rate	= 	41;
          //part->b_mean		= 	3.25e8; //Tesla usual value used 
 	 part->b_mean           =       275422870.33381635; //Tesla, value used in Igoshev et al. (2022)
@@ -32,25 +25,20 @@ void initialize(int argc, char *argv[], void *params){
 	 part->p_mean           =       129e-3;//1.174898e-1;// value used in Igoshev et al. (2022) in seconds (log normal distribution)
          //part->sigma_p		= 	0.010;//usual value used in s (normal distribution)
 	 part->sigma_p          =       0.45; // value used in Igoshev et al. (2022) (log normal distribution)
-         part->alpha_d          = 	1.5;
          //part->sigma_b		= 	0.5;//usual value used
 	 part->sigma_b          =       0.5; //value used in Igoshev et al. (2022)
-         part->v_old            =	265.0;//75.; //  km/s 
-/*
-         part->birth_rate	= 	300;
-         part->b_mean		= 	1.2e8; //Tesla
-         part->p_mean		= 	50e-3;//s 
-         part->sigma_p		= 	0.001;//s 
-         part->sigma_b		= 	0.4 ;// 
-         part->v_old            =	75.; //  km/s 
-*/
-  //       part->n_init=0.;
+	 //part->alpha_d          =       1.5;
+	 //part->tau_d            =       5*7e4*365*24*3600; //uncomment if you want to try to use only one tau_d, in s 
          }
 
-     
+       part->Npulsars           =       1000000;
+       part->k_tau0_B0          =       5;
+       part->alpha_d            =       1.5;
+       part->v_old              =       265.0;//km/s
+       //part->tau0_B0            =       part->tau_nu*pow(3e8,part->alpha_d)*365*24*3600; //uncomment if you want to try to use only one tau_d
        part->tau0_B0            =       part->k_tau0_B0*5e5*pow(2e9,part->alpha_d)*365*24*3600; //from Vigano
        part->tau0_B0_2          =       part->k_tau0_B0*5e4*pow(1e8,part->alpha_d)*365*24*3600; //from Vigano
-       part->tau0_B0_3          = 	part->k_tau0_B0*7e4*pow(3e8,part->alpha_d)*365*24*3600; //from Vigano 
+       part->tau0_B0_3          = 	part->k_tau0_B0*7e4*pow(3e8,part->alpha_d)*365*24*3600; //from Vigano
        //part->tau0_B0_4          =       part->k_tau0_B0*7e4*pow(3e8,part->alpha_d)*365*24*3600; //from Vigano
        part->R			=	12000;//m
        part->zexp               =	0.18; // kpc
@@ -163,5 +151,7 @@ void initialize(int argc, char *argv[], void *params){
                 if (part->S_N== NULL) printf("S_N: allocation failed");
        part->Nb_orb= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
                 if (part->Nb_orb== NULL) printf("Nb_orb: allocation failed");
+       part->delta= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->delta== NULL) printf("delta: allocation failed");
 
 }

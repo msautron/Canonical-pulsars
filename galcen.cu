@@ -24,7 +24,7 @@ Jumei Yao (yaojumei@xao.ac.cn), Richard N Manchester
 (dick.manchester@csiro.au), Na Wang (na.wang@xao.ac.cn).
 */
 #include "cn.h"
-void galcen(double xx, double yy, double zz, double *ne4 ,struct GC t4)
+__host__ __device__ void galcen(double xx, double yy, double zz, double *ne4 ,struct GC t4)
 {
   double Xgc=50;
   double Ygc=0;

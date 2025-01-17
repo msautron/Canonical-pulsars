@@ -108,7 +108,7 @@ struct LB
   double thetalb2;
 };
 
-struct LI
+ struct LI
 {
   double nLI;
   double RLI;
@@ -121,7 +121,7 @@ struct FB
 {
   double J_FB;
 };
-struct LMC
+ struct LMC
 {
   double nlmc;
 };
@@ -136,21 +136,25 @@ struct SMC
   double nsmc;
 };
 
-int ymw16par(struct Warp_Sun *t0, struct Thick *t1, struct Thin *t2,  struct Spiral *t3, struct GC *t4, struct Gum *t5, struct LB *t6, struct LI *t7, struct FB *t8, struct LMC *t9, struct Dora *t10, struct SMC *t11, char *dirname);
-void ne_ncrd(double xx, double yy, double zz, double gl, double gb, double dist, int ncrd, int vbs, char *dirname, char *text);
-void thick(double xx, double yy, double zz, double *gd, double *ne1, double rr, struct Thick t1);
-void thin(double xx, double yy, double zz, double gd, double *ne2, double rr, struct Thin t2);
-void spiral(double xx, double yy, double zz, double gd, double *ne3, double rr, struct Spiral t3, char *dirname);
-void galcen(double xx, double yy, double zz, double *ne4 ,struct GC t4);
-void gum(double xx, double yy, double zz, double *ne5, struct Gum t5);
-void localbubble(double xx, double yy, double zz, double gl, double gb,double *ne6, double *WW, struct LB t6);
-void nps(double xx,double yy,double zz,double *ne7, int *WLI, struct LI t7);
-void fermibubble(double xx, double yy, double zz, int *wfb);
-void lmc(double l, double b, double d, int *w_lmc, double *ne8, struct LMC t9);
-void dora(double l, double b, double d, double *ne9, struct Dora t10);
-void smc(double xx, double yy, double zz, int *w_smc, double *ne10, struct SMC t11);
-void frb_d(double DDM, double DM_Gal, double DM_MC, double DM_Host, int uu, int vbs, char* text);
-double tsc(double dm);
-void dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int np, int vbs, char *dirname, char *text);
-double ne_crd(double *x, double *y, double *z, double *gl, double *gb, double *dd, int ncrd, int vbs, char *dirname, char *text);
+__host__ __device__ int ymw16par(struct Warp_Sun *t0, struct Thick *t1, struct Thin *t2,  struct Spiral *t3, struct GC *t4, struct Gum *t5, struct LB *t6, struct LI *t7, struct FB *t8, struct LMC *t9, struct Dora *t10, struct SMC *t11, char *dirname);
+__host__ __device__ void ne_ncrd(double xx, double yy, double zz, double gl, double gb, double dist, int ncrd, int vbs, char *dirname, char *text);
+__host__ __device__ void thick(double xx, double yy, double zz, double *gd, double *ne1, double rr, struct Thick t1);
+__host__ __device__ void thin(double xx, double yy, double zz, double gd, double *ne2, double rr, struct Thin t2);
+__host__ __device__ void spiral(double xx, double yy, double zz, double gd, double *ne3, double rr, struct Spiral t3, char *dirname);
+__host__ __device__ void galcen(double xx, double yy, double zz, double *ne4 ,struct GC t4);
+__host__ __device__ void gum(double xx, double yy, double zz, double *ne5, struct Gum t5);
+__host__ __device__ void localbubble(double xx, double yy, double zz, double gl, double gb,double *ne6, double *WW, struct LB t6);
+__host__ __device__ void nps(double xx,double yy,double zz,double *ne7, int *WLI, struct LI t7);
+__host__ __device__ void fermibubble(double xx, double yy, double zz, int *wfb);
+__host__ __device__ void lmc(double l, double b, double d, int *w_lmc, double *ne8, struct LMC t9);
+__host__ __device__ void dora(double l, double b, double d, double *ne9, struct Dora t10);
+__host__ __device__ void smc(double xx, double yy, double zz, int *w_smc, double *ne10, struct SMC t11);
+__host__ __device__ void frb_d(double DDM, double DM_Gal, double DM_MC, double DM_Host, int uu, int vbs, char* text);
+__host__ __device__ double tsc(double dm);
+
+
+__host__  __device__ void dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int np, int vbs, char *dirname, char *text, double *dmpsr_f,double *tau_sc_f);
+
+
+__host__ __device__ double ne_crd(double *x, double *y, double *z, double *gl, double *gb, double *dd, int ncrd, int vbs, char *dirname, char *text);
 #endif 

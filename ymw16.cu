@@ -25,7 +25,7 @@ Jumei Yao (yaojumei@xao.ac.cn), Richard N Manchester
 */
 #include "cn.h"
 /* Program version 1.2.3, 2017 March 22 */
-void usage(int status)
+__host__ void usage(int status)
 {
   printf("\nConverts from DM to Dist and vice versa - electron density model\n");
   printf("Usage:\n");
@@ -44,7 +44,7 @@ void usage(int status)
   printf("\n");
   exit(status);
 }
-char *strupr(char *str)
+__host__ char *strupr(char *str)
 {
   char *p = str;
   while (*p != '\0'){
@@ -60,6 +60,8 @@ int main(int argc, char *argv[])
   double DM_Host=0;
   int ndir, np, ns;
   int vbs=0;
+  double dmpsr;
+  double tau_sc;
   char dirname[256]="NULL",text[64]="";
 
   char str[5];
@@ -202,5 +204,5 @@ int main(int argc, char *argv[])
 
   if(ndir==1)printf("%s: gl=%8.3f gb=%8.3f DM=%8.2f", p, gl, gb, dordm);
   else printf("%s: gl=%8.3f gb=%8.3f Dist=%9.1f", p, gl, gb, dordm);
-  dmdtau(gl, gb, dordm, DM_Host, ndir, np, vbs, dirname, text); 
+  dmdtau(gl, gb, dordm, DM_Host, ndir, np, vbs, dirname, text,&dmpsr,&tau_sc); 
 }

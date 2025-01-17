@@ -24,7 +24,7 @@ Jumei Yao (yaojumei@xao.ac.cn), Richard N Manchester
 (dick.manchester@csiro.au), Na Wang (na.wang@xao.ac.cn).
 */
 #include "cn.h"
-double ne_crd(double *x, double *y, double *z, double *gl, double *gb, double *dd, int ncrd, int vbs, char *dirname, char *text)
+__host__ __device__ double ne_crd(double *x, double *y, double *z, double *gl, double *gb, double *dd, int ncrd, int vbs, char *dirname, char *text)
 {
 
   double m_3=0;
@@ -48,7 +48,7 @@ double ne_crd(double *x, double *y, double *z, double *gl, double *gb, double *d
   double xx, yy, zz, glr, gbr, dist;
   double x_s, y_s, z_s, ll, bb, hh, r, sl, cl, sb, cb;
 
-  static double rr;
+  double rr;
   double R_g=0;
   double gd=0;
   

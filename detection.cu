@@ -12,56 +12,11 @@
 #include<gsl/gsl_sf_gamma.h>
 #include<time.h>
 #include <stdbool.h>
+#include "cn.h"
 
-/*
-
-int distribution(void *params){
-
-    	struct func_params *part= (struct func_params*)params;
-    	long np=0;
-	double two_pi=2*M_PI;   
-	double phi,rz;
-	double xx,yy,zz; //coordinates relative to eart
-//printf ("generator type: %s\n", gsl_rng_name (r));
- // printf ("seed = %lu\n", gsl_rng_default_seed);
- // printf ("first value = %lu\n", gsl_rng_get (r));
-
-
-
-           	while(np<part->Npulsars){   
-
-                                                  
-	 		phi	       =  two_pi*gsl_rng_uniform(part->r); // galactocentric azimuth uniformly distributed 
-                        //rz             =  fabs(gsl_ran_gaussian_ziggurat(part->r,part->sigma_rz)); // gaussian distribution for the distance to the z-axis 
-                       // rz             =  gsl_ran_exponential(part->r,part->scale_height); // gaussian distribution for the distance to the z-axis 
-                        rz             =  64.6*pow(1.528,4.35)*gsl_sf_gamma(4.35)*gsl_ran_gamma(part->r,4.35,1.528); // distribution taken from Lorimer 2004 
-			part->z[np]    =  gsl_ran_exponential(part->r,part->scale_height); //kpc
-			if(np%2==0) part->z[np] = part->z[np];
-		       	      else part->z[np]  = -part->z[np];	
-			part->x[np]   = rz*cos(phi);  //kpc
-			part->y[np]   = rz*sin(phi);  //kpc
-			xx            = 8.5-part->x[np]; // shift center of the Galaxy to the Sun
-			yy            = part->y[np]; //coordinates relative to Earth
-			zz	      = part->z[np];	
-			part->dist[np]= sqrt(sq(xx)+sq(yy)+sq(zz));
-			//printf("phi= %e rGC= %e \n",phi,rGC);
-			//printf(" rz= %e x= %e y= %e  z= %e \n",rz,part->x[np],part->y[np],part->z[np]);
-			//printf("gsl_ran_gamma(a,b) %e  gamma(4.35) %e pow(a,b) %e \n",gsl_ran_gamma(part->r,4.35,1.258),gsl_sf_gamma(4.35),pow(4.35,1.258));
-			//printf(" %e  %e  %e \n",xx,yy,zz);
-			//printf("theta %e cos_theta= %e sin_theta= %e cos_phi= %e sin_phi= %e \n",theta,cos_theta,sin_theta,cos(phi),sin(phi));
-			np++;
-                        //printf("\n");
-		}
-        //gsl_rng_free (r);
-
-
-	
-	return(0);
-
-
-   }
-
-*/
+//extern "C" {
+//    void dmdtau(double, double, double, double, int, int, int, char*, char*, double*, double*);
+//}
 
 double pdf_density_rho(double r){
 
@@ -192,7 +147,7 @@ FILE *kick(void *params){
 	const double kpc2km=3.0856775807e16; //kpc to km
 	//const double kpc2m=3.0856775807e19; //kpc to km
 	const double yr_sec=365*24*3600; // year to sec
-	double RAD = 180/M_PI;
+	double RAD_2 = 180/M_PI;
 	double r;
 	double glr,gbr; // galactic latitude, galactic longitude in radians
 	double age_pulsar_yr;
@@ -262,7 +217,7 @@ FILE *kick(void *params){
 			 }else{
 			     gbr=asin(z_s/part->dist[np]);
 			 }
-			part->gb[np]=gbr*RAD;
+			part->gb[np]=gbr*RAD_2;
 			    
 			if(r<1e-15){
 			      glr=0;
@@ -274,7 +229,7 @@ FILE *kick(void *params){
 			      }
 			 }
 
-			part->gl[np]=glr*RAD;
+			part->gl[np]=glr*RAD_2;
 			v=-1;
 
 			//part->gb[np] = RAD*asin(part->z[np]/part->dist[np]);
@@ -293,22 +248,6 @@ FILE *kick(void *params){
 
 
 return fp_gal;
-
-/*
-    FILE *fp=NULL;
-       if ( ( fp= fopen("file.dat","w+")) == NULL){
-                printf("Couldn't open file file.dat \n");
-                exit(-1);
-        }
-       int i;
-    for (i=0;i<10;i++){
-	x[i]=i*i;	
- 	//printf("%d \n", x[i]);
- 	fprintf(fp,"%d \n",x[i]);
- //	fprintf(fp,"%s \n", "This is file.dat");
-    }
-    return fp;
-*/
 }
 
 void pulse_profile_complete(void *params){
@@ -362,6 +301,32 @@ void pulse_profile_complete(void *params){
 
 	}
 
+}
+
+void pulse_profile_complete_2(void *params){
+
+	struct func_params *part= (struct func_params*)params;
+        double wint;double tau_samp=250e-6; //tau_samp of PMPS
+        double e=1.6e-19;//electronic charge in C
+        double m_e=9.1e-31; //electron mass in kg
+        double f=1.374e9; //Frequency of survey PMPS
+        double deltaf=3000e3; //bandwitdh of observation of PMPS
+        double tau_dm;
+        double tau_sc;
+	double DM;
+        //Variables declaration for YMW16 programm
+        int ndir=2;
+	double dordm;double DM_Host=100;int nt=1;int vbs=0;char dirname[10]="./";char text[10]="";
+        for(int np=0;np<part->Npulsars;np++){
+		dordm=part->dist[np]*1e3; //distance in pc
+                wint=part->w_r[np]*part->period[np]/(2*M_PI);
+                //Code to obtain DM and tau_scat from the YMW16 programm
+                dmdtau(part->gl[np], part->gb[np], dordm, DM_Host, ndir, nt, vbs, dirname, text, &DM,&tau_sc); //Compute the DM from the distance (Yao et al. (2017))
+        	tau_dm=(sq(e)*deltaf*DM)/(M_PI*m_e*SI_C*cube(f));
+        	part->DM[np]=DM;
+        	part->w_r[np]=sqrt(sq(wint)+sq(tau_samp)+sq(tau_dm)+sq(tau_sc))*((2*M_PI)/(part->period[np]));
+        	printf("pulse profile of pulsar nb %d with value %e rad computed \n",np,part->w_r[np]);
+	}
 }
 
 int geometry(void *params){ // calculated the geometry of the pulsar (i.e xi, and rho) 
@@ -444,6 +409,16 @@ void spinvel_angle(void *params){
 
 }
 
+void gamma_ray_peak_sep(void *params){
+
+	struct func_params *part= (struct func_params*)params;
+	long np=0;
+	for(np=0;np<part->Npulsars;np++){
+		part->delta[np]=(1.0/M_PI)*acos(fabs((cos(part->xi[np])/sin(part->xi[np]))*(cos(part->alpha[np])/sin(part->alpha[np]))));
+		if(part->delta[np]>0.5) part->delta[np]=1.0-part->delta[np];
+	}
+}
+
 int detection(void *params){ //check the flux of each pulsar and if the beam sweps the Earth
 
 
@@ -479,6 +454,8 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 	double eta=0.15;double alpha_l=45*(M_PI/180);double T6=2;double b=40;
 	double alpha_l2;double T6_2;double b2;
 	double P_dot_line;
+	FILE *gamma_peak_sep=NULL;
+        gamma_peak_sep=fopen("gamma_peak_sep.txt","w+");
 	check_SN=fopen("check_SN.txt","w+");
 	file_data=fopen("P_Pdot_positions.txt","w+");
 	check_DM=fopen("check_DM.txt","w+");
@@ -541,12 +518,12 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			
 			/* gamma detection */
 			  	if(fabs(xi-M_PI/2.)<=alpha){ 
-					if(Nr==1 && glat < 2.) {  //deep follow-up surveys at 1.4 GHz of gamma-ray sources
-					    Smin_gamma=4e-15; // in W.m^-2 
+					if(Nr==1 && glat < 2.0) {  //deep follow-up surveys at 1.4 GHz of gamma-ray sources
+					    Smin_gamma=04e-15; // in W.m^-2 
 					} else Smin_gamma=16e-15;
 				//Smin_gamma=5e-12;
                 			if(part->Fg[np]>Smin_gamma) {Ng=1;part->detec[np]=1;part->detec_gam[np]=1; }  
-				}  else continue; 
+				}  //else continue; 
 
 				if(Ng==1 && Nr==1){  //both radio and gamma are detected
 				        if (P_dot_line>part->Pdot[np]) {Ng=0;Nr=0;part->detec_rg[np]=0;part->detec[np]=0;part->detec_rad[np]=0;part->detec_gam[np]=0;}
@@ -606,6 +583,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
                                   fprintf(file_data,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|1|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
 				  fprintf(check_SN,"%e %e\n",S_N,part->S_N[np]);
 				  fprintf(check_nb_orbit,"%e\n",part->Nb_orb[np]);
+				  fprintf(check_DM,"%e\n",part->DM[np]);
 				
                         }
 
@@ -615,6 +593,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 				  fprintf(check_DM,"%e\n",part->DM[np]);
 				  fprintf(Fg_flux,"%e\n",part->Fg[np]);
 				  fprintf(check_nb_orbit,"%e\n",part->Nb_orb[np]);
+				  fprintf(gamma_peak_sep,"%e\n",part->delta[np]);
                         }
 
                                else if(part->detec_rg[np]==1 && part->Fg[np]-Smin_gamma>0 && part->S_N[np]>S_Nmin){
@@ -624,6 +603,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 				  fprintf(Fg_flux,"%e\n",part->Fg[np]);
 				  fprintf(check_SN,"%e %e\n",S_N,part->S_N[np]);
 				  fprintf(check_nb_orbit,"%e\n",part->Nb_orb[np]);
+				  fprintf(gamma_peak_sep,"%e\n",part->delta[np]);
                         }
 
 
@@ -654,6 +634,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			fclose(Fg_flux);
 			fclose(check_SN);
 			fclose(check_nb_orbit);
+			fclose(gamma_peak_sep);
 
 return(0);
 }
@@ -715,7 +696,7 @@ int gamma_flux(void *params){
 
     	struct func_params *part= (struct func_params*)params;
    	double cg,fac; //scatter term
-	cg=1.;
+	cg=1.0;
 	double lgamma;
 	const double kpc2m=3.0856775807e19; //kpc to m
 	fac=1./(4*M_PI*cg);
@@ -736,6 +717,7 @@ int gamma_flux(void *params){
 		    
 	        	if(alpha<-xi+0.6109) cg=1.9; //the correction factor cg (or f_omega)
 		   		else cg=1.;
+			//cg = 1.06 +0.84*tanh(0.1*(alpha+xi-0.6109));
       			part->Fg[np]=fac/(sq(part->dist[np]*kpc2m))*lgamma; // gamma flux in W.m-2
 			//printf("Fg %e np %ld dist %e \n",part->Fg[np],np,part->dist[np]);		
                         //printf("lgamma %e Fg %e B %e Edot %e \n",lgamma,part->Fg[np],part->B[np],part->Edot[np]);	

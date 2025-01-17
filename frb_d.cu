@@ -25,7 +25,7 @@ Jumei Yao (yaojumei@xao.ac.cn), Richard N Manchester
 */
 #include "cn.h"
 #define max(a,b) ( ((a)>(b)) ? (a):(b) )
-void frb_d(double DDM, double DM_Gal, double DM_MC, double DM_Host, int uu, int vbs, char* text)
+__host__ __device__ void frb_d(double DDM, double DM_Gal, double DM_MC, double DM_Host, int uu, int vbs, char* text)
 {
 
 //parameters for IG

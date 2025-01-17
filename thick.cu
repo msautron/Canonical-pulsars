@@ -24,20 +24,22 @@ Jumei Yao (yaojumei@xao.ac.cn), Richard N Manchester
 (dick.manchester@csiro.au), Na Wang (na.wang@xao.ac.cn).
 */
 #include "cn.h"
-void thin(double xx, double yy, double zz, double gd, double *ne2, double rr, struct Thin t2)
-{
-  double g2, Hg, ex1, ex2, g3, HH;
-  Hg=32+0.0016*rr+0.0000004*pow(rr, 2);
-  HH=t2.K2*Hg;
-  if((rr-t2.B2)>(mc*t2.A2)||(fabs(zz)>(mc*HH))) 
-  {
-  	*ne2=0;
-  	return;	
+
+__host__ __device__ void thick(double xx, double yy, double zz, double *gd, double *ne1, double rr, struct Thick t1){
+  
+  double gdd,gg;
+
+  if(fabs(zz)> mc*t1.H1 || (rr-t1.Bd)> mc*t1.Ad){
+    *ne1=0;
+    return;
+  }else{
+    if(rr<t1.Bd){
+      gdd=1;
+    }else{ 
+      gg=exp(-(rr-t1.Bd)/t1.Ad)+exp((rr-t1.Bd)/t1.Ad);
+      gdd=pow(2/gg,2);
+    }
   }
-  else
-  {
-    g3=(rr-t2.B2)/t2.A2;
-    g2=pow(2/(exp(-g3)+exp(g3)), 2);
-  }
-  *ne2=t2.n2*gd*g2*pow(2/(exp(-zz/HH)+exp(zz/HH)), 2);
+  *ne1=t1.n1*gdd*pow(2/(exp(-fabs(zz)/t1.H1)+exp(fabs(zz)/t1.H1)), 2);
+  *gd=gdd;
 }

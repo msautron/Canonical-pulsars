@@ -25,7 +25,7 @@ Jumei Yao (yaojumei@xao.ac.cn), Richard N Manchester
 */
 #include "cn.h"
 /* Program version 1.3.1, 2017 November 20 */
-void usage(int status)
+__host__ void usage(int status)
 {
   printf("\nCalculate electron density at a given point with galactocentric coordinates (x, y, z)/with (gl, gb, dist)\n");
   printf("Usage:\n");

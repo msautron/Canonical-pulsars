@@ -1,6 +1,4 @@
 #!/bin/sh
-nvcc -g main.cu initialize.cu birth_pulsars.cu detection.cu ism_scattering.cu galac_pot.cu evolution.cu  -o  YoungPop -lm -lgsl -lgslcblas  
-
-
-##gcc -g -W -Wall -L/usr/local/gsl-2.5 young_pulsar_pop.c initialize.c birth_pulsars.c evolution.c -o YoungPop -lm -lgsl -lgslcblas -lchealpix
+#nvcc -g -O0 -fmad=false -rdc=true --ptxas-options=-v main.cu initialize.cu birth_pulsars.cu detection.cu ism_scattering.cu galac_pot.cu evolution.cu ymw16.a -o  YoungPop -lm -lgsl -lgslcblas -lc -lcudadevrt
+nvcc -g -O0 -rdc=true -fmad=false -Xcompiler -fno-fast-math --ptxas-options=-v main.cu initialize.cu birth_pulsars.cu detection.cu ism_scattering.cu galac_pot.cu evolution.cu ymw16.a -o YoungPop -lm -lgsl -lgslcblas -lc -lcudadevrt
 
