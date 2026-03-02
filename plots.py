@@ -50,15 +50,6 @@ with open("P_Pdot_positions.txt","r") as f:
 with open("P_Pdot_positions.txt","r") as f:
     data_type=re.findall(reg_2,f.read())
 
-with open("xy_coord_dirson22.dat","r") as f :
-    data1_dirson22=re.findall(reg_4,f.read())
-
-with open("glat_dirson22.dat","r") as f :
-    data2_dirson22=re.findall(reg_4,f.read())
-
-with open("dist_dirson22.dat","r") as f:
-    data3_dirson22=re.findall(reg_4,f.read())
-
 with open("Fg_flux.txt","r") as f:
     fg_data=re.findall(reg_4,f.read())
 
@@ -67,9 +58,6 @@ with open("gamma_peak_sep.txt","r") as f:
 
 with open("nb_orbit.txt","r") as f:
     nb_orbit_data=re.findall(reg_4,f.read())
-
-with open("lat_dist_noISM.txt","r") as f :
-    lines = f.readlines()
 
 with open("wint.txt","r") as f:
     data_wint=re.findall(reg_5,f.read())
@@ -100,27 +88,6 @@ for i in range(len(data_3PC['G100'])):
 
 print(f'Number of canonical gamma pulsars : {len(g_peak_sep_obs)}')
 print(f'Number of gamma MSP in 3PC : {count_msp_g}')
-
-#Get the data of distance and latitude when the ISM is not taken into account
-lat_noISM,dist_noISM,x_noISM,y_noISM=[],[],[],[]
-for i,line in enumerate(lines):
-    values=line.strip().split()
-    lat_noISM.append(float(values[0]))
-    dist_noISM.append(float(values[1]))
-    x_noISM.append(float(values[2]))
-    y_noISM.append(float(values[3]))
-
-#Get the data from Dirson et al. (2022) for xy coord and latitude
-x_dirson22,y_dirson22,lat_dirson22,dist_dirson22=[],[],[],[]
-for i in range(int(len(data1_dirson22)/2)):
-    x_dirson22.append(float(data1_dirson22[2*i]))
-    y_dirson22.append(float(data1_dirson22[2*i+1]))
-
-for i in range(int(len(data2_dirson22))):
-    lat_dirson22.append(float(data2_dirson22[i]))
-
-for i in range(int(len(data3_dirson22))):
-    dist_dirson22.append(float(data3_dirson22[i]))
 
 #Get the data on the Fg flux, allowing then to plot the new pulsars detected in gamma with a sensitivity 10 times greater than before
 Fg_flux=[]
@@ -871,8 +838,6 @@ plt.close()
 plt.figure(8)
 plt.scatter(x,y,s=2,c='red',alpha=0.4,label='Simulation with the ISM',zorder=2)
 plt.scatter(x2,y2,s=2,c='blue',alpha=0.5,label='ATNF data') #Canonical pop
-#plt.scatter(y_dirson22,x_dirson22,s=2,c='green',alpha=0.7,label='Dirson et al.(2022)')
-#plt.scatter(x_noISM,y_noISM,s=2,c='black',alpha=0.4,label='Simulation without the ISM',zorder=0)
 plt.scatter([0],[8.5],c='yellow',marker='o',s=20,label='The Sun',zorder=3) #position of the sun
 plt.xlim(-20,20)
 plt.ylim(-20,20)
@@ -884,12 +849,8 @@ plt.close()
 
 #Distance histogram
 plt.figure(9)
-#plt.hist([distance,d_selec,dist_dirson22],bins=20,range=(0,25),edgecolor='white',color=['red','blue','green'],label=['Simulation','ATNF data','Dirson et al. (2022)'])
 plt.hist(distance,bins=20,range=(0,25),edgecolor='red',color='white',label='Simulation with the ISM',alpha=1,zorder=1,histtype='step')
-#plt.hist(d2,bins=20,range=(0,25),edgecolor='black',color='blue',alpha=0.5,label='ATNF data') #Whole pop
 plt.hist(d2,bins=20,range=(0,25),edgecolor='blue',color='white',label='ATNF data',alpha=1,zorder=1,histtype='step') #Canonical pop
-plt.hist(dist_dirson22,bins=20,range=(0,25),edgecolor='green',color='white',alpha=1,label='Dirson et al. (2022)',zorder=1,histtype='step')
-plt.hist(dist_noISM,bins=20,range=(0,25),edgecolor='black',color='white',alpha=1,label='Simulation without the ISM',zorder=1,histtype='step')
 plt.legend()
 plt.yscale('log')
 plt.xlabel('d (kpc)')
@@ -932,8 +893,6 @@ plt.close()
 plt.figure(13)
 plt.hist(latitude,bins=20,range=(-60,60),edgecolor='red',color='red',alpha=1,label='Simulation with the ISM',zorder=3,histtype='step')
 plt.hist(latitude2,bins=20,range=(-60,60),edgecolor='blue',color='blue',alpha=1,label='ATNF data',zorder=2,histtype='step') #Canonical pop
-plt.hist(lat_dirson22,bins=20,range=(-60,60),edgecolor='green',color='green',alpha=1,label='Dirson et al.(2022)',zorder=1,histtype='step')
-plt.hist(lat_noISM,bins=20,range=(-60,60),edgecolor='black',color='green',alpha=1,label='Simulation without the ISM',zorder=0,histtype='step')
 plt.yscale('log')
 plt.legend()
 plt.xlabel('Latitude in degrees')
@@ -1221,8 +1180,8 @@ b_wrminus3=b_wr3-std_err_b3
 reglinyplus3 = 10**(a_wr3 * np.log10(reglinx3) + b_wrplus3)
 reglinyminus3 = 10**(a_wr3 * np.log10(reglinx3) + b_wrminus3)
 
-print(len(w10_combined_filtered))
-print(len(w_geometry_r_or_rg))
+#print(len(w10_combined_filtered))
+#print(len(w_geometry_r_or_rg))
 
 #f(log(wr))=logP
 plt.figure(34)
