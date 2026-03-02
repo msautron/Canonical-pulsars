@@ -6,7 +6,6 @@
 #include"birth_pulsars.h"
 #include"evolution.h"
 #include"galac_pot.h"
-#include"ism_scattering.h"
 #include"detection.h"
 #include<gsl/gsl_rng.h>
 #include<gsl/gsl_randist.h>
@@ -16,6 +15,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cn.h"
+#include <curand_kernel.h>
+#include <math_constants.h>
 #define TAILLE_MAX 1000 // Tableau de taille 1000
 
 #define NTHREAD (250)
@@ -113,7 +114,7 @@ __device__ void phi_kepler(double *gx,double *gy,double *gz,double phi_k[3],int 
 
 }
 
-__global__ void evol_galac_PEFRL(double *gx,double *gy,double *gz, double *gvx,double *gvy,double *gvz,double *gage_pulsar,int *gsize,double *error_rel,double *gtmilky,double *ggl,double *ggb,double *gDM,double *gperiod,double *gw_r,double *galpha,double *g_nomegax,double *g_nomegay,double *g_nomegaz,double *gxi,double *grho){ //PEFRL integration scheme + computation of DM and geometry of emission
+__global__ void evol_galac_PEFRL(double *gx,double *gy,double *gz, double *gvx,double *gvy,double *gvz,double *gage_pulsar,int *gsize,double *error_rel,double *gtmilky,double *ggl,double *ggb,double *gDM,double *gperiod,double *gw_r_fast,double *gw_r_pmps,double *galpha,double *g_nomegax,double *g_nomegay,double *g_nomegaz,double *gxi,double *grho,long seed,long npulsar){ //PEFRL integration scheme + computation of DM and geometry of emission
 
     const double yr_sec=365*24*3600;int np;
     double step;
@@ -124,8 +125,11 @@ __global__ void evol_galac_PEFRL(double *gx,double *gy,double *gz, double *gvx,d
     double xsi=0.1786178958448091;double lambda=-0.2123418310626054;
     double chi=-0.6626458266981849e-01;
     int idx=threadIdx.x+blockIdx.x*NTHREAD;
-    int size=*gsize;
-    int start=idx*size;int end=start+size;
+    long total_threads = gridDim.x*NTHREAD;
+    long size=(npulsar + total_threads - 1) / total_threads;
+    //int size=*gsize;
+    long start=idx*size;//long end=start+size;
+    long end=min(npulsar,start+size);
     double x_s;double y_s;double dist;double z_s;
     //printf("Bonjour I'm thread %d in block %d, with absolute %d\n",threadIdx.x,blockIdx.x,idx);
     for(np=start;np<end;np++){
@@ -281,12 +285,23 @@ __global__ void evol_galac_PEFRL(double *gx,double *gy,double *gz, double *gvx,d
 
       ggl[np]=glr*RAD_2;
       //Compute the geometry of emission
-      double k=0.118940963;
+      double h_em=2e5;
       double alpha;double rho;double norm;double n[3];double xi;double ratio;
+      /*double cos_theta_g;
+      double phi_g;
+      curandState state;
+      curand_init(seed, idx, 0, &state);
+      cos_theta_g=2*curand_uniform(&state)-1;
+      phi_g=2*M_PI*curand_uniform(&state);
+      g_nomegax[np]=((1-pow(cos_theta_g,2.0))*cosf(phi_g));
+      g_nomegay[np]=((1-pow(cos_theta_g,2.0))*sinf(phi_g));
+      g_nomegaz[np]=cos_theta_g;*/
       if (galpha[np]<=M_PI/2) alpha=galpha[np]; // just to make it easier to read    
       else if (galpha[np]>M_PI/2) alpha=M_PI-galpha[np];
-      rho            = k/sqrt(gperiod[np]); // 3*sqrt((PI*hem)/2*P*c) Equation 2 of Johnston et al. (2020)
+      rho            = 3*sqrt(M_PI*h_em)/sqrt(2*gperiod[np]*SI_C); // 3*sqrt((PI*hem)/2*P*c) Equation 2 of Johnston et al. (2020)
       grho[np]=rho;
+
+      //printf("rho : %e\n",180*rho/M_PI);
 
       /* line of sight vector */
       norm=sqrt(sq(gx[np])+sq(gy[np]-8.5)+sq(gz[np]-0.015));
@@ -305,28 +320,39 @@ __global__ void evol_galac_PEFRL(double *gx,double *gy,double *gz, double *gvx,d
       /* calculates the width of the radio beam w_r, from eq 22 of our paper */
       if(fabs(alpha-xi)<= rho && alpha >= rho){
       		ratio=(cos(rho)-cos(alpha)*cos(xi))/(sin(alpha)*sin(xi));
-                gw_r[np]=2*acos(ratio);
+                gw_r_fast[np]=2*acos(ratio);
       } else if(fabs(xi-(M_PI-alpha))<=rho && alpha >= rho){
                 //alpha=M_PI-alpha;
                 ratio=(cos(rho)-cos(alpha)*cos(xi))/(sin(alpha)*sin(xi));
-                gw_r[np]=2*acos(ratio);
+                gw_r_fast[np]=2*acos(ratio);
                 }
 
       //Compute the DM of each pulsar
       double DM_Host=100;int nt=1;int vbs=0;char dirname[10]="./";char text[10]="";int ndir=2;
       double tau_sc;
-      double wint;double tau_samp=250e-6; //tau_samp of PMPS
+      double wint;
+      double tau_samp_fast=0.05e-3; //tau_samp of FAST
       double e=1.6e-19;//electronic charge in C
       double m_e=9.1e-31; //electron mass in kg
-      double f=1.374e9; //Frequency of survey PMPS
-      double deltaf=3000e3; //bandwitdh of observation of PMPS
-      double tau_dm;
+      double f=1.374e9; //Frequency of survey fast/PMPS
+      double deltaf_fast=0.24414e6; //bandwitdh of observation of fast
+      double tau_samp_pmps=250e-6; //tau_samp of PMPS
+      double delta_f_pmps=3000e3; //bandwidth of observation of PMPS
+      /*double f=1400.0e6; //Frequency of survey SKA-mid
+      double f_SKAlow=300e6; //Frequency of survey SKA-low
+      double deltaf_fast=0.005e6; //bandwitdh of observation of SKA-low
+      double tau_samp_pmps=6.4e-5; //tau_samp of SKA-mid
+      double delta_f_pmps=0.009e6; //bandwidth of observation of SKA-mid
+      double tau_samp_fast=0.1e-3; //tau_samp of SKA-low*/
+      double tau_dm_fast,tau_dm_pmps;
       double DM_SI;
-      wint=gw_r[np]*gperiod[np]/(2*M_PI);
+      wint=gw_r_fast[np]*gperiod[np]/(2*M_PI);
       dmdtau(ggl[np], ggb[np], dist*1e3, DM_Host, ndir, nt, vbs, dirname, text, &gDM[np],&tau_sc); //Compute the DM from the distance (Yao et al. (2017))
       DM_SI=gDM[np]*3.086e22;
-      tau_dm=(sq(e)*deltaf*DM_SI)/(4*M_PI*SI_eps0*M_PI*m_e*SI_C*cube(f));
-      gw_r[np]=sqrt(sq(wint)+sq(tau_samp)+sq(tau_dm)+sq(tau_sc))*((2*M_PI)/(gperiod[np]));
+      tau_dm_fast=(sq(e)*deltaf_fast*DM_SI)/(4*M_PI*SI_eps0*M_PI*m_e*SI_C*cube(f));
+      tau_dm_pmps=(sq(e)*delta_f_pmps*DM_SI)/(4*M_PI*SI_eps0*M_PI*m_e*SI_C*cube(f));
+      gw_r_fast[np]=sqrt(sq(wint)+sq(tau_samp_fast)+sq(tau_dm_fast)+sq(tau_sc))*((2*M_PI)/(gperiod[np]));
+      gw_r_pmps[np]=sqrt(sq(wint)+sq(tau_samp_pmps)+sq(tau_dm_pmps)+sq(tau_sc))*((2*M_PI)/(gperiod[np]));
       //if (isnan(gw_r[np])) printf("w_int=%e, tau_dm=%e, tau_sc=%e, DM=%e, period=%e, gl=%e, gb=%e, dist=%e\n",wint,tau_dm,tau_sc,gDM[np],gperiod[np],ggl[np],ggb[np],dist);
     }
     printf("The thread %d in block %d, with absolute %d has finished\n",threadIdx.x,blockIdx.x,idx);
@@ -361,7 +387,7 @@ int main(int argc, char **argv){
 	srand((unsigned)time(NULL));
 	gsl_rng_set(params.r, time(NULL));
 
-	printf("## birth_rate (yr) %ld \n",params.birth_rate);
+	printf("## birth_rate (yr) %ld \n",params.birth_rate2);
 	printf("## sigma_P (s or log(s)) %e \n",params.sigma_p);
 	printf("## sigma_B (logB) %e \n",params.sigma_b);
 	printf("## Pmean (s) %e \n",params.p_mean);
@@ -379,9 +405,9 @@ int main(int argc, char **argv){
 	distrib_init_2(&params); // initial distribution of the pulsars, when they are born in spiral arms
 	distrib_vinit(&params); // Use when you want to run the simulation with the galactic potential
 	
-	double *gvx;double *gvy;double *gvz;double *gx;double *gy;double *gz;double *gage_pulsar;int *gsize;double *error_rel;double *gtmilky;double *ggl;double *ggb;double *gDM;double *gperiod;double *gw_r;double *galpha;double *g_nomegax;
+	double *gvx;double *gvy;double *gvz;double *gx;double *gy;double *gz;double *gage_pulsar;int *gsize;double *error_rel;double *gtmilky;double *ggl;double *ggb;double *gDM;double *gperiod;double *gw_r_fast;double *gw_r_pmps;double *galpha;double *g_nomegax;
 	double *g_nomegay;double *g_nomegaz;double *gxi;double *grho;
-	double *x_bis;double *y_bis;double *z_bis;double *vx_bis;double *vy_bis;double *vz_bis;double *error_bis;double *gl_bis;double *gb_bis;double tmilky;double *DM_bis;double *w_r_bis;double *xi_bis;
+	double *x_bis;double *y_bis;double *z_bis;double *vx_bis;double *vy_bis;double *vz_bis;double *error_bis;double *gl_bis;double *gb_bis;double tmilky;double *DM_bis;double *w_r_fast_bis;double *w_r_pmps_bis;double *xi_bis;
 	double *rho_bis;
 	const double yr_sec=365*24*3600;tmilky=TMILKY*yr_sec;
 	int size=params.Npulsars/(NBLOCK*NTHREAD);
@@ -399,7 +425,8 @@ int main(int argc, char **argv){
 	cudaMalloc((void**)&gtmilky,sizeof(double));
 	cudaMalloc((void**)&gDM,sizeof(double)*params.Npulsars);
 	cudaMalloc((void**)&gperiod,sizeof(double)*params.Npulsars);
-	cudaMalloc((void**)&gw_r,sizeof(double)*params.Npulsars);
+	cudaMalloc((void**)&gw_r_fast,sizeof(double)*params.Npulsars);
+        cudaMalloc((void**)&gw_r_pmps,sizeof(double)*params.Npulsars);
 	cudaMalloc((void**)&galpha,sizeof(double)*params.Npulsars);
 	cudaMalloc((void**)&g_nomegax,sizeof(double)*params.Npulsars);
 	cudaMalloc((void**)&g_nomegay,sizeof(double)*params.Npulsars);
@@ -417,7 +444,8 @@ int main(int argc, char **argv){
 	gl_bis=(double *)calloc(params.Npulsars,sizeof(double));
 	gb_bis=(double *)calloc(params.Npulsars,sizeof(double));
 	DM_bis=(double *)calloc(params.Npulsars,sizeof(double));
-	w_r_bis=(double *)calloc(params.Npulsars,sizeof(double));
+	w_r_pmps_bis=(double *)calloc(params.Npulsars,sizeof(double));
+        w_r_fast_bis=(double *)calloc(params.Npulsars,sizeof(double));
 	xi_bis=(double *)calloc(params.Npulsars,sizeof(double));
 	rho_bis=(double *)calloc(params.Npulsars,sizeof(double));
 
@@ -434,7 +462,8 @@ int main(int argc, char **argv){
 	cudaMemcpy(gtmilky,&tmilky,sizeof(double),cudaMemcpyHostToDevice);
 	cudaMemcpy(gDM,params.DM,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
 	cudaMemcpy(gperiod,params.period,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
-	cudaMemcpy(gw_r,params.w_r,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
+	cudaMemcpy(gw_r_pmps,params.w_r_pmps,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
+        cudaMemcpy(gw_r_fast,params.w_r_fast,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
 	cudaMemcpy(galpha,params.alpha,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
 	cudaMemcpy(g_nomegax,params.n_omega_x,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
 	cudaMemcpy(g_nomegay,params.n_omega_y,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
@@ -442,7 +471,7 @@ int main(int argc, char **argv){
 	cudaMemcpy(gxi,params.xi,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
 	cudaMemcpy(grho,params.rho,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
 
-        evol_galac_PEFRL<<<dimgrid,dimblock>>>(gx,gy,gz,gvx,gvy,gvz,gage_pulsar,gsize,error_rel,gtmilky,ggl,ggb,gDM,gperiod,gw_r,galpha,g_nomegax,g_nomegay,g_nomegaz,gxi,grho); // Use when you want to run the simulation with the galactic potential + compute DM + geometry of emission
+        evol_galac_PEFRL<<<dimgrid,dimblock>>>(gx,gy,gz,gvx,gvy,gvz,gage_pulsar,gsize,error_rel,gtmilky,ggl,ggb,gDM,gperiod,gw_r_fast,gw_r_pmps,galpha,g_nomegax,g_nomegay,g_nomegaz,gxi,grho,time(NULL),params.Npulsars); // Use when you want to run the simulation with the galactic potential + compute DM + geometry of emission
 	cudaDeviceSynchronize();
 
 	cudaMemcpy(x_bis,gx,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
@@ -455,11 +484,12 @@ int main(int argc, char **argv){
 	cudaMemcpy(vz_bis,gvz,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
 	cudaMemcpy(error_bis,error_rel,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
 	cudaMemcpy(DM_bis,gDM,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
-	cudaMemcpy(w_r_bis,gw_r,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
+	cudaMemcpy(w_r_fast_bis,gw_r_fast,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
+        cudaMemcpy(w_r_pmps_bis,gw_r_pmps,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
 	cudaMemcpy(xi_bis,gxi,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
 	cudaMemcpy(rho_bis,grho,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
 
-	cudaFree(gvx);cudaFree(gvy);cudaFree(gvz);cudaFree(gx);cudaFree(gy);cudaFree(gz);cudaFree(gage_pulsar);cudaFree(gsize);cudaFree(error_rel);cudaFree(gtmilky);cudaFree(ggb);cudaFree(ggl);cudaFree(gDM);cudaFree(gw_r);
+	cudaFree(gvx);cudaFree(gvy);cudaFree(gvz);cudaFree(gx);cudaFree(gy);cudaFree(gz);cudaFree(gage_pulsar);cudaFree(gsize);cudaFree(error_rel);cudaFree(gtmilky);cudaFree(ggb);cudaFree(ggl);cudaFree(gDM);cudaFree(gw_r_fast);cudaFree(gw_r_pmps);
 	cudaFree(gperiod);cudaFree(galpha);cudaFree(g_nomegax);cudaFree(g_nomegay);cudaFree(g_nomegaz);cudaFree(gxi);cudaFree(grho);
 
 	for (int i=0;i<params.Npulsars;i++){
@@ -478,11 +508,12 @@ int main(int argc, char **argv){
                 params.z_s[i]= params.z[i]-0.015;
                 params.dist[i]= sqrt(sq(params.x_s[i])+sq(params.y_s[i])+sq(params.z_s[i]));
 		params.DM[i]=DM_bis[i];
-		params.w_r[i]=w_r_bis[i];
+		params.w_r_fast[i]=w_r_fast_bis[i];
+                params.w_r_pmps[i]=w_r_pmps_bis[i];
 		params.xi[i]=xi_bis[i];
 		params.rho[i]=rho_bis[i];
 	}
-	free(x_bis);free(y_bis);free(z_bis);free(vx_bis);free(vy_bis);free(vz_bis);free(error_bis);free(gl_bis);free(gb_bis);free(DM_bis);free(w_r_bis);free(xi_bis);free(rho_bis);
+	free(x_bis);free(y_bis);free(z_bis);free(vx_bis);free(vy_bis);free(vz_bis);free(error_bis);free(gl_bis);free(gb_bis);free(DM_bis);free(w_r_fast_bis);free(w_r_pmps_bis);free(xi_bis);free(rho_bis);
 	cudaStatus = cudaGetLastError();
         if (cudaStatus != cudaSuccess) {
                 fprintf(stderr, "Erreur CUDA : %s\n", cudaGetErrorString(cudaStatus));
@@ -503,13 +534,14 @@ int main(int argc, char **argv){
 	/* Detection */
 	//geometry(&params); // calculates the angles xi and w_r
         //pulse_profile_complete_2(&params); //Computes the pulse profile taking into account the DM + scattering + instrument
+	sky_temp_Fmin_fermi(&params); //Get the sky temperatur at the position (l,b) of the pulsar. Maps of Haslam et al. (1982), reworked by Remazailles et al. (2015) + get the sensitivity of Fermi/LAT at a given position with python code from fermi
 	radio_flux(&params); //calculates the radio flux of each pulsar
+	get_fomega(&params); //Get all the different values of f_omega for the different angles of chi and zeta
 	gamma_flux(&params); //idem for gamma flux
-	radio_flux_low_freq(&params);
 	spinvel_angle(&params); //Computes the angle between the velocity vector and the rotation axis
 	gamma_ray_peak_sep(&params); //Computes the gamma-ray peak separation 
 	detection(&params); // check if the pulsar is beaming to us and if its flux is high enough to be detected
-
+	save_all(&params); //Save the info of every simulated pulsar
 
 
 //Should I free all the parameters??         
@@ -557,9 +589,17 @@ int main(int argc, char **argv){
         free(params.n_omega_z);
 	free(params.PA);
 	free(params.DM);
-	free(params.S_N);
 	free(params.Nb_orb);
 	free(params.delta);
+	for(int i=0;i<91;i++) {free(params.fomega[i]);}
+        free(params.fomega);
+	free(params.Smin_fermi);
+	free(params.w_int);
+	free(params.w_r_fast);
+        free(params.w_r_pmps);
+	free(params.Smin_fast);
+        free(params.Smin_pmps);
+	free(params.temp);
 
 	gsl_rng_free(params.r);
 

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import re
 from mpl_toolkits import mplot3d
-from scipy.stats import kstest,ks_2samp
+from scipy.stats import kstest,ks_2samp,linregress
 from scipy.stats import mannwhitneyu
 from matplotlib.colors import LogNorm
 from astropy.table import Table
@@ -13,9 +13,13 @@ P,P_dot,x,y,age,error,type_pulsar,distance,latitude,longitude,cos_alpha0,cos_alp
 Pa,P_dota,da,za,xa,ya,agea,E_dota=[],[],[],[],[],[],[],[] #Refers to the data of the ATNF catalogue, before the unknown values are ruled out 
 Pa_gamma,P_dota_gamma,da_gamma,za_gamma,xa_gamma,ya_gamma,agea_gamma,E_dota_gamma=[],[],[],[],[],[],[],[] #Refers to the data of the ATNF catalogue of the gamma pulsars only
 P2,P_dot2,d2,z2,x2,y2,age2,E_dot2,latitude2,longitude2=[],[],[],[],[],[],[],[],[],[] #Refers to the data of the ATNF catalogue that is used
+P3,P_dot3,d3,z3,x3,y3,age3,E_dot3,latitude3,longitude3=[],[],[],[],[],[],[],[],[],[] #Refers to the data of the ATNF catalogue that is used (radio)
+P4,P_dot4,d4,z4,x4,y4,age4,E_dot4,latitude4,longitude4=[],[],[],[],[],[],[],[],[],[] #Refers to the data of the ATNF catalogue that is used (gamma)
+P5,P_dot5,d5,z5,x5,y5,age5,E_dot5,latitude5,longitude5=[],[],[],[],[],[],[],[],[],[] #Refers to the data of the ATNF catalogue that is used (radio-gamma)
 log_age,log_age2,log_P,log_Pdot,log_P2,log_Pdot2=[],[],[],[],[],[] #Refers to the quantities we need in log scale
 RAD = 180/np.pi
 test_l=[]
+B4,B5,B3=[],[],[]
 Ba,B2,Ba_gamma=[],[],[]
 B0=3.2e15 #constant to compute the surface magnetic field of the observations
 P_selected,Pdot_selected=[],[]
@@ -27,18 +31,18 @@ reg_1=re.compile("-*.{12}[|]{1}")
 reg_2=re.compile("[|]{1}.{1}[|]{1}")
 reg_3=re.compile("[-+]?\d*[.]\d*[Ee]*[-+]*\d*")
 reg_4=re.compile("-*\d{1}[.]\d{6}[eE]*[+-]*\d{2}")
+reg_5=re.compile("-*\d{1}[.]\d{6}[eE]*[+-]*\d{2}")
+reg_6=re.compile("-?\d+[.]\d+")
+reg_survey=re.compile(r"\b(?!NULL\b)[\w,]{3,}\b")
 
-with open("ATNF_canonical_pulsars_gamma.txt","r") as f:
-    data_only_gamma=re.findall(reg_3,f.read())
-
-with open("ATNF_canonical_pulsars_radio.txt","r") as f:
-    data_only_r=re.findall(reg_3,f.read())
-
-with open("ATNF_canonical_pulsars.txt","r") as f:
+with open("fast_fermi_pmps.txt","r") as f:
     data2=re.findall(reg_3,f.read())
 
-with open("ATNF_canonical_pulsars_rg.txt","r") as f:
-    data_only_rg=re.findall(reg_3,f.read())
+with open("fast_fermi_pmps.txt","r") as f:
+    data_survey=re.findall(reg_survey,f.read())
+
+with open("w10_gl_gb.txt","r") as f:
+    data_gl_gb_w10_ATNF=re.findall(reg_6,f.read())
 
 with open("P_Pdot_positions.txt","r") as f:
     data=re.findall(reg_1,f.read())
@@ -67,22 +71,35 @@ with open("nb_orbit.txt","r") as f:
 with open("lat_dist_noISM.txt","r") as f :
     lines = f.readlines()
 
-df=pd.read_excel('/home/matteo.sautron/Documents/cuda/canonical_pulsars/pulsar_population_repo/3PC_Catalog_20230803.xls')
+with open("wint.txt","r") as f:
+    data_wint=re.findall(reg_5,f.read())
+
+with open("xi_rho_data.txt","r") as f:
+    xi_rho_data=re.findall(reg_5,f.read())
+
+with open("wr.txt","r") as f:
+    data_wr=re.findall(reg_5,f.read())
+
+df=pd.read_excel('3PC_Catalog_20230803.xls')
 data_3PC=Table.from_pandas(df)
 
 #Get the flux from the 3PC catalog for the canonical pulsars
 flux_3PC_cano,g_peak_sep_obs=[],[]
+count_msp_g=0
 for i in range(len(data_3PC['G100'])):
-    B_3PC=3.2e15*np.sqrt(data_3PC['P0'][i]*data_3PC['P1'][i])
-    if B_3PC<=4.4e9 and B_3PC>=6e6 and data_3PC['G100'][i]!='*':
-        flux_3PC_cano.append(float(data_3PC['G100'][i])*1e-3)
-    if B_3PC<=4.4e9 and B_3PC>=6e6 and data_3PC['PKSEP'][i]!='*':
-        if data_3PC['PKSEP'][i] <= 0.5: 
-            g_peak_sep_obs.append(float(data_3PC['PKSEP'][i]))
-        else:
-            g_peak_sep_obs.append(1.0-float(data_3PC['PKSEP'][i]))
+    if data_3PC['B_S'][i]!='*':
+        if float(data_3PC['B_S'][i])<=6e10:
+            count_msp_g+=1
+        if float(data_3PC['B_S'][i])<=4.4e13 and float(data_3PC['B_S'][i])>=6e10 and data_3PC['G100'][i]!='*':
+            flux_3PC_cano.append(float(data_3PC['G100'][i])*1e-3)
+        if float(data_3PC['B_S'][i])<=4.4e13 and float(data_3PC['B_S'][i])>=6e10 and data_3PC['PKSEP'][i]!='*':
+            if data_3PC['PKSEP'][i] <= 0.5: 
+                g_peak_sep_obs.append(float(data_3PC['PKSEP'][i]))
+            else:
+                g_peak_sep_obs.append(1.0-float(data_3PC['PKSEP'][i]))
 
-print(f'Number of canonical gamma pulsars : {len(g_peak_sep_obs)}\n')
+print(f'Number of canonical gamma pulsars : {len(g_peak_sep_obs)}')
+print(f'Number of gamma MSP in 3PC : {count_msp_g}')
 
 #Get the data of distance and latitude when the ISM is not taken into account
 lat_noISM,dist_noISM,x_noISM,y_noISM=[],[],[],[]
@@ -120,6 +137,53 @@ nb_orbit=[]
 for i in range(int(len(nb_orbit_data))):
     nb_orbit.append(float(nb_orbit_data[i]))
 
+#Get the data from the ATNF catalog for longitude and latitude
+latitude_ATNF,longitude_ATNF,w10_atnf=[],[],[]
+for i in range(int(len(data_gl_gb_w10_ATNF)/3)):
+    longitude_ATNF.append(float(data_gl_gb_w10_ATNF[3*i]))
+    latitude_ATNF.append(float(data_gl_gb_w10_ATNF[3*i+1]))
+    w10_atnf.append(float(data_gl_gb_w10_ATNF[3*i+2]))
+
+#Get the data from the wr file for each MSPs
+wr_cano=[]
+for i in range(int(len(data_wr))):
+        wr_cano.append(float(data_wr[i]))
+
+wint_cano=[]
+for i in range(int(len(data_wint))):
+    wint_cano.append(float(data_wint[i]))
+
+#Get rho et xi from simulation
+rho_sim,xi_sim=[],[]
+for i in range(int(len(xi_rho_data)/2)):
+    xi_sim.append(float(xi_rho_data[2*i])*180/np.pi)
+    rho_sim.append(float(xi_rho_data[2*i+1])*180/np.pi)
+
+#Get data from 3PC and filter the MSPs
+df=pd.read_excel('3PC_Catalog_20230803.xls')
+data_3PC=Table.from_pandas(df)
+data_3PC['B_S']=pd.to_numeric(data_3PC['B_S'],errors='coerce')
+mask=(data_3PC['B_S'] > 6e10) & (data_3PC['B_S'] < 4.4e13)
+data_3PC_filtered=data_3PC[mask]
+
+size_3PC_filtered=len(data_3PC_filtered['P0'])
+
+print(f'Number of canonical pulsars in 3PC {size_3PC_filtered}')
+
+#name_to_exclude=['J0023+0923','J0340+4130','J0605+3757','J0653+4706','J1125-6014','J1142+0119','J1301+0833','J1312+0051','J1455-3330','J1544+4937','J1630+3734','J1730-2304','J1741+1351','J1745+1017','J1824-2452A','J1843-1113','J1921+0137','J1921+1929','J1946+3417','J1959+2048','J2017+0603','J2042+0246','J2215+5135','J2234+0944']
+#mask_exclusion = ~np.isin(data_3PC_filtered['PSRJ'], name_to_exclude)
+#data_3PC_filtered_complete = data_3PC_filtered[mask_exclusion]
+
+#Handle the type of pulsar
+type_pulsar_obs=[]
+for i in range(len(data_survey)):
+    if ("fast" in data_survey[i] or "pks" in data_survey[i]) and not "Fermi" in data_survey[i]:
+        type_pulsar_obs.append(1) #Pulsar radio
+    elif not ("fast" in data_survey[i] and not "pks" in data_survey[i]) and "Fermi" in data_survey[i]:
+        type_pulsar_obs.append(2) #Pulsar gamma
+    elif ("fast" in data_survey[i] or "pks" in data_survey[i]) and "Fermi" in data_survey[i]:
+        type_pulsar_obs.append(3) #Pulsar rg
+
 #Get the data of the ATNF catalogue
 for i in range(int(len(data2)/9)):
     Pa+=[float(data2[i*9])] #Period of the rotation of the pulsar in seconds
@@ -129,118 +193,11 @@ for i in range(int(len(data2)/9)):
     xa+=[float(data2[i*9+4])] #X position in the galactocentric frame in kpc
     ya+=[float(data2[i*9+5])] #age of the pulsar in years
     agea+=[float(data2[i*9+6])] #age of the pulsars in seconds
-    E_dota+=[float(data2[i*9+7])]  #Spin down power of the pulsar in ergs/s
-    Ba+=[float(data2[i*9+8])] #surface magnetic field in T
+    Ba+=[float(data2[i*9+7])*1e-4] #surface magnetic field in T
+    E_dota+=[float(data2[i*9+8])] #Spin down power of the pulsar in ergs/s
 
-#Get the data of the ATNF catalogue of the gamma pulsars only
-for i in range(int(len(data_only_gamma)/9)):
-    Pa_gamma+=[float(data_only_gamma[i*9])] #Period of the rotation of the pulsar in seconds
-    P_dota_gamma+=[float(data_only_gamma[i*9+1])] #Period derivative of the rotation of the pulsar no units
-    da_gamma+=[float(data_only_gamma[i*9+2])] #Distance to us in kpc
-    za_gamma+=[float(data_only_gamma[i*9+3])] #Z position in the galactocentric frame in kpc
-    xa_gamma+=[float(data_only_gamma[i*9+4])] #X position in the galactocentric frame in kpc
-    ya_gamma+=[float(data_only_gamma[i*9+5])] #age of the pulsar in years
-    agea_gamma+=[float(data_only_gamma[i*9+6])] #age of the pulsars in seconds
-    E_dota_gamma+=[float(data_only_gamma[i*9+7])]  #Spin down power of the pulsar in ergs/s
-    Ba_gamma+=[float(data_only_gamma[i*9+8])] #surface magnetic field in T
-
-#Get the data of the ATNF catalogue of the radio-gamma pulsars only
-Pa_rg,P_dota_rg,da_rg,za_rg,xa_rg,ya_rg,agea_rg,E_dota_rg,Ba_rg=[],[],[],[],[],[],[],[],[]
-for i in range(int(len(data_only_rg)/9)):
-    Pa_rg+=[float(data_only_rg[i*9])] #Period of the rotation of the pulsar in seconds
-    P_dota_rg+=[float(data_only_rg[i*9+1])] #Period derivative of the rotation of the pulsar no units
-    da_rg+=[float(data_only_rg[i*9+2])] #Distance to us in kpc
-    za_rg+=[float(data_only_rg[i*9+3])] #Z position in the galactocentric frame in kpc
-    xa_rg+=[float(data_only_rg[i*9+4])] #X position in the galactocentric frame in kpc
-    ya_rg+=[float(data_only_rg[i*9+5])] #age of the pulsar in years
-    agea_rg+=[float(data_only_rg[i*9+6])] #age of the pulsars in seconds
-    E_dota_rg+=[float(data_only_rg[i*9+7])]  #Spin down power of the pulsar in ergs/s
-    Ba_rg+=[float(data_only_rg[i*9+8])] #surface magnetic field in T
-
-#Get the data of the ATNF catalogue of the radio pulsars only
-Pa_r,P_dota_r,da_r,za_r,xa_r,ya_r,agea_r,E_dota_r,Ba_r=[],[],[],[],[],[],[],[],[]
-for i in range(int(len(data_only_r)/9)):
-    Pa_r+=[float(data_only_r[i*9])] #Period of the rotation of the pulsar in seconds
-    P_dota_r+=[float(data_only_r[i*9+1])] #Period derivative of the rotation of the pulsar no units
-    da_r+=[float(data_only_r[i*9+2])] #Distance to us in kpc
-    za_r+=[float(data_only_r[i*9+3])] #Z position in the galactocentric frame in kpc
-    xa_r+=[float(data_only_r[i*9+4])] #X position in the galactocentric frame in kpc
-    ya_r+=[float(data_only_r[i*9+5])] #age of the pulsar in years
-    agea_r+=[float(data_only_r[i*9+6])] #age of the pulsars in seconds
-    E_dota_r+=[float(data_only_r[i*9+7])]  #Spin down power of the pulsar in ergs/s
-    Ba_r+=[float(data_only_r[i*9+8])] #surface magnetic field in T
-
-#Create lists with the data of all gamma pulsars (gamma + radio-gamma)
-Pa_gall,P_dota_gall,da_gall,za_gall,xa_gall,ya_gall,agea_gall,E_dota_gall,Ba_gall=[],[],[],[],[],[],[],[],[]
-Pa_gall=Pa_rg+Pa_gamma
-P_dota_gall=P_dota_rg+P_dota_gamma
-da_gall=da_rg+da_gamma
-za_gall=za_rg+za_gamma
-xa_gall=xa_rg+xa_gamma
-ya_gall=ya_rg+ya_gamma
-agea_gall=agea_rg+agea_gamma
-E_dota_gall=E_dota_rg+E_dota_gamma
-Ba_gall=Ba_rg+Ba_gamma
-
-Pa_gall_no5,P_dota_gall_no5=[],[]
-for i in range(len(Pa_gall)):
-    if (Pa_gall[i]<5):
-        Pa_gall_no5+=[Pa_gall[i]]
-        P_dota_gall_no5+=[P_dota_gall[i]]
-
-#Data we are really using, getting rid of lines where we miss a single info
-P2_g,P_dot2_g,d2_g,z2_g,x2_g,y2_g,age2_g,E_dot2_g,B2_g=[],[],[],[],[],[],[],[],[]
-for i in range(len(P_dota_gamma)):
-    if P_dota_gamma[i]!=0.0 and da_gamma[i]!=0.0 and E_dota_gamma[i]!=0 and da_gamma[i]<=25:
-        P2_g+=[Pa_gamma[i]]
-        P_dot2_g+=[P_dota_gamma[i]]
-        d2_g+=[da_gamma[i]]
-        z2_g+=[za_gamma[i]]
-        x2_g+=[xa_gamma[i]]
-        y2_g+=[ya_gamma[i]]
-        age2_g+=[agea_gamma[i]]
-        E_dot2_g+=[E_dota_gamma[i]]
-        B2_g+=[Ba_gamma[i]]
-
-P2_rg,P_dot2_rg,d2_rg,z2_rg,x2_rg,y2_rg,age2_rg,E_dot2_rg,B2_rg=[],[],[],[],[],[],[],[],[]
-for i in range(len(P_dota_rg)):
-    if P_dota_rg[i]!=0.0 and da_rg[i]!=0.0 and E_dota_rg[i]!=0 and da_rg[i]<=25:
-        P2_rg+=[Pa_rg[i]]
-        P_dot2_rg+=[P_dota_rg[i]]
-        d2_rg+=[da_rg[i]]
-        z2_rg+=[za_rg[i]]
-        x2_rg+=[xa_rg[i]]
-        y2_rg+=[ya_rg[i]]
-        age2_rg+=[agea_rg[i]]
-        E_dot2_rg+=[E_dota_rg[i]]
-        B2_rg+=[Ba_rg[i]]
-
-P2_gall,P_dot2_gall,d2_gall,z2_gall,x2_gall,y2_gall,age2_gall,E_dot2_gall,B2_gall=[],[],[],[],[],[],[],[],[]
-for i in range(len(P_dota_gall)):
-    if P_dota_gall[i]!=0.0 and da_gall[i]!=0.0 and E_dota_gall[i]!=0 and da_gall[i]<=25:
-        P2_gall+=[Pa_gall[i]]
-        P_dot2_gall+=[P_dota_gall[i]]
-        d2_gall+=[da_gall[i]]
-        z2_gall+=[za_gall[i]]
-        x2_gall+=[xa_gall[i]]
-        y2_gall+=[ya_gall[i]]
-        age2_gall+=[agea_gall[i]]
-        E_dot2_gall+=[E_dota_gall[i]]
-        B2_gall+=[Ba_gall[i]]
-
-P2_r,P_dot2_r,d2_r,z2_r,x2_r,y2_r,age2_r,E_dot2_r,B2_r=[],[],[],[],[],[],[],[],[]
-for i in range(len(P_dota_r)):
-    if P_dota_r[i]!=0.0 and da_r[i]!=0.0 and E_dota_r[i]!=0 and da_r[i]<=25:
-        P2_r+=[Pa_r[i]]
-        P_dot2_r+=[P_dota_r[i]]
-        d2_r+=[da_r[i]]
-        z2_r+=[za_r[i]]
-        x2_r+=[xa_r[i]]
-        y2_r+=[ya_r[i]]
-        age2_r+=[agea_r[i]]
-        E_dot2_r+=[E_dota_r[i]]
-        B2_r+=[Ba_r[i]]
-
+#Data we are really using, getting rid of lines where we miss info
+type_pulsar_obs2,w10_atnf2=[],[]
 for i in range(len(P_dota)):
     if P_dota[i]!=0.0 and da[i]!=0.0 and E_dota[i]!=0 and da[i]<=25:
         P2+=[Pa[i]]
@@ -252,32 +209,12 @@ for i in range(len(P_dota)):
         age2+=[agea[i]]
         E_dot2+=[E_dota[i]]
         B2+=[Ba[i]]
-
-#Create file for optimisation program
-with open("data_ATNF_for_c.txt","w") as f:
-    for i in range(len(P2)):
-        if B2[i]<4.4e9 and B2[i]>6e6:
-            f.write(f"{P2[i]}")
-            f.write("|")
-            f.write(f"{P_dot2[i]}")
-            f.write("|")
-            f.write(f"{d2[i]}")
-            f.write("|")
-            f.write(f"{x2[i]}")
-            f.write("|")
-            f.write(f"{y2[i]}")
-            f.write("|")
-            f.write(f"{z2[i]}")
-            f.write("|")
-            f.write(f"{age2[i]}")
-            f.write("|")
-            f.write(f"{E_dot2[i]}")
-            f.write("|")
-            f.write("\n")
+        w10_atnf2.append(w10_atnf[i])
+        type_pulsar_obs2.append(type_pulsar_obs[i])
 
 #Computation of latitude and longitude for the ATNF data
 for i in range(len(z2)):
-    if d2[i]<1e-15 or i==9 or i==26:
+    if d2[i]<1e-15:
         lat=0
         latitude2+=[lat]
     else:
@@ -286,10 +223,55 @@ for i in range(len(z2)):
     r=(x2[i]**2+y2[i]**2)**0.5
     if x2[i]>=0:
         longi=np.arccos(-y2[i]/r)*RAD
-        longitude+=[longi]
+        longitude2+=[longi]
     else:
         longi=(np.arccos(-y2[i]/r)+np.pi)*RAD
-        longitude+=[longi]
+        longitude2+=[longi]
+
+w10_r,w10_rg=[],[]
+for i in range(len(type_pulsar_obs2)):
+    if type_pulsar_obs2[i]==1:
+        P3+=[P2[i]]
+        P_dot3+=[P_dot2[i]]
+        d3+=[d2[i]]
+        z3+=[z2[i]]
+        x3+=[x2[i]]
+        y3+=[y2[i]]
+        age3+=[age2[i]]
+        E_dot3+=[E_dot2[i]]
+        B3+=[B2[i]]
+        latitude3+=[latitude2[i]]
+        longitude3+=[longitude2[i]]
+        w10_r+=[(float(w10_atnf2[i])*(1e-3)*(360/P2[i]))%360]
+    elif type_pulsar_obs2[i]==2:
+        P4+=[P2[i]]
+        P_dot4+=[P_dot2[i]]
+        d4+=[d2[i]]
+        z4+=[z2[i]]
+        x4+=[x2[i]]
+        y4+=[y2[i]]
+        age4+=[age2[i]]
+        E_dot4+=[E_dot2[i]]
+        B4+=[B2[i]]
+        latitude4+=[latitude2[i]]
+        longitude4+=[longitude2[i]]
+    elif type_pulsar_obs2[i]==3:
+        P5+=[P2[i]]
+        P_dot5+=[P_dot2[i]]
+        d5+=[d2[i]]
+        z5+=[z2[i]]
+        x5+=[x2[i]]
+        y5+=[y2[i]]
+        age5+=[age2[i]]
+        E_dot5+=[E_dot2[i]]
+        B5+=[B2[i]]
+        latitude5+=[latitude2[i]]
+        longitude5+=[longitude2[i]]
+        w10_rg+=[(float(w10_atnf2[i])*(1e-3)*(360/P2[i]))%360]
+
+print(f'Number of observed radio pulsars (FAST GPPS + PMPS + Arecibo): {len(P3)}')
+print(f'Number of observed gamma pulsars (Fermi): {len(P4)}')
+print(f'Number of observed radio+gamma pulsars: {len(P5)}')
 
 #Log calculation for age, P and Pdot for the ATNF data
 log_agea=[]
@@ -304,10 +286,6 @@ for i in range(len(Pa)):
 for i in range(len(P2)):
     log_P2+=[(np.log(P2[i]))/(np.log(10))]
     log_Pdot2+=[(np.log(P_dot2[i]))/(np.log(10))]
-
-log_age_gamma_ATNF=[]
-for i in range(len(age2_gall)):
-    log_age_gamma_ATNF.append(np.log10(age2_gall[i]))
 
 #get the data of the P_Pdot_positions file (simulation)
 for i in range(len(data_type)):
@@ -343,10 +321,6 @@ for i in range(int(len(data)/20)):
     vy0+=[data[20*i+17]] #Velocity on the y-absciss of the pulsar initially, in km/s
     vz0+=[data[20*i+18]] #Velocity on the z-absciss of the pulsar initially, in km/s
     PA+=[(180/np.pi)*np.arccos(data[20*i+19])]
-
-#with open("lat_dist_noISM.txt","w+")as f:
-#    for i in range(len(latitude)):
-#        f.write(f'{latitude[i]} {distance[i]} {x[i]} {y[i]}\n')
 
 #Computation of characteristic age
 charac_age,log_charac_age,P_old_charac=[],[],[]
@@ -419,12 +393,25 @@ for i in range(len(PA)):
     elif log_age[i]<7:
         PA_young.append(PA[i])
 
+#Refolding wr
+for i in range(len(wr_cano)):
+    if wr_cano[i]>360:
+        wr_cano[i]=wr_cano[i]-int(wr_cano[i]/360.0)*360
 
 #Lists depending on the pulsar emission type
 P_radio,P_dot_radio,x_radio,y_radio,age_radio,error_radio,distance_radio=[],[],[],[],[],[],[]
-P_gamma,P_dot_gamma,x_gamma,y_gamma,age_gamma,error_gamma,distance_gamma,cos_alpha_gamma=[],[],[],[],[],[],[],[]
+P_gamma,P_dot_gamma,x_gamma,y_gamma,age_gamma,error_gamma,distance_gamma=[],[],[],[],[],[],[]
 P_radio_gamma,P_dot_radio_gamma,x_radio_gamma,y_radio_gamma,age_radio_gamma,error_radio_gamma,distance_radio_gamma=[],[],[],[],[],[],[]
-log_age_gamma_all=[]
+wr_r_or_rg,P_r_or_rg=[],[]
+xi_r,xi_g,xi_rg=[],[],[]
+alpha_r,alpha_g,alpha_rg=[],[],[]
+Bf_r,Bf_g,Bf_rg=[],[],[]
+z_r,z_g,z_rg=[],[],[]
+Fr_gamma=[]
+Edot_g=0
+w_geometry_r_or_rg=[]
+rho_r,rho_g,rho_rg=[],[],[]
+xi_r_or_rg,rho_r_or_rg,alpha_r_or_rg=[],[],[]
 for i in range(len(P)):
     if type_pulsar[i]==1:
         P_radio+=[P[i]]
@@ -433,6 +420,17 @@ for i in range(len(P)):
         y_radio+=[y[i]]
         age_radio+=[age[i]]
         distance_radio+=[distance[i]]
+        wr_r_or_rg.append(wr_cano[i])
+        w_geometry_r_or_rg.append(wint_cano[i])
+        P_r_or_rg.append(P[i])
+        xi_r.append(xi_sim[i])
+        xi_r_or_rg.append(xi_sim[i])
+        alpha_r.append(min(180*np.arccos(cos_alpha[i])/np.pi,180-180*np.arccos(cos_alpha[i])/np.pi))
+        alpha_r_or_rg.append(min(180*np.arccos(cos_alpha[i])/np.pi,180-180*np.arccos(cos_alpha[i])/np.pi))
+        Bf_r.append(Bf[i])
+        z_r.append(z[i])
+        rho_r.append(rho_sim[i])
+        rho_r_or_rg.append(rho_sim[i])
     elif type_pulsar[i]==2:
         P_gamma+=[P[i]]
         P_dot_gamma+=[P_dot[i]]
@@ -440,7 +438,15 @@ for i in range(len(P)):
         y_gamma+=[y[i]]
         age_gamma+=[age[i]]
         distance_gamma+=[distance[i]]
-        cos_alpha_gamma+=[cos_alpha[i]]
+        xi_g.append(xi_sim[i])
+        alpha_g.append(min(180*np.arccos(cos_alpha[i])/np.pi,180-180*np.arccos(cos_alpha[i])/np.pi))
+        Bf_g.append(Bf[i])
+        z_g.append(z[i])
+        Edot_g=4*np.pi**2*1e38*(P_dot[i])*(P[i])**(-3)
+        Fj=np.random.normal(loc=0.0,scale=0.2)
+        Fr_gamma_value=9*1e3*(distance[i])**(-2)*(Edot_g/1e29)**(0.25)*10**Fj
+        Fr_gamma.append(Fr_gamma_value)
+        rho_g.append(rho_sim[i])
     elif type_pulsar[i]==3:
         P_radio_gamma+=[P[i]]
         P_dot_radio_gamma+=[P_dot[i]]
@@ -448,57 +454,42 @@ for i in range(len(P)):
         y_radio_gamma+=[y[i]]
         age_radio_gamma+=[age[i]]
         distance_radio_gamma+=[distance[i]]
+        wr_r_or_rg.append(wr_cano[i])
+        w_geometry_r_or_rg.append(wint_cano[i])
+        P_r_or_rg.append(P[i])
+        xi_rg.append(xi_sim[i])
+        xi_r_or_rg.append(xi_sim[i])
+        alpha_rg.append(min(180*np.arccos(cos_alpha[i])/np.pi,180-180*np.arccos(cos_alpha[i])/np.pi))
+        alpha_r_or_rg.append(min(180*np.arccos(cos_alpha[i])/np.pi,180-180*np.arccos(cos_alpha[i])/np.pi))
+        Bf_rg.append(Bf[i])
+        z_rg.append(z[i])
+        rho_rg.append(rho_sim[i])
+        rho_r_or_rg.append(rho_sim[i])
 
-P_gamma_or_rg,P_dot_gamma_or_rg=[],[]
-P_gamma_or_rg=P_gamma+P_radio_gamma
-P_dot_gamma_or_rg=P_dot_gamma+P_dot_radio_gamma
+#Checking condition of radio observation
+Pcheck,Pdotcheck=[],[]
+xicheck,rhocheck,alphacheck,alpha_xi=[],[],[],[]
+for i in range(len(P_r_or_rg)):
+    if (wr_r_or_rg[i]<1):
+        Pcheck.append(P_r_or_rg[i])
+        xicheck.append(xi_r_or_rg[i])
+        rhocheck.append(rho_r_or_rg[i])
+        alphacheck.append(alpha_r_or_rg[i])
+        alpha_xi.append(alpha_r_or_rg[i]+xi_r_or_rg[i])
 
-for i in range(len(age_gamma)):
-    log_age_gamma_all.append(np.log10(age_gamma[i]/(365*24*3600)))
+#Compute the number of pulsars in the Galactic center
+dist_GC=[]
+nb_in_GC=0
+L_gamma_all_inGC=0
+Edot_calc=0
+for i in range(len(x)):
+    dist_calc=np.sqrt((x[i])**2+(y[i])**2+(z[i])**2)
+    if (dist_calc <= 0.7):
+        Edot_calc=4*np.pi**2*Inertia*P[i]**(-3)*P_dot[i]
+        L_gamma_all_inGC+=10**(26.15)*(Bf[i]/1e8)**(0.11)*(Edot_calc/1e26)**(0.51)
+        nb_in_GC+=1
 
-for i in range(len(age_radio_gamma)):
-    log_age_gamma_all.append(np.log10(age_radio_gamma[i]/(365*24*3600)))
-
-#Lists of the gamma-rays (gamma only or radio-gamma) detected pulsars above the usual threshold of Fermi/LAT
-P_gamma_all,P_dot_gamma_all,x_gamma_all,y_gamma_all,age_gamma_all,error_gamma_all,distance_gamma_all,cos_alpha_gamma_all,latitude_gamma_all,longitude_gamma_all=[],[],[],[],[],[],[],[],[],[]
-P_gamma_ab,P_dot_gamma_ab,x_gamma_ab,y_gamma_ab,age_gamma_ab,error_gamma_ab,distance_gamma_ab,cos_alpha_gamma_ab,latitude_gamma_ab,longitude_gamma_ab=[],[],[],[],[],[],[],[],[],[]
-P_gamma_bel,P_dot_gamma_bel,x_gamma_bel,y_gamma_bel,age_gamma_bel,error_gamma_bel,distance_gamma_bel,cos_alpha_gamma_bel,latitude_gamma_bel,longitude_gamma_bel=[],[],[],[],[],[],[],[],[],[]
-type_pulsar_g_or_rg=[]
-for i in range(len(P)):
-    if type_pulsar[i]==2 or type_pulsar[i]==3:
-        P_gamma_all+=[P[i]]
-        P_dot_gamma_all+=[P_dot[i]]
-        x_gamma_all+=[x[i]]
-        y_gamma_all+=[y[i]]
-        age_gamma_all+=[age[i]]
-        distance_gamma_all+=[distance[i]]
-        cos_alpha_gamma_all+=[cos_alpha[i]]
-        latitude_gamma_all+=[latitude[i]]
-        longitude_gamma_all+=[longitude[i]]
-        type_pulsar_g_or_rg+=[type_pulsar[i]]
-
-for i in range(len(P_gamma_all)):
-    if ((Fg_flux[i]<=16e-15 and type_pulsar_g_or_rg[i]==2) or (Fg_flux[i]<=4e-15 and type_pulsar_g_or_rg[i]==3)):
-        P_gamma_ab+=[P_gamma_all[i]]
-        P_dot_gamma_ab+=[P_dot_gamma_all[i]]
-        x_gamma_ab+=[x_gamma_all[i]]
-        y_gamma_ab+=[y_gamma_all[i]]
-        age_gamma_ab+=[age_gamma_all[i]]
-        distance_gamma_ab+=[distance_gamma_all[i]]
-        cos_alpha_gamma_ab+=[cos_alpha_gamma_all[i]]
-        latitude_gamma_ab+=[latitude_gamma_all[i]]
-        longitude_gamma_ab+=[longitude_gamma_all[i]]
-    elif ((Fg_flux[i]>16e-15 and type_pulsar_g_or_rg[i]==2) or (Fg_flux[i]>4e-15 and type_pulsar_g_or_rg[i]==3)):
-        P_gamma_bel+=[P_gamma_all[i]]
-        P_dot_gamma_bel+=[P_dot_gamma_all[i]]
-        x_gamma_bel+=[x_gamma_all[i]]
-        y_gamma_bel+=[y_gamma_all[i]]
-        age_gamma_bel+=[age_gamma_all[i]]
-        distance_gamma_bel+=[distance_gamma_all[i]]
-        cos_alpha_gamma_bel+=[cos_alpha_gamma_all[i]]
-        latitude_gamma_bel+=[latitude_gamma_all[i]]
-        longitude_gamma_bel+=[longitude_gamma_all[i]]
-
+print(f'Number of pulsars in the GC (detected or not) : {nb_in_GC}\nLuminosity of pulsars in the GC : {L_gamma_all_inGC}\n')
 
 #Plot the death line of the article from Mitra et al. (2019)
 T_6=2
@@ -531,11 +522,14 @@ B_linecrit=[10**np.log10(((B_crit/B0)**2)*(i**(-1))) for i in np.arange(1e-2,3e1
 
 #Plot the Edot lines
 P_dot_Edot1e22W=[(1e22*(P_line[i])**3)/(4*np.pi**2*Inertia) for i in range(len(P_line))]
+P_dot_Edot1e23W=[(1e23*(P_line[i])**3)/(4*np.pi**2*Inertia) for i in range(len(P_line))]
 P_dot_Edot1e25W=[(1e25*(P_line[i])**3)/(4*np.pi**2*Inertia) for i in range(len(P_line))]
 P_dot_Edot1e28W=[(1e28*(P_line[i])**3)/(4*np.pi**2*Inertia) for i in range(len(P_line))]
 P_dot_Edot1e31W=[(1e31*(P_line[i])**3)/(4*np.pi**2*Inertia) for i in range(len(P_line))]
 
 #Plot the B lines
+P_dot_B1e4=[(1e4/3.2e15)**2*(1/P_line[i]) for i in range(len(P_line))]
+P_dot_B1e5=[(1e5/3.2e15)**2*(1/P_line[i]) for i in range(len(P_line))]
 P_dot_B1e6=[(1e6/3.2e15)**2*(1/P_line[i]) for i in range(len(P_line))]
 P_dot_B5e6=[(5e6/3.2e15)**2*(1/P_line[i]) for i in range(len(P_line))]
 P_dot_B1e7=[(1e7/3.2e15)**2*(1/P_line[i]) for i in range(len(P_line))]
@@ -623,77 +617,47 @@ p_value_all2=KS_test.pvalue
 print(f"d_value of P KS test = {test_stat_all2}")
 print(f"p_value of P={p_value_all2}")
 
-#KS test 1D python (gamma-ray population)
-KS_test=kstest(P_dot_gamma_or_rg,P_dota_gall)
-test_stat=KS_test.statistic
-p_value=KS_test.pvalue
-print("----ALL GAMMA PULSARS----\n")
-print(f"d_value of Pdot KS test for all the gamma pulsars= {test_stat}")
-print(f"p_value of Pdot for all the gamma pulsars={p_value}")
-
-KS_test=kstest(P_gamma_or_rg,Pa_gall)
-test_stat=KS_test.statistic
-p_value=KS_test.pvalue
-print(f"d_value of P KS test for all the gamma pulsars= {test_stat}")
-print(f"p_value of P for all the gamma pulsars={p_value}")
-
 #KS test 1D python (gamma-ray only population)
-KS_test=kstest(P_dot_gamma,P_dota_gamma)
+KS_test=kstest(P_dot_gamma,data_3PC_filtered['P1'])
 test_stat=KS_test.statistic
 p_value=KS_test.pvalue
 print("----GAMMA ONLY PULSARS----\n")
 print(f"d_value of Pdot KS test for the gamma only pulsars= {test_stat}")
 print(f"p_value of Pdot for the gamma only pulsars={p_value}")
 
-KS_test=kstest(P_gamma,Pa_gamma)
+KS_test=kstest(P_gamma,data_3PC_filtered['P0'])
 test_stat=KS_test.statistic
 p_value=KS_test.pvalue
 print(f"d_value of P KS test for the gamma only pulsars= {test_stat}")
 print(f"p_value of P for the gamma only pulsars={p_value}")
 
 #KS test 1D python (radio/gamma-ray population)
-KS_test=kstest(P_dot_radio_gamma,P_dota_rg)
+KS_test=kstest(P_dot_radio_gamma,P_dot5)
 test_stat=KS_test.statistic
 p_value=KS_test.pvalue
 print("----ALL RADIO/GAMMA PULSARS----\n")
 print(f"d_value of Pdot KS test for the radio/gamma pulsars= {test_stat}")
 print(f"p_value of Pdot for the radio/gamma pulsars={p_value}")
 
-KS_test=kstest(P_radio_gamma,Pa_rg)
+KS_test=kstest(P_radio_gamma,P5)
 test_stat=KS_test.statistic
 p_value=KS_test.pvalue
 print(f"d_value of P KS test for the radio/gamma pulsars= {test_stat}")
 print(f"p_value of P for the radio/gamma pulsars={p_value}")
 
 #KS test 1D python (radio population)
-KS_test=kstest(P_dot_radio,P_dota_r)
+KS_test=kstest(P_dot_radio,P_dot3)
 test_stat=KS_test.statistic
 p_value=KS_test.pvalue
 print("----ALL RADIO ONLY PULSARS----\n")
 print(f"d_value of Pdot KS test for the radio only pulsars= {test_stat}")
 print(f"p_value of Pdot for the radio only pulsars={p_value}")
 
-KS_test=kstest(P_radio,Pa_r)
+KS_test=kstest(P_radio,P3)
 test_stat=KS_test.statistic
 p_value=KS_test.pvalue
 print(f"d_value of P KS test for the radio only pulsars= {test_stat}")
 print(f"p_value of P for the radio only pulsars={p_value}")
-
-#KS test without the outliers
-KS_test=kstest(P_dot_gamma_or_rg,P_dota_gall_no5)
-test_stat=KS_test.statistic
-p_value=KS_test.pvalue
-print("----ALL GAMMA PULSARS WITHOUT THE OUTLIERS----\n")
-print(f"d_value of Pdot KS test for all the gamma pulsars= {test_stat}")
-print(f"p_value of Pdot for all the gamma pulsars={p_value}")
-
-KS_test=kstest(P_gamma_or_rg,Pa_gall_no5)
-test_stat=KS_test.statistic
-p_value=KS_test.pvalue
-print(f"d_value of P KS test for all the gamma pulsars= {test_stat}")
-print(f"p_value of P for all the gamma pulsars={p_value}")
-
-print(len(Pa_gall)-len(Pa_gall_no5))
 
 #Plot the CDF
 plt.plot(bin_edges[1:], cdf1, marker='o', linestyle='-',label='Simulation data')
@@ -716,7 +680,7 @@ plt.close()
 condition = [Pdot2 < Pdot3 for Pdot2, Pdot3 in zip(Pdot_line2,Pdot_line3)]
 
 #P-Pdot plot only canonical population
-plt.figure(300)
+plt.figure(0)
 plt.scatter(Pa,P_dota,c='blue',marker='o',s=10,label='ATNF data')
 plt.plot(P_line,Pdot_line,c='green',label='Death line',linestyle='-',linewidth=2) #Death line Mitra et al. 2019
 plt.fill_between(P_line,Pdot_line4,Pdot_line5,where=condition,facecolor='green',alpha=0.4,label='Death Valley')
@@ -752,7 +716,7 @@ plt.xscale('log')
 #plt.title("Spin period derivative - Spin period diagram for radio pulsars only")
 plt.xlabel(r'$P$ (s)')
 plt.ylabel(r'$\dot{P} \ (s.s^{-1})$')
-plt.savefig('P_Pdot_plot_selected.png',dpi=300)
+plt.savefig('P_Pdot_plot_selected.pdf',dpi=300)
 plt.close()
 
 #P-Pdot plot all pulsars
@@ -801,11 +765,11 @@ plt.xscale('log')
 plt.xlabel(r'$P$ (s)')
 plt.ylabel(r'$\dot{P} \ (s.s^{-1})$')
 plt.legend(loc='lower left',fontsize='x-small')
-plt.savefig('P_Pdot_plot.png',dpi=300)
+plt.savefig('P_Pdot_plot.pdf',dpi=300)
 plt.close()
 
 #2D histogram P-Pdot
-plt.figure(31)
+plt.figure(2)
 #plt.figure(figsize=(6,6))
 #plt.imshow((histSIM-histobs)/((histSIM+histobs)**0.5),extent=[-2, 1.5, -18.5, -11], cmap='RdBu',aspect='auto')
 #plt.hist2d(xsim_edges[:-1],ysim_edges[:-1],bins=(xsim_edges,ysim_edges),cmap='RdBu',weights=hist_diff.flatten())
@@ -814,11 +778,11 @@ plt.colorbar()
 #plt.gca().set_aspect('equal')
 plt.xlabel(r'Log $P$ ($P$ in s)')
 plt.ylabel(r'Log $\dot{P}$ ($\ \dot{P}$ in $s.s^{-1})$')
-plt.savefig('2D P_Pdot_plot_sim.png',dpi=300)
+plt.savefig('2D P_Pdot_plot_sim.pdf',dpi=300)
 plt.close()
 
 #2D histogram P-Pdot
-plt.figure(32)
+plt.figure(3)
 #plt.figure(figsize=(6,6))
 #plt.imshow((histSIM-histobs)/((histSIM+histobs)**0.5),extent=[-2, 1.5, -18.5, -11], cmap='RdBu',aspect='auto')
 #plt.hist2d(log_P,log_Pdot,bins=(30,30),range=((-2,1.5),(-20,-10)),cmap='RdBu')
@@ -827,11 +791,11 @@ plt.colorbar()
 #plt.gca().set_aspect('equal')
 plt.xlabel(r'Log $P$ ($P$ in s)')
 plt.ylabel(r'Log $\dot{P}$ ($\ \dot{P}$ in $s.s^{-1})$')
-plt.savefig('2D P_Pdot_plot_obs.png',dpi=300)
+plt.savefig('2D P_Pdot_plot_obs.pdf',dpi=300)
 plt.close()
 
 #2D histogram P-Pdot
-plt.figure(33)
+plt.figure(4)
 #plt.figure(figsize=(6,6))
 plt.imshow(hist_diff,extent=[-2, 1.5, -18.5, -11], cmap='RdBu',aspect='auto')
 #plt.hist2d(xsim_edges[:-1],ysim_edges[:-1],bins=(xsim_edges,ysim_edges),cmap='RdBu',weights=hist_diff.flatten())
@@ -840,113 +804,86 @@ plt.colorbar()
 #plt.gca().set_aspect('equal')
 plt.xlabel(r'Log $P$ ($P$ in s)')
 plt.ylabel(r'Log $\dot{P}$ ($\ \dot{P}$ in $s.s^{-1})$')
-plt.savefig('2D P_Pdot_plot.png',dpi=300)
+plt.savefig('2D P_Pdot_plot.pdf',dpi=300)
 plt.close()
 
 #P-Pdot plot radio pulsars only 
-plt.figure(2)
+plt.figure(5)
 plt.scatter(P_radio,P_dot_radio,c='red',marker='o',s=10,label='Simulation')
-plt.scatter(Pa_r,P_dota_r,c='blue',marker='o',s=10,label='ATNF data')
+plt.scatter(P3,P_dot3,c='blue',marker='o',s=10,label='ATNF data')
+#Plot the Edot lines
+plt.plot(P_line,P_dot_Edot1e23W,linestyle='dotted',c='orange',zorder=0)
+plt.text(P_line[6]*1.0,P_dot_Edot1e23W[6]*1.5,r'$\dot{E} = 10^{23}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+plt.plot(P_line,P_dot_Edot1e28W,linestyle='dotted',c='orange',zorder=0)
+plt.text(P_line[15]*1.0,P_dot_Edot1e28W[15]*1.5,r'$\dot{E} = 10^{28}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+plt.plot(P_line,P_dot_Edot1e25W,linestyle='dotted',c='orange',zorder=0)
+plt.text(P_line[1]*0.68,P_dot_Edot1e25W[1]*0.5,r'$\dot{E} = 10^{25}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+#Plot the B lines
+plt.plot(P_line,P_dot_B5e6,linestyle='dotted',c='black',zorder=0)
+plt.text(P_line[60]*0.6,P_dot_B5e6[50]*0.64,r'$B =5\times10^{6}$T',fontsize=7,color='black',rotation=-17,zorder=3)
+#plt.plot(P_line,P_dot_B1e3,linestyle='dotted',c='black',zorder=0)
+#plt.text(P_line[100]*0.6,P_dot_B1e3[90]*0.95,r'$B= 10^{3}$T',fontsize=7,color='black',rotation=-17,zorder=3)
+plt.plot(P_line,P_dot_B1e4,linestyle='dotted',c='black',zorder=0)
+plt.text(P_line[800]*0.6,P_dot_B1e4[750]*0.95,r'$B= 10^{4}$T',fontsize=7,color='black',rotation=-17,zorder=3)
+plt.plot(P_line,P_dot_B1e5,linestyle='dotted',c='black',zorder=0)
+plt.text(P_line[900]*0.6,P_dot_B1e5[750]*0.9,r'$B= 10^{5}$T',fontsize=7,color='black',rotation=-17,zorder=3)
+plt.plot(P_line,P_dot_B1e6,linestyle='dotted',c='black',zorder=0)
+plt.text(P_line[900]*0.6,P_dot_B1e6[750]*0.9,r'$B= 10^{6}$T',fontsize=7,color='black',rotation=-17,zorder=3)
 plt.legend()
 plt.xlim(1e-2,3e1)
 plt.ylim(1e-18,1e-11)
 plt.yscale('log')
 plt.xscale('log')
-#plt.title("Spin period derivative - Spin period diagram for radio pulsars only")
-plt.xlabel('Spin period s')
-plt.ylabel('Spin period derivative s.s^-1')
-plt.savefig('P_Pdot_plot_r.png')
+plt.xlabel(r'$P$ (s)')
+plt.ylabel(r'$\dot{P} \ (s.s^{-1})$')
+plt.savefig('P_Pdot_plot_r.pdf')
 plt.close()
 
 #P-Pdot plot gamma pulsars only
-plt.figure(3)
+plt.figure(6)
 plt.scatter(P_gamma,P_dot_gamma,c='green',marker='o',s=5,label='Simulation')
-plt.scatter(Pa_gamma,P_dota_gamma,c='blue',marker='o',s=5,label='ATNF data')
+plt.scatter(data_3PC_filtered['P0'],data_3PC_filtered['P1'],c='blue',marker='o',s=5,label='3PC data')
 plt.xlim(1e-2,5)
 plt.ylim(1e-17,1e-11)
 plt.yscale('log')
 plt.xscale('log')
 plt.legend()
-#plt.title("Spin period derivative - Spin period diagram for gamma pulsars only")
 plt.xlabel(r'$P$ (s)')
 plt.ylabel(r'$\dot{P} \ (s.s^{-1})$')
-plt.savefig('P_Pdot_plot_gonly.png',dpi=300)
+plt.savefig('P_Pdot_plot_gonly.pdf',dpi=300)
 plt.close()
 
 #P-Pdot plot radio gamma pulsars
-plt.figure(4)
+plt.figure(7)
 plt.scatter(P_radio_gamma,P_dot_radio_gamma,c='purple',marker='o',s=10,label='Simulation')
-plt.scatter(Pa_rg,P_dota_rg,c='blue',marker='o',s=10,label='ATNF data')
+plt.scatter(P5,P_dot5,c='blue',marker='o',s=10,label='ATNF data')
 plt.legend()
 plt.xlim(1e-2,1e1)
 plt.ylim(1e-20,1e-10)
 plt.yscale('log')
 plt.xscale('log')
-#plt.title("Spin period derivative - Spin period diagram for radio gamma pulsars")
-plt.xlabel('Spin period s')
-plt.ylabel('Spin period derivative s.s^-1')
-plt.savefig('P_Pdot_plot_rg.png')
-plt.close()
-
-#P-Pdot plot all gamma pulsars
-plt.figure(27)
-plt.scatter(P_gamma_or_rg,P_dot_gamma_or_rg,c='green',marker='o',s=10,label='Simulation')
-plt.scatter(Pa_gall,P_dota_gall,c='blue',marker='o',s=10,label='ATNF data')
-
-#Plot the Edot lines
-plt.plot(P_line,P_dot_Edot1e22W,linestyle='dotted',c='orange',zorder=0)
-plt.text(P_line[1800]*0.85,P_dot_Edot1e22W[1800]*1.05,r'$\dot{E} = 10^{22}$W',fontsize=7,color='orange',rotation=45,zorder=3)
-plt.plot(P_line,P_dot_Edot1e25W,linestyle='dotted',c='orange',zorder=0)
-plt.text(P_line[800]*0.85,P_dot_Edot1e25W[800]*1.05,r'$\dot{E} = 10^{25}$W',fontsize=7,color='orange',rotation=45,zorder=3)
-plt.plot(P_line,P_dot_Edot1e28W,linestyle='dotted',c='orange',zorder=0)
-plt.text(P_line[77]*0.85,P_dot_Edot1e28W[77]*1.05,r'$\dot{E} = 10^{28}$W',fontsize=7,color='orange',rotation=45,zorder=3)
-plt.plot(P_line,P_dot_Edot1e31W,linestyle='dotted',c='orange',zorder=0)
-plt.text(P_line[7]*0.85,P_dot_Edot1e31W[7]*1.05,r'$\dot{E} = 10^{31}$W',fontsize=7,color='orange',rotation=45,zorder=3)
-#Plot the B lines
-plt.plot(P_line,P_dot_B1e6,linestyle='dotted',c='black',zorder=0)
-plt.text(P_line[80]*0.6,P_dot_B1e6[80]*0.95,r'$B =10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
-#plt.plot(P_line,P_dot_B5e6,linestyle='dotted',c='black',zorder=0)
-#plt.text(P_line[1500]*0.6,P_dot_B5e6[1500]*0.75,r'$B =5\times10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
-plt.plot(P_line,P_dot_B1e7,linestyle='dotted',c='black',zorder=0)
-plt.text(P_line[2000]*0.6,P_dot_B1e7[2000]*0.95,r'$B= 10^{7}$T',fontsize=7,color='black',rotation=-20,zorder=3)
-plt.plot(P_line,P_dot_B1e8,linestyle='dotted',c='black',zorder=0)
-plt.text(P_line[2300]*0.6,P_dot_B1e8[2300]*0.95,r'$B= 10^{8}$T',fontsize=7,color='black',rotation=-20,zorder=3)
-plt.plot(P_line,P_dot_B1e9,linestyle='dotted',c='black',zorder=0)
-plt.text(P_line[2500]*0.6,P_dot_B1e9[2500]*0.95,r'$B= 10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
-#plt.plot(P_line,P_dot_B4_4e9,linestyle='dotted',c='black',zorder=0)
-#plt.text(P_line[2500]*0.6,P_dot_B4_4e9[2500]*0.95,r'$B= 4.4\times10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
-
-plt.legend()
-plt.xlim(1e-2,3e1)
-plt.ylim(1e-19,1e-11)
-plt.yscale('log')
-plt.xscale('log')
-#plt.title("Spin period derivative - Spin period diagram for radio gamma pulsars")
 plt.xlabel(r'$P$ (s)')
 plt.ylabel(r'$\dot{P} \ (s.s^{-1})$')
-plt.savefig('P_Pdot_plot_all_gamma.png',dpi=300)
+plt.savefig('P_Pdot_plot_rg.pdf')
 plt.close()
 
 #Positions plot
-plt.figure(1000)
+plt.figure(8)
 plt.scatter(x,y,s=2,c='red',alpha=0.4,label='Simulation with the ISM',zorder=2)
 plt.scatter(x2,y2,s=2,c='blue',alpha=0.5,label='ATNF data') #Canonical pop
-plt.scatter(y_dirson22,x_dirson22,s=2,c='green',alpha=0.7,label='Dirson et al.(2022)')
-plt.scatter(x_noISM,y_noISM,s=2,c='black',alpha=0.4,label='Simulation without the ISM',zorder=0)
+#plt.scatter(y_dirson22,x_dirson22,s=2,c='green',alpha=0.7,label='Dirson et al.(2022)')
+#plt.scatter(x_noISM,y_noISM,s=2,c='black',alpha=0.4,label='Simulation without the ISM',zorder=0)
 plt.scatter([0],[8.5],c='yellow',marker='o',s=20,label='The Sun',zorder=3) #position of the sun
 plt.xlim(-20,20)
 plt.ylim(-20,20)
-#plt.gca().set_aspect('equal', adjustable='box')
-#plt.axis('equal')
-#plt.title('Positions of the detected pulsars compared to the sun')
 plt.xlabel('x (kpc)')
 plt.ylabel('y (kpc)')
 plt.legend(fontsize='small')
-plt.savefig('Positions_detected_pulsars.png',dpi=300)
+plt.savefig('Positions_detected_pulsars.pdf',dpi=300)
 plt.close()
 
 #Distance histogram
-plt.figure(6)
+plt.figure(9)
 #plt.hist([distance,d_selec,dist_dirson22],bins=20,range=(0,25),edgecolor='white',color=['red','blue','green'],label=['Simulation','ATNF data','Dirson et al. (2022)'])
 plt.hist(distance,bins=20,range=(0,25),edgecolor='red',color='white',label='Simulation with the ISM',alpha=1,zorder=1,histtype='step')
 #plt.hist(d2,bins=20,range=(0,25),edgecolor='black',color='blue',alpha=0.5,label='ATNF data') #Whole pop
@@ -956,48 +893,43 @@ plt.hist(dist_noISM,bins=20,range=(0,25),edgecolor='black',color='white',alpha=1
 plt.legend()
 plt.yscale('log')
 plt.xlabel('d (kpc)')
-plt.ylabel('Frequency')
-#plt.title('Distance to earth of the pulsars')
-plt.savefig('histo_dist.png',dpi=300)
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_dist.pdf',dpi=300)
 plt.close()
 
 #Age histogram (charac age OBS VS real age SIM)
-plt.figure(7)
+plt.figure(10)
 plt.hist(log_age,bins=20,range=(1,11),edgecolor='red',color='red',alpha=1,label='Simulation',histtype='step')
-#plt.hist(log_age2,bins=20,range=(1,11),edgecolor='black',color='blue',alpha=0.5,label='ATNF data') #Whole pop
 plt.hist(log_agea,bins=20,range=(1,11),edgecolor='blue',color='blue',alpha=1,label='ATNF data',histtype='step') #Canonical pop
 plt.legend()
 plt.xlabel('Log(age) (age in yr)')
-plt.ylabel('Frequency')
-#plt.title('Histogram of the age of the detected pulsars')
-plt.savefig('histo_age.png',dpi=300)
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_age.pdf',dpi=300)
 plt.close()
 
 #Age histogram (charac age OBS VS charac age SIM)
-plt.figure(100)
+plt.figure(11)
 plt.hist(log_charac_age,bins=20,range=(1,11),edgecolor='red',color='red',alpha=1,label='Simulation',histtype='step')
 plt.hist(log_agea,bins=20,range=(1,11),edgecolor='blue',color='blue',alpha=1,label='ATNF data',histtype='step') #Canonical pop
 plt.legend()
 plt.xlabel('Log(age) (age in yr)')
-plt.ylabel('Frequency')
-#plt.title('Histogram of the age of the detected pulsars')
-plt.savefig('histo_age_both_charac.png',dpi=300)
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_age_both_charac.pdf',dpi=300)
 plt.close()
 
 #Longitude
-plt.figure(27)
+plt.figure(12)
 plt.hist(longitude,bins=20,range=(0,360),edgecolor='red',color='red',alpha=1,label='Simulation',zorder=3,histtype='step')
 #plt.hist(latitude_selec,bins=20,range=(-60,60),edgecolor='blue',color='blue',alpha=1,label='ATNF data',zorder=2,histtype='step') #Canonical pop
 #plt.yscale('log')
 plt.legend()
 plt.xlabel('Longitude in degrees')
-plt.ylabel('Frequency')
-#plt.title('Histogram of the latitude of the detected pulsars')
-plt.savefig('histo_longitude.png',dpi=300)
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_longitude.pdf',dpi=300)
 plt.close()
 
 #Latitude histogram
-plt.figure(8)
+plt.figure(13)
 plt.hist(latitude,bins=20,range=(-60,60),edgecolor='red',color='red',alpha=1,label='Simulation with the ISM',zorder=3,histtype='step')
 plt.hist(latitude2,bins=20,range=(-60,60),edgecolor='blue',color='blue',alpha=1,label='ATNF data',zorder=2,histtype='step') #Canonical pop
 plt.hist(lat_dirson22,bins=20,range=(-60,60),edgecolor='green',color='green',alpha=1,label='Dirson et al.(2022)',zorder=1,histtype='step')
@@ -1005,220 +937,144 @@ plt.hist(lat_noISM,bins=20,range=(-60,60),edgecolor='black',color='green',alpha=
 plt.yscale('log')
 plt.legend()
 plt.xlabel('Latitude in degrees')
-plt.ylabel('Frequency')
-#plt.title('Histogram of the latitude of the detected pulsars')
-plt.savefig('histo_latitude.png',dpi=300)
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_latitude.pdf',dpi=300)
 plt.close()
 
 #Log(P) histogram
-plt.figure(9)
+plt.figure(14)
 plt.hist(log_P,bins=20,range=(-2,1.5),edgecolor='red',color='red',alpha=1,label='Simulation',histtype='step')
 plt.hist(log_Pa,bins=20,range=(-2,1.5),edgecolor='blue',color='blue',alpha=1,label='ATNF data',histtype='step') #Canonical pop
-#plt.hist(P_old_charac,bins=20,range=(-2,1.5),edgecolor='green',color='green',alpha=1,label='Old pulsars',histtype='step')
 plt.legend()
 plt.xlabel(r'Log($P$) ($P$ in s)')
-plt.ylabel('Frequency')
-#plt.title('Histogram of the rotation period of the detected pulsars')
-plt.savefig('histo_period.png',dpi=300)
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_period.pdf',dpi=300)
 plt.close()
 
 #Log(P_dot) histogram
-plt.figure(10)
+plt.figure(15)
 plt.hist(log_Pdot,bins=20,range=(-20,-10),edgecolor='red',color='red',alpha=1,label='Simulation',histtype='step')
 plt.hist(log_P_dota,bins=20,range=(-20,-10),edgecolor='blue',color='blue',alpha=1,label='ATNF data',histtype='step') #Canonical pop
 plt.legend()
 plt.xlabel(r'Log ($\dot{P}$) ($\ \dot{P}$ in $s.s^{-1})$')
-plt.ylabel('Frequency')
-#plt.title('Histogram of the rotation period derivative of the detected pulsars')
-plt.savefig('histo_pdot.png',dpi=300)
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_pdot.pdf',dpi=300)
 plt.close()
 
 #cos(alpha0) and cos(alpha) histogram
-plt.figure(11)
+plt.figure(16)
 plt.hist(cos_alpha,bins=20,range=(-1,1),edgecolor='black',color='red',alpha=0.5,label=r'cos($\alpha$)')
 plt.hist(cos_alpha0,bins=20,range=(-1,1),edgecolor='black',color='blue',alpha=0.5,label=r'cos($\alpha_0$)')
 plt.legend()
 plt.xlabel(r'cos($\alpha$) and cos($\alpha_0$)')
-plt.ylabel('Frequency')
-#plt.title('Histogram of the inclination angle of the detected pulsars')
-plt.savefig('histo_cosalpha.png')
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_cosalpha.pdf')
 plt.close()
 
 #Period of old pulsars : histogram
-plt.figure(12)
+plt.figure(17)
 plt.hist(P_old,bins=20,range=(-2,1.5),edgecolor='black',color='red',alpha=0.5,label='Simulation')
 plt.legend()
 plt.xlabel(r'Log($P$) ($P$ in s)')
-plt.ylabel('Frequency')
-#plt.title('Histogram of the rotation period of the detected pulsars with ages betwen 1e7.7 years and 1e8.7')
-plt.savefig('histo_period_old.png')
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_period_old.pdf')
 plt.close()
 
 #Relative error between B(P,Pdot) and Bf the decaying magnetic field
-plt.figure(13)
+plt.figure(18)
 plt.hist(err_rel_B,bins=20,range=(0,0.01),edgecolor='black',color='red',alpha=0.5,label='Simulation')
 plt.legend()
 plt.xlabel(r'Relative error between the magnetic field computed with decay or with $P$ and $\dot{P}$')
-plt.ylabel('Frequency')
-#plt.title('Histogram of the error on the magnetic field for the detected pulsars')
-plt.savefig('histo_err_B.png')
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_err_B.pdf')
 plt.close()
 
 #Velocities
-plt.figure(14)
+plt.figure(19)
 plt.hist(v_norm,bins=20,range=(0,1000),edgecolor='black',color='red',alpha=0.5,label='Simulation')
 plt.legend()
 plt.xlabel('Velocities of the pulsars in km/s')
-plt.ylabel('Frequency')
-#plt.title("Histogram of the velocities of the detected pulsars in the simulation")
-plt.savefig('histo_velocities.png')
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_velocities.pdf')
 plt.close()
 
 #Comparison between Bfield computed with the decay and with P and Pdot
-plt.figure(15)
+plt.figure(20)
 plt.hist(Bf,bins=20,range=(1e6,1.5e8),edgecolor='black',color='red',alpha=0.5,label='Decaying magnetic field')
 plt.hist(B_ppdot,bins=20,range=(1e6,1.5e8),edgecolor='black',color='blue',alpha=0.5,label=r'Magnetic field computed with $P$ and $\dot{P}$')
 plt.legend()
 plt.xlabel('Magnetic field (B in Tesla)')
-plt.ylabel('Frequency')
-plt.savefig('histo_Bfield.png')
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_Bfield.pdf')
 plt.close()
 
 #Spin-velocity angles histogram
-plt.figure(16)
+plt.figure(21)
 plt.hist(PA,bins=20,range=(0,180),edgecolor='red',color='red',alpha=1,label='Simulation',histtype='step')
 plt.legend()
 plt.xlabel('spin-velocity angle in degrees')
-plt.ylabel('Frequency')
+plt.ylabel('Number of pulsars')
 plt.yscale('log')
-#plt.title('Histogram of the angle between the velocity vector and the rotation axis of the detected pulsars')
-plt.savefig('histo_spinvelangle.png',dpi=300)
+plt.savefig('histo_spinvelangle.pdf',dpi=300)
 plt.close()
 
 #Spin-velocity angle (old pulsars) histogram
-plt.figure(17)
+plt.figure(22)
 plt.hist(PA_old,bins=20,range=(0,180),edgecolor='red',color='red',alpha=1,label='Simulation',histtype='step')
 plt.legend()
 plt.xlabel('spin-velocity angle in degrees for pulsars older than 10 Myr')
-plt.ylabel('Frequency')
-#plt.title('Histogram of the angle between the velocity vector and the rotation axis of the detected pulsars')
-plt.savefig('histo_spinvelangle_old.png')
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_spinvelangle_old.pdf')
 plt.close()
 
 #Spin-velocity angle (young pulsars) histogram
-plt.figure(18)
+plt.figure(23)
 plt.hist(PA_young,bins=20,range=(0,180),edgecolor='blue',color='blue',alpha=1,label='Simulation',histtype='step')
 plt.legend()
 plt.yscale('log')
 plt.xlabel('spin-velocity angle in degrees for pulsars younger than 10 Myr')
-plt.ylabel('Frequency')
-#plt.title('Histogram of the angle between the velocity vector and the rotation axis of the detected pulsars')
-plt.savefig('histo_spinvelangle_young.png')
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_spinvelangle_young.pdf')
 plt.close()
 
 #Spin-velocity angle (young pulsars and old) histogram
-plt.figure(19)
+plt.figure(24)
 plt.hist(PA_young,bins=20,range=(0,180),edgecolor='blue',color='blue',alpha=1,label='Age < 10Myr',zorder=2,histtype='step')
 plt.hist(PA_old,bins=20,range=(0,180),edgecolor='red',color='red',alpha=1,label='Age > 10Myr',histtype='step')
 plt.legend()
 plt.yscale('log')
 plt.xlabel('spin-velocity angle in degrees')
-plt.ylabel('Frequency')
-#plt.title('Histogram of the angle between the velocity vector and the rotation axis of the detected pulsars')
-plt.savefig('histo_spinvelangle_young_and_old.png',dpi=300)
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_spinvelangle_young_and_old.pdf',dpi=300)
 plt.close()
 
 #Plot age=f(spin-vel angle)
-plt.figure(20)
+plt.figure(25)
 plt.scatter(PA,log_age,c='red',marker='o',s=5,label='Simulation data')
 plt.xlim(0,180)
 plt.ylim(0,12)
 #plt.yscale('log')
 #plt.xscale('log')
-#plt.title("Spin period derivative - Spin period diagram")
 plt.xlabel('Spin-velocity angle in degrees')
 plt.ylabel('Log(age) in yr')
 plt.legend()
-plt.savefig('spin_vel_age_plot.png')
+plt.savefig('spin_vel_age_plot.pdf')
 plt.close()
 
 #Initial velocities
-plt.figure(21)
+plt.figure(26)
 plt.hist(v0_norm,bins=20,range=(0,1000),edgecolor='black',color='red',alpha=0.5,label='Simulation')
 plt.legend()
 plt.xlabel('Birth kick velocities of the pulsars in km/s')
-plt.ylabel('Frequency')
-#plt.title("Histogram of the velocities of the detected pulsars in the simulation")
-plt.savefig('histo_BK_velocities.png')
-plt.close()
-
-#cos(alpha0) and cos(alpha) gamma pulsars histogram
-plt.figure(22)
-plt.hist(cos_alpha_gamma,bins=20,range=(-1,1),edgecolor='black',color='green',alpha=0.5,label=r'cos($\alpha$)')
-plt.legend()
-plt.xlabel(r'cos($\alpha$)')
-plt.ylabel('Frequency')
-plt.savefig('histo_cosalpha_gamma_ray_pulsars.png')
-plt.close()
-
-#Age histogram every gamma pulsars 
-plt.figure(23)
-plt.hist(log_age_gamma_all,bins=20,range=(1,11),edgecolor='green',color='green',alpha=1,label='Simulation',histtype='step')
-plt.hist(log_age2,bins=20,range=(1,11),edgecolor='black',color='blue',alpha=0.5,label='ATNF data') #canonical pop
-plt.hist(log_age_gamma_ATNF,bins=20,range=(1,11),edgecolor='blue',color='blue',alpha=1,label='ATNF data',histtype='step') #gamma pop
-plt.legend()
-plt.xlabel('Log(age) (age in yr)')
-plt.ylabel('Frequency')
-plt.savefig('histo_age_gamma.png',dpi=300)
-plt.close()
-
-#P-Pdot every gamma pulsars with threshold below the Fermi/LAT sensitivity
-plt.figure(24)
-plt.scatter(P_gamma_ab,P_dot_gamma_ab,c='green',marker='o',s=5,label='Simulation')
-plt.scatter(P2_gall,P_dot2_gall,c='blue',marker='o',s=5,label='ATNF data')
-plt.xlim(1e-2,3e1)
-plt.ylim(1e-18,1e-11)
-plt.yscale('log')
-plt.xscale('log')
-plt.legend()
-plt.xlabel(r'$P$ (s)')
-plt.ylabel(r'$\dot{P} \ (s.s^{-1})$')
-plt.savefig('P_Pdot_plot_g_above_Fermi_LAT.png',dpi=300)
-plt.close()
-
-#Latitude gamma pulsars below threshold sensitivity of Fermi/LAT
-plt.figure(25)
-plt.hist(latitude_gamma_ab,bins=20,range=(-60,60),edgecolor='green',color='green',alpha=1,label='Simulation',zorder=3,histtype='step')
-plt.yscale('log')
-plt.legend()
-plt.xlabel('Latitude in degrees')
-plt.ylabel('Frequency')
-plt.savefig('histo_latitude_above_Fermi_LAT.png',dpi=300)
-plt.close()
-
-print(len(x_gamma_ab))
-print(len(x_gamma_bel))
-
-#X-Y positions gamma pulsars below threshold sensitivity of Fermi/LAT
-plt.figure(26)
-plt.scatter(x_gamma_ab,y_gamma_ab,s=2,c='green',alpha=0.2,label='Detection with a sensitivity lower than a factor of 10 compared to\nthe Fermi/LAT instrument',zorder=2)#label=r'Gamma pulsars with $F_{min} < 16\times10^{-15} W.m^{-2}$ or $F_{min} < 4\times10^{-15} W.m^{-2}$',zorder=2)
-plt.scatter(x_gamma_bel,y_gamma_bel,s=2,c='red',alpha=0.9,label='Detection according to the Fermi/LAT instrument sensitivity',zorder=1)#label=r'Gamma pulsars with $F_{min} > 16\times10^{-15} W.m^{-2}$ or $F_{min} > 4\times10^{-15} W.m^{-2}$',zorder=1)
-plt.scatter([0],[8.5],c='yellow',marker='o',s=20,label='The Sun',zorder=3) #position of the sun
-plt.xlim(-15,15)
-plt.ylim(-15,15)
-#plt.gca().set_aspect('equal', adjustable='box')
-#plt.axis('equal')
-plt.xlabel('x (kpc)')
-plt.ylabel('y (kpc)')
-plt.legend(fontsize='small')
-plt.savefig('Positions_detected_pulsars_above_Fermi_LAT.png',dpi=300)
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_BK_velocities.pdf')
 plt.close()
 
 for i in range(len(age)):
     age[i]=age[i]/(365*24*3600) #Get the age in yr
 
 #Plot spin-vel angle=f(nb_orbit)
-plt.figure(40)
+plt.figure(27)
 scatter=plt.scatter(PA,nb_orbit,c=age,cmap='plasma',marker='o',s=5,label='Simulation data')#,norm=LogNorm(vmin=1e2,vmax=5e7))
 #plt.ylim(0,10)
 plt.xlim(0,180)
@@ -1229,11 +1085,11 @@ plt.ylabel('Number of orbits in the Galaxy')
 plt.legend()
 cbar=plt.colorbar(scatter)
 cbar.set_label('Age (yr)')
-plt.savefig('spinvel_orbit_plot.png',dpi=300)
+plt.savefig('spinvel_orbit_plot.pdf',dpi=300)
 plt.close()
 
 #Plot spin-vel angle=f(v_init)
-plt.figure(41)
+plt.figure(28)
 scatter=plt.scatter(PA,nb_orbit,c=v0,cmap='plasma',marker='o',s=5,label='Simulation data')
 plt.ylim(0,10)
 plt.xlim(0,180)
@@ -1242,7 +1098,7 @@ plt.ylabel('Number of orbits in the Galaxy')
 cbar=plt.colorbar(scatter)
 cbar.set_label('Initial velocity (km/s)')
 plt.legend()
-plt.savefig('spinvel_init_vel_plot.png',dpi=300)
+plt.savefig('spinvel_init_vel_plot.pdf',dpi=300)
 plt.close()
 
 Fg_flux_log=[]
@@ -1254,39 +1110,166 @@ for i in range(len(flux_3PC_cano)):
     flux_3PC_cano_log.append(np.log10(flux_3PC_cano[i]))
 
 #Comparison flux 3PC and simulation (gamma-ray pulsars)
-plt.figure(42)
-plt.hist(Fg_flux_log,bins=20,range=(-15,-11),edgecolor='red',color='red',alpha=1,label='Simulation',zorder=3,histtype='step')
-plt.hist(flux_3PC_cano_log,bins=20,range=(-15,-11),edgecolor='blue',color='blue',alpha=1,label='3PC data',zorder=2,histtype='step') #Canonical pop
+plt.figure(29)
+plt.hist(Fg_flux_log,bins=20,range=(-16,-11),edgecolor='red',color='red',alpha=1,label='Simulation',density=True,zorder=3,histtype='step')
+plt.hist(flux_3PC_cano_log,bins=20,range=(-16,-11),edgecolor='blue',color='blue',alpha=1,label='3PC data',density=True,zorder=2,histtype='step') #Canonical pop
 plt.legend()
 plt.yscale('log')
 plt.xlabel(r'Gamma-ray flux in log space (W.m$^{-2}$)')
-plt.ylabel('Frequency')
-plt.savefig('histo_fgamma.png',dpi=300)
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_fgamma.pdf',dpi=300)
 plt.close()
 
-weights_obs=np.ones_like(g_peak_sep_obs) / len(g_peak_sep_obs)
-weights_sim=np.ones_like(g_peak_sep_sim) / len(g_peak_sep_sim)
-
 #Comparison gamma-ray peak separation 3PC and simulation
-plt.figure(43)
-plt.hist(g_peak_sep_sim,bins=10,weights=weights_sim,range=(0,0.5),edgecolor='red',color='red',alpha=1,label='Simulation',zorder=3,histtype='step')
-plt.hist(g_peak_sep_obs,bins=10,weights=weights_obs,range=(0,0.5),edgecolor='blue',color='blue',alpha=1,label='3PC data',zorder=2,histtype='step') #Canonical pop
+plt.figure(30)
+plt.hist(g_peak_sep_sim,bins=10,range=(0,0.5),edgecolor='red',color='red',alpha=1,label='Simulation',density=True,zorder=3,histtype='step')
+plt.hist(g_peak_sep_obs,bins=10,range=(0,0.5),edgecolor='blue',color='blue',alpha=1,label='3PC data',density=True,zorder=2,histtype='step') #Canonical pop
 plt.legend()
 #plt.yscale('log')
 plt.xlabel(r'Gamma-ray peak separation')
-plt.ylabel('p.d.f value')
-plt.savefig('histo_gpeaksep.png',dpi=300)
+plt.ylabel('p.d.f')
+plt.savefig('histo_gpeaksep.pdf',dpi=300)
 plt.close()
 
-#KS test without the outliers
-KS_test=kstest(Fg_flux_log,flux_3PC_cano_log)
-test_stat=KS_test.statistic
-p_value=KS_test.pvalue
-print("----ALL GAMMA PULSARS FLUX----\n")
-print(f"d_value of Fg KS test for all the gamma pulsars= {test_stat}")
-print(f"p_value of Fg for all the gamma pulsars={p_value}")
+#Rho histogram
+plt.figure(31)
+plt.hist(rho_rg,bins=20,range=(0,30),edgecolor='blue',color='blue',alpha=0.5,label='Pulsars in both radio and gamma-ray surveys',zorder=3,histtype='step')
+plt.hist(rho_r,bins=20,range=(0,30),edgecolor='red',color='red',alpha=0.5,label='Pulsars in radio surveys only',zorder=3,histtype='step')
+plt.hist(rho_g,bins=20,range=(0,30),edgecolor='green',color='green',alpha=0.5,label='Pulsars in gamma-ray surveys only',zorder=3,histtype='step')
+plt.legend()
+plt.xlabel(r'$\rho$ (°)')
+plt.ylabel('Number of pulsars')
+plt.savefig('rho_sim.pdf',dpi=300)
+plt.close()
 
-#"Optimisation save in file" 
-#line=[f"{count_tot} {count_rad} {count_gam} {count_radgam} {test_stat_all2} {p_value_all2} {test_stat_all1} {p_value_all1}\n"]
-#with open("data_opt_04sigp.txt","a") as f:
-#    f.writelines(line)
+#Longitude
+plt.figure(32)
+plt.hist(longitude,bins=20,range=(0,360),edgecolor='red',color='red',alpha=1,label='Simulation',zorder=3,histtype='step')
+plt.hist(longitude_ATNF,bins=20,range=(0,360),edgecolor='blue',color='blue',alpha=1,label='ATNF data',zorder=2,histtype='step')
+plt.legend()
+plt.yscale('log')
+plt.xlabel('Longitude in °')
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_longitude.pdf',dpi=300)
+plt.close()
+
+#Zeta=f(chi) all
+plt.figure(33)
+plt.scatter(alpha_rg,xi_rg,c='blue',marker='o',s=5,label='Pulsars in both radio and gamma-ray surveys')
+plt.scatter(alpha_g,xi_g,c='green',marker='x',s=5,label='Pulsars in gamma-ray surveys only')
+plt.scatter(alpha_r,xi_r,c='red',marker='s',s=5,label='Pulsars in radio surveys only')
+plt.ylabel(r'$\zeta$ in °')
+plt.legend(fontsize='small')
+plt.xlabel(r'$\chi$ in °')
+plt.xlim(0,90)
+plt.ylim(0,90)
+plt.savefig('zeta_chi_all.pdf',dpi=300)
+plt.close()
+
+#For w_r with ISM+instrument effects
+a_wr,b_wr,r_value,p_value,std_err=linregress(np.log10(P_r_or_rg),np.log10(wr_r_or_rg))
+reglinx = np.logspace(np.log10(min(P_r_or_rg)), np.log10(max(P_r_or_rg)), num=len(P_r_or_rg))
+regliny = 10**(a_wr * np.log10(reglinx) + b_wr)
+residuals_y= np.log10(wr_r_or_rg) - np.log10(regliny)
+sigma_y = np.sqrt(np.sum(residuals_y**2) / (len(P_r_or_rg) - 2))
+Sxx=np.sum((np.log10(P_r_or_rg) - np.mean(np.log10(P_r_or_rg)))**2)
+std_err_b=sigma_y*np.sqrt(1.0/len(P_r_or_rg)+((np.mean(np.log10(P_r_or_rg)))**2/Sxx))
+a_wrplus=a_wr+std_err
+b_wrplus=b_wr+std_err_b
+a_wrminus=a_wr-std_err
+b_wrminus=b_wr-std_err_b
+reglinyplus = 10**(a_wr * np.log10(reglinx) + b_wrplus)
+reglinyminus = 10**(a_wr * np.log10(reglinx) + b_wrminus)
+
+#print(w_geometry_r_or_rg)
+
+#for w_r without ISM+instrument effects
+indices=[i for i, val in enumerate(P_r_or_rg)]
+P_r_or_rg2=[P_r_or_rg[i] for i in indices]
+w_geometry_r_or_rg2=[w_geometry_r_or_rg[i] for i in indices]
+a_wr2,b_wr2,r_value2,p_value2,std_err2=linregress(np.log10(P_r_or_rg2),np.log10(w_geometry_r_or_rg2))
+reglinx2 = np.logspace(np.log10(min(P_r_or_rg2)), np.log10(max(P_r_or_rg2)), num=len(P_r_or_rg2))
+regliny2 = 10**(a_wr2 * np.log10(reglinx2) + b_wr2)
+residuals_y2= np.log10(w_geometry_r_or_rg2) - np.log10(regliny2)
+sigma_y2 = np.sqrt(np.sum(residuals_y2**2) / (len(P_r_or_rg2) - 2))
+Sxx2=np.sum((np.log10(P_r_or_rg2) - np.mean(np.log10(P_r_or_rg2)))**2)
+std_err_b2=sigma_y2*np.sqrt(1.0/len(P_r_or_rg2)+((np.mean(np.log10(P_r_or_rg2)))**2/Sxx2))
+a_wrplus2=a_wr2+std_err2
+b_wrplus2=b_wr2+std_err_b2
+a_wrminus2=a_wr2-std_err2
+b_wrminus2=b_wr2-std_err_b2
+reglinyplus2 = 10**(a_wr2 * np.log10(reglinx2) + b_wrplus2)
+reglinyminus2 = 10**(a_wr2 * np.log10(reglinx2) + b_wrminus2)
+
+#W10 Obs
+P_obs_combined=P3+P5
+w10_combined=w10_r+w10_rg
+indices = [i for i, val in enumerate(w10_combined) if val != 0]
+w10_combined_filtered = [w10_combined[i] for i in indices]
+P_obs_combined_filtered = [P_obs_combined[i] for i in indices]
+a_wr3,b_wr3,r_value3,p_value3,std_err3=linregress(np.log10(P_obs_combined_filtered),np.log10(w10_combined_filtered))
+reglinx3 = np.logspace(np.log10(min(P_obs_combined_filtered)), np.log10(max(P_obs_combined_filtered)), num=len(P_obs_combined_filtered))
+regliny3 = 10**(a_wr3 * np.log10(reglinx3) + b_wr3)
+residuals_y3= np.log10(w10_combined_filtered) - np.log10(regliny3)
+sigma_y3 = np.sqrt(np.sum(residuals_y3**2) / (len(P_obs_combined_filtered) - 2))
+Sxx3=np.sum((np.log10(P_obs_combined_filtered) - np.mean(np.log10(P_obs_combined_filtered)))**2)
+std_err_b3=sigma_y3*np.sqrt(1.0/len(P_obs_combined_filtered)+((np.mean(np.log10(P_obs_combined_filtered)))**2/Sxx3))
+a_wrplus3=a_wr3+std_err3
+b_wrplus3=b_wr3+std_err_b3
+a_wrminus3=a_wr3-std_err3
+b_wrminus3=b_wr3-std_err_b3
+reglinyplus3 = 10**(a_wr3 * np.log10(reglinx3) + b_wrplus3)
+reglinyminus3 = 10**(a_wr3 * np.log10(reglinx3) + b_wrminus3)
+
+print(len(w10_combined_filtered))
+print(len(w_geometry_r_or_rg))
+
+#f(log(wr))=logP
+plt.figure(34)
+plt.scatter(P_r_or_rg,wr_r_or_rg,c='green',marker='o',s=5,label='Simulation with ISM and instrumental effect')
+plt.scatter(P_r_or_rg2,w_geometry_r_or_rg2,c='red',marker='o',s=5,label='Simulation (geometry only)')
+plt.plot(reglinx,regliny,linestyle='-',label=r'$\log$($w_r$) = (%.2f$\pm%.2f$) $\log(P)$ + (%.2f$\pm$%.2f)' % (a_wr,std_err, b_wr,std_err_b),c='green')
+plt.plot(reglinx2,regliny2,linestyle='-',label=r'$\log$($w_r$) = (%.2f$\pm$%.2f) $\log(P)$ + (%.2f$\pm$%.2f) ' % (a_wr2,std_err2,b_wr2,std_err_b2),c='red')
+plt.scatter(P3,w10_r,c='blue',marker='o',s=5)
+plt.scatter(P5,w10_rg,c='blue',marker='o',s=5,label='ATNF data')
+plt.plot(reglinx3,regliny3,linestyle='-',label=r'$\log$($w^{ATNF}_{10}$) = (%.2f$\pm$%.2f) $\log(P)$ + (%.2f$\pm$%.2f)' % (a_wr3,std_err3,b_wr3,std_err_b3),c='blue')
+plt.fill_between(reglinx2, reglinyminus2, reglinyplus2, color='red', alpha=0.1)#, label=r'$\pm 1\sigma$ interval')
+plt.fill_between(reglinx3, reglinyminus3, reglinyplus3, color='blue', alpha=0.1)
+plt.fill_between(reglinx, reglinyminus, reglinyplus, color='green', alpha=0.1)
+plt.xscale('log')
+plt.yscale('log')
+plt.ylabel(r'$w_r$ (°)')
+plt.xlabel(r'$P$ (s)')
+plt.legend(fontsize='small')
+plt.savefig('wr_P_plot.pdf',dpi=300)
+plt.close()
+
+#Zeta=f(chi) eliminated
+xexample=[i for i in np.arange(0,180,0.1)]
+yexample=xexample
+plt.figure(35)
+#plt.plot(xexample,yexample,label=r'$\rho=\chi+\zeta$')
+plt.scatter(alphacheck,xicheck,c='blue',marker='o',s=5)
+plt.ylabel(r'$\zeta$ in °')
+plt.legend(fontsize='small')
+plt.xlabel(r'$\chi$ in °')
+plt.xlim(0,90)
+plt.ylim(0,90)
+plt.savefig('zeta_chi_elim.pdf',dpi=300)
+plt.close()
+
+#chi+zeta
+alpha_xi2=[]
+for i in range(len(alpha_r_or_rg)):
+    alpha_xi2.append(alpha_r_or_rg[i]+xi_r_or_rg[i])
+
+plt.figure(36)
+plt.scatter(alpha_xi2,rho_r_or_rg,c='blue',marker='o',s=5)
+plt.ylabel(r'$\rho$ in °')
+plt.legend(fontsize='small')
+plt.xlabel(r'$\chi+\zeta$ in °')
+plt.xlim(0,90)
+plt.ylim(0,90)
+plt.axvline(x=20,linestyle='--')
+plt.savefig('zeta_chi_elim2.pdf',dpi=300)
+plt.close()

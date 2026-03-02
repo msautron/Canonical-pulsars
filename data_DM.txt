@@ -1,2 +1,0 @@
-Warning: YMW16_DIR set to local directory
-Gal: gl= 338.036 gb=  -3.005 Dist=  31593.8 DM:  534.27 log(tau_sc): -1.642 

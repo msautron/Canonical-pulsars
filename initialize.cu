@@ -13,12 +13,14 @@ void initialize(int argc, char *argv[], void *params){
                 part->b_mean     = (double) strtod(argv[2],(char **)NULL);
                 part->p_mean     = (double) strtod(argv[3],(char **)NULL);
                 part->sigma_p    = (double) strtod(argv[4],(char **)NULL);
-                part->birth_rate = (double) strtod(argv[5],(char **)NULL);
+                part->birth_rate2 = (double) strtod(argv[5],(char **)NULL);
 		//part->tau_d = (double) strtod(argv[6],(char **)NULL);
 		//part->alpha_d = (double) strtod(argv[7],(char **)NULL);
          }
          else{
-         part->birth_rate	= 	41;
+         part->birth_rate1	 = 	 25;
+	 part->birth_rate2       =       41;
+	 part->birth_rate3       =       80;
          //part->b_mean		= 	3.25e8; //Tesla usual value used 
 	 part->b_mean           =       275422870.33381635; //Tesla, value used in Igoshev et al. (2022)
          //part->p_mean		= 	60e-3;// usual value used in seconds (normal distribution)
@@ -147,11 +149,26 @@ void initialize(int argc, char *argv[], void *params){
                 if (part->PA== NULL) printf("n_omega_x: allocation failed");
        part->DM= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
                 if (part->DM== NULL) printf("n_omega_x: allocation failed");
-       part->S_N= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
-                if (part->S_N== NULL) printf("S_N: allocation failed");
        part->Nb_orb= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
                 if (part->Nb_orb== NULL) printf("Nb_orb: allocation failed");
        part->delta= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
                 if (part->delta== NULL) printf("delta: allocation failed");
+       part->fomega=(double **)calloc(91,sizeof(double *));
+                if (part->fomega== NULL) printf("fomega: allocation failed");
+       for(int i=0;i<91;i++) {part->fomega[i]=(double *)calloc(91,sizeof(double)); if (part->fomega[i]==NULL) printf("fomega[i]: allocation failed");}
+       part->Smin_fermi= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate)
+                if (part->Smin_fermi== NULL) printf("Smin_fermi: allocation failed");
 
+       part->temp=(double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->temp== NULL) printf("temp: allocation failed");
+       part->Smin_pmps= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->Smin_pmps== NULL) printf("Smin_pmps: allocation failed");
+       part->Smin_fast= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->Smin_fast== NULL) printf("Smin_fast: allocation failed");
+       part->w_int= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->w_int== NULL) printf("w_int: allocation failed");
+       part->w_r_fast= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->w_r_fast== NULL) printf("w_r_fast: allocation failed"); // check if allocation succeeded
+       part->w_r_pmps= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate) 
+                if (part->w_r_pmps== NULL) printf("w_r_pmps: allocation failed"); // check if allocation succeeded
 }

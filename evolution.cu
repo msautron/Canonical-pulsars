@@ -43,12 +43,6 @@ double func_angle_mhd(double x, void *params){ // function for which we want to 
 int evolution(void *params){  
 
         struct func_params *part= (struct func_params*)params;
-  
-        FILE *fp;
-        if ( ( fp = fopen("/home/matteo.sautron/Documents/cuda/canonical_pulsars/SBI/pop_synthesis/pulsar_properties.dat","w+")) == NULL){
-      	     printf("Couldn't open file pulsar_properties.dat \n");
-	     exit(-1);
-         }
         long np;
         double k;
         double four_pi2 = 4*M_PI*M_PI;   
@@ -83,11 +77,11 @@ int evolution(void *params){
 		double pdecay     =    gsl_rng_uniform(part->r);
 		//part->tau0_B0     =    part->k_tau0_B0*exp(log(1e7-1e5)*pdecay+log(1e5))*pow(2.5e8,part->alpha_d)*365*24*3600; //from Vigano
 		//part->tau_d       =    part->tau0_B0*pow(part->Binit[np],-part->alpha_d);
-                if (pdecay< 0.31) part->tau_d       =    part->tau0_B0*pow(part->Binit[np],-part->alpha_d);
-		else if (pdecay>= 0.31 && pdecay <0.54) {
+                if (pdecay< 0.29) part->tau_d       =    part->tau0_B0*pow(part->Binit[np],-part->alpha_d);
+		else if (pdecay>= 0.29 && pdecay <0.62) {
 			part->tau_d       =    part->tau0_B0_2*pow(part->Binit[np],-part->alpha_d);
 		}
-		else if (pdecay>= 0.54) part->tau_d       =    part->tau0_B0_3*pow(part->Binit[np],-part->alpha_d);
+		else if (pdecay>= 0.62) part->tau_d       =    part->tau0_B0_3*pow(part->Binit[np],-part->alpha_d);
 		//else if (pdecay>=0.8) part->tau_d       =    part->tau0_B0_4*pow(part->Binit[np],-part->alpha_d);
 
 			if(part->ff_evol){  	//evolution of the angle alpha in the MHD case
@@ -183,16 +177,8 @@ int evolution(void *params){
 	              part->alpha[np]=alpha;
 		      part->period[np]=part->Pinit[np]*cos(alpha)/cosa0;
 	              part->Pdot[np]    =   four_pi2*k*(1./part->period[np]);
-		    }		
-		    
-	   
-
-
-		      
+		    }				      
 	}	  
-
-   fclose(fp);
-
 
 return(0);
 

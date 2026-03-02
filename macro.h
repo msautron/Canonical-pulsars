@@ -11,12 +11,22 @@
 
 struct func_params{
 
+	double *Smin_pmps;
+	double *Smin_fast;
+	double *w_r_fast;
+	double *w_r_pmps;
+	double *w_int; 
+	double *temp; //Stores sky temperature at (gl,gb) position
+	double *Smin_fermi; //Minimum flux detectable by Fermi/LAT
+	double **fomega; //f_omega values taken from table
 	double *n_omega_x;
 	double *n_omega_y;
 	double *n_omega_z;
 	double *PA;
 	double *delta; //Stores the gamma-ray peak separation
-        long birth_rate;
+        long birth_rate1;
+	long birth_rate2;
+	long birth_rate3;
         double R; //Radius of the neutron star
         double *alpha;//angle between the magnetic field and the rotation axis
         double *Binit; //table which returns the initial B
@@ -29,7 +39,6 @@ struct func_params{
         double *age_pulsar; // stores the age of the pulsar (in s)
 	double *DM; //Stores the dispersion measure of the pulsar in cm^-3.pc
 	double *Nb_orb; //Estimation of the number of orbits done by the NS 
-	double *S_N;
 	double Bfield_const;
 	double tau_nu;
 	long Bfield_var;

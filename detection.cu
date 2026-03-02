@@ -116,22 +116,22 @@ void distrib_init_2(void *params){
                         choice=(int)(4*gsl_rng_uniform(part->r)+1);
                         theta[np]=theta_arms(r[np],choice);
 			//Correction
-			double arg_exp=0.35*r[np];double sigma_r=0.07*r[np];
+			double arg_exp=0.35*r[np];double sigma_r=0.07;
            		double theta_corr=2*M_PI*gsl_rng_uniform(part->r)*exp(-arg_exp);
            		double theta_corr_2=omega_MW*part->age_pulsar[np]/(365*24*3600);
            		theta[np]+=theta_corr+theta_corr_2;
-           		double r_corr=gsl_ran_gaussian_ziggurat(part->r,sigma_r);
-           		r[np]+=r_corr;
+           		double r_corr=1.0+gsl_ran_gaussian_ziggurat(part->r,sigma_r);
+           		r[np]=r[np]*r_corr;
                         p_plus_or_minus_1=gsl_rng_uniform(part->r);
                         if (p_plus_or_minus_1<0.5) {part->y[np]=r[np]*tan(theta[np])/pow(1.0+pow(tan(theta[np]),2),0.5);part->x[np]=pow(pow(r[np],2)-pow(part->y[np],2),0.5);}
                         else {part->y[np]=-r[np]*tan(theta[np])/pow(1.0+pow(tan(theta[np]),2),0.5);part->x[np]=-pow(pow(r[np],2)-pow(part->y[np],2),0.5);}
                         fprintf(save_coord,"%e %e\n",part->x[np],part->y[np]);
-                        }
-                        part->x0[np]= part->x[np];
+			part->x0[np]= part->x[np];
                         part->y0[np]= part->y[np];
                         part->z[np]= part->z0[np];
-			fclose(save_coord);
-			free(r);free(theta);
+                        }
+		fclose(save_coord);
+		free(r);free(theta);
                 }
 
 FILE *kick(void *params){
@@ -419,9 +419,51 @@ void gamma_ray_peak_sep(void *params){
 	}
 }
 
+void sky_temp_Fmin_fermi(void *params){
+
+        struct func_params *part= (struct func_params*)params;
+        long np=0;
+        FILE *lb_coord=NULL;
+        FILE *temp_data=NULL;
+        FILE *fermi_fmin=NULL;
+        lb_coord=fopen("l_b_coord_sim.txt","w+");
+        temp_data=fopen("temp.txt","r");
+        fermi_fmin=fopen("fermi_fmin.txt","r");
+        for(np=0;np<part->Npulsars;np++){
+                fprintf(lb_coord,"%e %e\n",part->gl[np],part->gb[np]);
+        }
+        np=0;
+        fclose(lb_coord);
+        system("python3 get_temp.py");
+        system("python3 sensitivity_3PC.py");
+        while(fscanf(temp_data,"%le\n",&part->temp[np])==1) {np++;}
+        np=0;
+        while(fscanf(fermi_fmin,"%le\n",&part->Smin_fermi[np])==1) {np++;}
+        np=0;
+        /*for(np=0;np<part->Npulsars;np++){
+                part->temp[np]=part->temp[np]*pow(408.0/1374.0,2.6); //Adapt the temperature to fast survey 
+        }*/
+        fclose(temp_data);
+        fclose(fermi_fmin);
+}
+
+
+void save_all(void *params){
+
+	struct func_params *part= (struct func_params*)params;
+	FILE *all_pulsar=NULL;
+	long np=0;
+	all_pulsar=fopen("all_pulsar_info.txt","w++");
+	for (np=0;np<part->Npulsars;np++){
+		fprintf(all_pulsar,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+	}
+	fclose(all_pulsar);
+}
+
 int detection(void *params){ //check the flux of each pulsar and if the beam sweps the Earth
 
 
+	printf("Started detection pipeline\n");
     	struct func_params *part= (struct func_params*)params;
     	long np=0;
 	long count_radio_tot=0;
@@ -441,33 +483,36 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 	double xi,rho,alpha;
 	double Smin_gamma, Smin_radio;
         double glat;
+	long S_Nmin_fast=9.0; // signal to noise ratio min detectable FAST
+        long S_Nmin_pmps=9.0; // signal to noise ratio min detectable pmps
 	long Ntot;
 	long Nbeam=0;
         int detec;
-	double S_N ; // signal to noise ratio
-	double S_Nmin=10.0 ; // signal to noise ratio
+	double ratio;
 	FILE *file_data=NULL;
-	FILE *check_DM;
 	FILE *Fg_flux;
-	FILE *check_SN;
+	FILE *save_tempo=NULL;
+	FILE *file_wr=NULL;
+        FILE *file_wint=NULL;
 	FILE *check_nb_orbit;
 	double eta=0.15;double alpha_l=45*(M_PI/180);double T6=2;double b=40;
 	double alpha_l2;double T6_2;double b2;
 	double P_dot_line;
+	int detec_fast=0;int detec_pmps=0;int detec_htru=0;
+        int current_detec_fast,current_detec_pmps,current_detec_htru;
 	FILE *gamma_peak_sep=NULL;
         gamma_peak_sep=fopen("gamma_peak_sep.txt","w+");
-	check_SN=fopen("check_SN.txt","w+");
 	file_data=fopen("P_Pdot_positions.txt","w+");
-	check_DM=fopen("check_DM.txt","w+");
 	Fg_flux=fopen("Fg_flux.txt","w+");
+	save_tempo=fopen("xi_rho_data.txt","w+");
 	check_nb_orbit=fopen("nb_orbit.txt","w+");
+	file_wint=fopen("wint.txt","w+");
+	file_wr=fopen("wr.txt","w+");
 			
            	for (np=0;np<part->Npulsars;np++){ 
-			xi=part->xi[np];
-			//P_dot_line=(pow(part->period[np],3)*sq(0.17e8)*16*pow(M_PI,3)*pow(R_NS,6)*(1+sq(sin(alpha_l))))/(SI_I*SI_mu0*pow(SI_C,3)); //death line Ruderman & Sutherland 1975
-			//P_dot_line=(sq(part->period[np])*pow(10,13.9)*16*pow(M_PI,3)*pow(R_NS,6)*(1+sq(sin(alpha_l))))/(SI_I*SI_mu0*pow(SI_C,3)); death line Chen & Ruderman 1993
+			if (part->xi[np]<=M_PI/2.0) xi=part->xi[np];
+                        else if (part->xi[np]>M_PI/2.0) xi=M_PI-part->xi[np];
 			rho=part->rho[np];
-			//alpha=part->alpha[np];
 			if (part->alpha[np]<=M_PI/2) alpha=part->alpha[np]; // just to make it easier to read
                         else if (part->alpha[np]>M_PI/2) alpha=M_PI-part->alpha[np];
 			P_dot_line=(3.16e-4*pow(T6,4)*sq(part->period[np])*1e-15)/(sq(eta)*b*sq(cos(alpha_l)));
@@ -477,53 +522,54 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 				b2=30*gsl_rng_uniform(part->r)+30;
 				P_dot_line=(3.16e-4*pow(T6_2,4)*sq(part->period[np])*1e-15)/(sq(eta)*b2*sq(cos(alpha_l2)));
 			}
+
+			/* calculates the width of the radio beam w_r, from eq 22 of our paper */
+                        if(fabs(alpha-xi)<= rho){
+                                ratio=(cos(rho)-cos(alpha)*cos(xi))/(sin(alpha)*sin(xi));
+                                part->w_int[np]=2*acos(ratio);
+                        } else if(fabs(xi-(M_PI-alpha))<=rho){
+                                ratio=(cos(rho)-cos(alpha)*cos(xi))/(sin(alpha)*sin(xi));
+                                part->w_int[np]=2*acos(ratio);
+                                }
+
 			glat = (180*asin(part->z[np]/part->dist[np]))/M_PI;
-			//glat = 180*asin(part->z[np]/part->dist[np]/M_PI);
-			//wtilde=part->w_r[np]*part->period[np]/(2*M_PI); // converting the width from radians to s 
-			//Smin_gamma = 5e-12;
-			Smin_radio = part->Smin[np];
-		//	Smin_radio = 0.15;
-			//S_N = part->Fr[np]/part->Smin[np];
-			//S_N = part->Fr[np]/Smin_radio;
-			if (part->NenuFAR==1 ) S_N = part->flux_low_freq[np]/Smin_radio; // nenuphar
-			else S_N = part->Fr[np]/part->Smin[np];
 
-                        if (S_N > S_Nmin) {detec = 1;}//printf("Fr=%e,Smin=%e,w_r=%e\n",part->Fr[np],part->Smin[np],part->w_r[np]);}
-			else {detec  = 0;}
-                 
+			detec=0; //Initialization of detec param for detection, it will be one if detected in one survey
+                        current_detec_fast=0;current_detec_pmps=0;
 
-
-			if ((((-21.80 < glat && glat < 27.13) && part->NenuFAR==1)) || part->NenuFAR==0){
-
+                        //FAST detection
+                        if (isnan(part->w_r_fast[np])==false && part->Fr[np]/part->Smin_fast[np] > S_Nmin_fast && part->Smin_fast[np]!=0 && abs(part->gb[np])<10) {detec = 1;detec_fast+=1;current_detec_fast=1;}
+                        //PMPS detection isnan(part->w_r_fast[np])==false &&
+                        if (isnan(part->w_r_fast[np])==false && part->Fr[np]/part->Smin_pmps[np] > S_Nmin_pmps && part->Smin_pmps[np]!=0 && (part->gl[np]<=50 || part->gl[np]>=260) && abs(part->gb[np])<5) {detec = 1;detec_pmps+=1;current_detec_pmps=1;}
 			        					        
 			/* radio detection */
-				if(fabs(alpha-xi)<= rho && alpha >= rho){ 
-					Nbeam++;
-                			if (part->S_N[np]>S_Nmin){
-						Nr=1;  // mJy
-						part->detec[np]=1;
-                                                part->detec_rad[np]=1;
-						count_radio_tot++;
+				if(fabs(xi-alpha)<= rho){
+				       //if (cos(rho)>=cos(xi+alpha)){	
+					if ((20.0*M_PI/180.0)<=alpha+xi){
+							Nbeam++;
+                					if (detec==1){
+							Nr=1;  // mJy
+							part->detec[np]=1;
+                                                	part->detec_rad[np]=1;
+							count_radio_tot++;
 					}
-				} else if (fabs(xi-(M_PI-alpha))<=rho && alpha >= rho){ 
+				       
+					}
+				/*} else if (fabs(xi-(M_PI-alpha))<=rho && (cos(rho)>=cos(xi+alpha))){ 
 					Nbeam++;
-                			if (part->S_N[np]>S_Nmin){
+                			if (detec==1){
 						count_radio_tot++;
 						part->detec[np]=1;
                                                 part->detec_rad[np]=1;
 						Nr=1;  
-						}
+						}*/
 					}
-				}
+				
 			
 			/* gamma detection */
-			  	if(fabs(xi-M_PI/2.)<=alpha){ 
-					if(Nr==1 && glat < 2.0) {  //deep follow-up surveys at 1.4 GHz of gamma-ray sources
-					    Smin_gamma=04e-15; // in W.m^-2 
-					} else Smin_gamma=16e-15;
-				//Smin_gamma=5e-12;
-                			if(part->Fg[np]>Smin_gamma) {Ng=1;part->detec[np]=1;part->detec_gam[np]=1; }  
-				}  //else continue; 
+			  	if(fabs(xi-M_PI/2.)<=alpha){
+				        if(part->Fg[np]>9*part->Smin_fermi[np]) {Ng=1;part->detec[np]=1;part->detec_gam[np]=1;} 
+				}  
 
 				if(Ng==1 && Nr==1){  //both radio and gamma are detected
 				        if (P_dot_line>part->Pdot[np]) {Ng=0;Nr=0;part->detec_rg[np]=0;part->detec[np]=0;part->detec_rad[np]=0;part->detec_gam[np]=0;}
@@ -578,36 +624,42 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			       Nr=0;
 			       Ng=0;
 			       detec=0;
-			       if(part->detec_rad[np]==1 && part->S_N[np]>S_Nmin){
+			       if(part->detec_rad[np]==1){
 
                                   fprintf(file_data,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|1|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
-				  fprintf(check_SN,"%e %e\n",S_N,part->S_N[np]);
 				  fprintf(check_nb_orbit,"%e\n",part->Nb_orb[np]);
-				  fprintf(check_DM,"%e\n",part->DM[np]);
+				  fprintf(file_wint,"%e\n",part->w_int[np]*180/M_PI);
+				  fprintf(save_tempo,"%e %e\n",xi,rho);
+				  if (current_detec_fast==1) fprintf(file_wr,"%e\n",part->w_r_fast[np]*180.0/M_PI);
+                                  else if (current_detec_pmps==1) fprintf(file_wr,"%e\n",part->w_r_pmps[np]*180.0/M_PI);
 				
                         }
 
-                               else if(part->detec_gam[np]==1 && part->Fg[np]-Smin_gamma>0){
+                               else if(part->detec_gam[np]==1){
 
                                   fprintf(file_data,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|2|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
-				  fprintf(check_DM,"%e\n",part->DM[np]);
 				  fprintf(Fg_flux,"%e\n",part->Fg[np]);
 				  fprintf(check_nb_orbit,"%e\n",part->Nb_orb[np]);
 				  fprintf(gamma_peak_sep,"%e\n",part->delta[np]);
+				  fprintf(file_wr,"%e\n",part->w_r_fast[np]*180.0/M_PI);
+				  fprintf(file_wint,"%e\n",part->w_int[np]*180/M_PI);
+                                  fprintf(save_tempo,"%e %e\n",xi,rho);
                         }
 
-                               else if(part->detec_rg[np]==1 && part->Fg[np]-Smin_gamma>0 && part->S_N[np]>S_Nmin){
+                               else if(part->detec_rg[np]==1){
 
                                   fprintf(file_data,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|3|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
-				  fprintf(check_DM,"%e\n",part->DM[np]);
 				  fprintf(Fg_flux,"%e\n",part->Fg[np]);
-				  fprintf(check_SN,"%e %e\n",S_N,part->S_N[np]);
 				  fprintf(check_nb_orbit,"%e\n",part->Nb_orb[np]);
 				  fprintf(gamma_peak_sep,"%e\n",part->delta[np]);
+				  if (current_detec_fast==1) fprintf(file_wr,"%e\n",part->w_r_fast[np]*180.0/M_PI);
+                                  else if (current_detec_pmps==1) fprintf(file_wr,"%e\n",part->w_r_pmps[np]*180.0/M_PI);
+				  fprintf(file_wint,"%e\n",part->w_int[np]*180/M_PI);
+                                  fprintf(save_tempo,"%e %e\n",xi,rho);
                         }
-
-
 		}
+
+		
 
  
 			Ntot = count_radio+count_gamma+count_radio_gamma;
@@ -628,13 +680,16 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			printf("# Total number of gamma-only pulsars detected %ld \n",count_gamma);
 			printf("# Total number of radio+gamma pulsars detected %ld \n",count_radio_gamma);
 			printf("# Number of radio pulsars beaming to us %ld \n",Nbeam);
+			printf("# Number of radio pulsars detected with PMPS: %d\n",detec_pmps);
+                        printf("# Number of radio pulsars detected with fast: %d\n",detec_fast);
 			printf(" \n");
 			fclose(file_data);
-			fclose(check_DM);
 			fclose(Fg_flux);
-			fclose(check_SN);
 			fclose(check_nb_orbit);
 			fclose(gamma_peak_sep);
+			fclose(save_tempo);
+			fclose(file_wint);
+			fclose(file_wr);
 
 return(0);
 }
@@ -644,41 +699,40 @@ int radio_flux(void *params){ // returns Smin and radio flux Fr in mJy
     	struct func_params *part= (struct func_params*)params;
    	double Fj; //scatter term
 	long np=0;
-	double wtilde;
-	double S_0=0.05;
+	double wtilde_fast,wtilde_pmps;
+	double S_0;
+	double C_thres,T_rec,n_pol,Gain,B_mhz,int_t;
+	n_pol=2;
 
            	for (np=0;np<part->Npulsars;np++){ 
 		
 			part->np=np;	
-			wtilde=part->w_r[np]*part->period[np]/(2*M_PI); // converting the width from radians to s 
+			wtilde_fast=part->w_r_fast[np]*part->period[np]/(2*M_PI); // converting the width from radians to s 
+			wtilde_pmps=part->w_r_pmps[np]*part->period[np]/(2*M_PI);
 
+			//FAST
+			C_thres=9;T_rec=25;Gain=16.;int_t=300;B_mhz=450e6;
+                        S_0=(C_thres*(T_rec+(part->temp[np]*pow(408.0/1374.0,2.6)))/(Gain*sqrt(n_pol*B_mhz*int_t)))*1e3; //in mJy
+                        if (part->period[np]-wtilde_fast>0){
+                                part->Smin_fast[np]=S_0*sqrt(wtilde_fast/((part->period[np])-wtilde_fast)); //in mJy
+                        }
+                        else if (part->period[np]-wtilde_fast<=0){
+                                part->Smin_fast[np]=1e55;
+                        }
 
-		//	 	part->Smin[np]=8.660254e-05*sqrt(wtilde/((part->period[np])-wtilde)); // Bhattcharya 1998 this if for S/N=10, BW=100 MHz, G=10K/Jy, tau=10 min, Tsys= 30K, np=2  
-		  //  		part->Smin[np]=part->Smin[np]*1e3; // converts from Jy to mJy
-		//	} else {
-		        if(part->NenuFAR==1) S_0=30.;
+			//PMPS
+			C_thres=9;T_rec=21;Gain=0.735;int_t=2100;B_mhz=288e6;
+                        S_0=(C_thres*(T_rec+(part->temp[np]*pow(408.0/1374.0,2.6)))/(Gain*sqrt(n_pol*B_mhz*int_t)))*1e3; //in mJy
 
-			else if (part->ska==1) S_0 = 0.0045;
+                        if (part->period[np]-wtilde_pmps>0){
+                                part->Smin_pmps[np]=S_0*sqrt(wtilde_pmps/((part->period[np])-wtilde_pmps)); //in mJy
+                        }
+                        else if (part->period[np]-wtilde_pmps<=0){
+                                part->Smin_pmps[np]=1e55;
+                        }
 
-			else S_0 = 0.05;
-
-		        part->Smin[np]=S_0*sqrt(wtilde/((part->period[np])-wtilde)); //in mJy	
-			//printf("Smin %e \n",part->Smin[np]);
-				 //part->Smin[np]=15e-3; 	
-
-                        
-			//part->Smin[np]=0.15;
-			//part->Smin[np]=0.1;
 			Fj             =  fabs(gsl_ran_gaussian_ziggurat(part->r,0.2)); 
                     	part->Fr[np]   =(9.0/sq(part->dist[np]))*(pow((part->Edot[np]*1e7),0.25)/1e9)*pow(10,Fj); // (From Johnston's paper) in mJy .1e7 to get Edot in erg.s-1
-			part->S_N[np]  = part->Fr[np]/part->Smin[np];
-			//printf("Smin=%e, Fr=%e\n",part->Smin[np],part->Fr[np]);
-			//printf("Fr %e dist %e Edot %e \n",part->Fr[np],part->dist[np],part->Edot[np]);
-			//printf("S_0 %e Smin %e Fr %e sqrt %e wtilde %e P %e \n",S_0,part->Smin[np],part->Fr[np],sqrt(wtilde/((part->period[np])-wtilde)),wtilde,part->period[np]);
-//			printf("S_0 %e Smin %e sqrt %e wtilde %e P %e \n",S_0,part->Smin[np],sqrt(wtilde/((part->period[np])-wtilde)),wtilde,part->period[np]);
-			// /!\ problem: units !!!
-			//printf("Fr %e np %ld dist %e \n",part->Fr[np],np,part->dist[np]);		
-			//printf("%e \n",part->Fr[np]);		
 
 		}
 
@@ -691,57 +745,77 @@ int radio_flux(void *params){ // returns Smin and radio flux Fr in mJy
 }
 
 
+int get_fomega(void *params){
 
-int gamma_flux(void *params){
+        struct func_params *part= (struct func_params*)params;
+        FILE *fomega_file=NULL;
+        fomega_file=fopen("facteur_omega.dat","r");
+        for(int i=0;i<91;i++){
+                for(int j=0;j<91;j++){
+                        if (fscanf(fomega_file, "%lf", &part->fomega[i][j]) != 1) {
+                                fprintf(stderr, "Failed read of values [%d][%d]\n", i, j);
+                                fclose(fomega_file);
+                                return EXIT_FAILURE;
+                        }
 
-    	struct func_params *part= (struct func_params*)params;
-   	double cg,fac; //scatter term
-	cg=1.0;
-	double lgamma;
-	const double kpc2m=3.0856775807e19; //kpc to m
-	fac=1./(4*M_PI*cg);
-	//fac=0.3;
-	double alpha;double xi;
-	long np=0;
-
-           	for (np=0;np<part->Npulsars;np++){ 
-		
-			part->np=np;	
-
-                        //lgamma = 1e15*pow(part->B[np]*1e4,0.11)*pow(part->Edot[np]*1e7,0.51); 
-                        lgamma = pow(10,26.15)*pow(part->B[np]/1e8,0.11)*pow(part->Edot[np]/1e26,0.51); //(W) from Kalapotharakos et al 2019
-			if (part->alpha[np]<=M_PI/2) alpha=part->alpha[np];
-                        else if (part->alpha[np]>M_PI/2) alpha=M_PI-part->alpha[np];
-                        if (part->xi[np]<=M_PI/2) xi=part->xi[np]; // just to make it easier to read
-                        else if (part->xi[np]>M_PI/2) xi=M_PI-part->xi[np];
-		    
-	        	if(alpha<-xi+0.6109) cg=1.9; //the correction factor cg (or f_omega)
-		   		else cg=1.;
-			//cg = 1.06 +0.84*tanh(0.1*(alpha+xi-0.6109));
-      			part->Fg[np]=fac/(sq(part->dist[np]*kpc2m))*lgamma; // gamma flux in W.m-2
-			//printf("Fg %e np %ld dist %e \n",part->Fg[np],np,part->dist[np]);		
-                        //printf("lgamma %e Fg %e B %e Edot %e \n",lgamma,part->Fg[np],part->B[np],part->Edot[np]);	
-
-      			//part->Fg[np]=fac*(part->Edot[np]*1e7/(sq(part->dist[np]*KPC2CM)))*sqrt(1e33/(part->Edot[np]*1e7)); // Petri 2011a 
- 				
-		} 
-
-return(0);
-
+                }
+        }
+        fclose(fomega_file);
+        return 0;
 
 }
 
-/*void verif_log_normal(void *params){
+int gamma_flux(void *params){
+        struct func_params *part= (struct func_params*)params;
+        double cg; //scatter term
+        cg=1.0;
+        double lgamma;
+        const double kpc2m=3.0856775807e19; //kpc to m
+        //fac=0.3;
+        long np=0;
+        double pcst,pb;
+        double pedot=-1.0;
+        double alpha,xi;
+        int alpha_int,xi_int;
+                for (np=0;np<part->Npulsars;np++){
+                        part->np=np;
+                        //lgamma = 1e15*pow(part->B[np]*1e4,0.11)*pow(part->Edot[np]*1e7,0.51); 
+                        //pcst=26.15+gsl_ran_gaussian_ziggurat(part->r, 2.6);
+                        //pb=0.11+gsl_ran_gaussian_ziggurat(part->r, 0.05);
+                        //while (pedot<0) {pedot=0.51+gsl_ran_gaussian_ziggurat(part->r, 0.09);}
+                        pcst=26.15;pb=0.06;pedot=0.6;
+                        //pb=0.11;pedot=0.51;
+                        lgamma = pow(10,pcst)*pow(part->B[np]/1e8,pb)*pow(part->Edot[np]/1e26,pedot); //(W) from Kalapotharakos et al 2019
+                        if (part->alpha[np]<=M_PI/2) alpha=part->alpha[np];
+                        else if (part->alpha[np]>M_PI/2) alpha=M_PI-part->alpha[np];
+                        if (part->xi[np]<=M_PI/2) xi=part->xi[np]; // just to make it easier to read
+                        else if (part->xi[np]>M_PI/2) xi=M_PI-part->xi[np];
+                        alpha=(180.0/M_PI)*alpha;alpha_int=(int)round(alpha);
+                        xi=(180.0/M_PI)*xi;xi_int=(int)round(xi);
+                        cg=part->fomega[alpha_int][xi_int];
+                        //printf("%e,%d,%d,%ld\n",cg,alpha_int,xi_int,np);
+                        /*if (alpha<=-xi+70) {cg=1.9;}
+                        else if (alpha<=-xi+72.5) {cg=1.713;}
+                        else if (alpha<=-xi+75) {cg=1.527;}
+                        else if (alpha<=-xi+76) {cg=1.340;}
+                        else if (alpha<=-xi+77 || (alpha>=-(45.0/27.5)*xi+192.27)) {cg=1.153;}
+                        else if (alpha<=-xi+78 || (alpha>=-xi+130)) {cg=0.967;}
+                        else if (alpha<=-xi+79 || (alpha>=-(67.0/64.0)*xi+117.22)) {cg=0.780;}
+                        else if (alpha<=-xi+81 || (alpha>=-(75.0/70.0)*xi+111.43)) {cg=0.593;}
+                        else if ((alpha<=8 && xi >= 85) || (alpha>=85 && xi <= 7.5)) {cg=0.22;}
+                        else {cg=0.407;}*/
+                        //if(alpha<-xi+0.6109) cg=1.9; //the correction factor cg (or f_omega)
+                        //      else cg=1.;
+                        part->Fg[np]=(1.0/(4*M_PI*cg*sq(part->dist[np]*kpc2m)))*lgamma; // gamma flux in W.m-2
+                        //if (part->accretion[np]==1) printf("Fg=%e,B=%e,Edot=%e\n",part->Fg[np],part->B[np],part->Edot[np]);
+                        //printf("Fg %e np %ld dist %e \n",part->Fg[np],np,part->dist[np]);             
+                        //printf("lgamma %e Fg %e B %e Edot %e \n",lgamma,part->Fg[np],part->B[np],part->Edot[np]);     
+                        //part->Fg[np]=fac*(part->Edot[np]*1e7/(sq(part->dist[np]*KPC2CM)))*sqrt(1e33/(part->Edot[np]*1e7)); // Petri 2011a 
 
-	struct func_params *part= (struct func_params*)params;
-	FILE *file=NULL;
-	file=fopen("verif_lognorm.txt","w+");
-	for(int i=0;i<part->Npulsars;i++){
-           fprintf(file,"%e\n",part->Binit[i]);
-	}
-	fclose(file);
-
-}*/
+                }
+                printf("Fg computed for everyone\n");
+return(0);
+}
 
 double calc_Pdotline(void *params,long np){
 
