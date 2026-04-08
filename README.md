@@ -1,7 +1,7 @@
 # User guide
 
-This code generates a synthetic population of normal pulsars, considering radio and gamma-ray emission. If you download this repository, you are comparing the simulation to the detection made by Parkes, FAST and Fermi/LAT. 
-A GPU is needed. The library GSL is needed.
+This code generates a synthetic population of normal pulsars, considering radio, gamma-ray emission and thermal X-ray emission from two antipodal hot spots. If you download this repository, you are comparing the simulation to the detection made by Parkes, FAST and Fermi/LAT. 
+A GPU is needed. The library GSL is needed. You will need to go to the drive to get the temperature map of the sky obtained by Remazeilles 2014 at 408 MHz, the fits containing the sky coverage of Chandra and XMM-Newton: https://drive.google.com/drive/folders/1g5Z820uUpipQSCmaCKylrhwtkVzcgv_w?usp=sharing
 
 ## Compilation 
 
@@ -36,3 +36,9 @@ Use bash run_pop.sh to compile, execute the code and generate the plots !
 `sensitivity_3PC.py` -> Compute sensitivity in gamma thanks to the fits map. 
 
 `fast_fermi_pmps.txt` -> Contains the data to compare with normal pulsars detected by FAST, Fermi and Parkes. 
+
+`get_X_coverage.py` -> Contains the code to compute the sky coverage from Chandra and XMM-Newton
+
+`x_ray_analysis.py` -> Contains the code to make the plots for the X-ray analysis
+
+`X_ray_data_wu_et_al.ods` -> Contains the data of X ray pulsars 
