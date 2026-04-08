@@ -427,8 +427,6 @@ void sky_temp_Fmin_fermi(void *params){
         FILE *temp_data=NULL;
         FILE *fermi_fmin=NULL;
         lb_coord=fopen("l_b_coord_sim.txt","w+");
-        temp_data=fopen("temp.txt","r");
-        fermi_fmin=fopen("fermi_fmin.txt","r");
         for(np=0;np<part->Npulsars;np++){
                 fprintf(lb_coord,"%e %e\n",part->gl[np],part->gb[np]);
         }
@@ -436,6 +434,8 @@ void sky_temp_Fmin_fermi(void *params){
         fclose(lb_coord);
         system("python3 get_temp.py");
         system("python3 sensitivity_3PC.py");
+	temp_data=fopen("temp.txt","r");
+        fermi_fmin=fopen("fermi_fmin.txt","r");
         while(fscanf(temp_data,"%le\n",&part->temp[np])==1) {np++;}
         np=0;
         while(fscanf(fermi_fmin,"%le\n",&part->Smin_fermi[np])==1) {np++;}
@@ -458,6 +458,69 @@ void save_all(void *params){
 		fprintf(all_pulsar,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
 	}
 	fclose(all_pulsar);
+}
+
+void X_telescope_sky_coverage(void *params){
+
+	struct func_params *part= (struct func_params*)params;
+	long np=0;
+	FILE *obs_XMM=NULL;
+        FILE *obs_chandra=NULL;
+	system("python3 get_X_coverage.py");
+	obs_XMM=fopen("sky_X_obs_XMM.txt","r");
+	obs_chandra=fopen("sky_X_obs_chandra.txt","r");
+	while(fscanf(obs_XMM,"%d\n",&part->sky_XMM[np])==1) {np++;}
+        np=0;
+        while(fscanf(obs_chandra,"%d\n",&part->sky_chandra[np])==1) {np++;}
+        np=0;
+	fclose(obs_XMM);
+	fclose(obs_chandra);
+}
+
+void detection_X(void *params){
+
+	struct func_params *part= (struct func_params*)params;
+	long np=0;
+	double F_min_XMM=1.7e-18; //Minimum flux for detectability for XMM-Newton Chen et al. (2018) MNRAS
+	double F_min_chandra=1e-19; //Minimum flux for detectability for Chandra 
+	FILE *x_file=NULL;
+	FILE *x_file2=NULL;
+	long count_X=0;
+	long count_X_pulse=0;
+	double xi,alpha;
+	double beta_h; //Opening angle for Thermal X-ray emission
+	x_file=fopen("x_file.txt","w+");
+	x_file2=fopen("x_file2.txt","w+");
+	for(np=0;np<part->Npulsars;np++){
+		if((part->Fx[np]>F_min_XMM && part->sky_XMM[np]==1) || (part->Fx[np]>F_min_chandra && part->sky_chandra[np]==1)){
+			count_X+=1;
+			if (part->xi[np]<=M_PI/2.0) xi=part->xi[np];
+                        else if (part->xi[np]>M_PI/2.0) xi=M_PI-part->xi[np];
+			if(part->PF[np]>=0.07){
+				count_X_pulse+=1;
+			}
+			if(part->detec_rad[np]==1){
+				fprintf(x_file2,"%e %e %e %e %e\n",part->cos_i[np],part->Temp[np],part->r_h[np],part->Fx[np],xi);
+				fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|1|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+		}
+			else if(part->detec_gam[np]==1){
+				fprintf(x_file2,"%e %e %e %e %e\n",part->cos_i[np],part->Temp[np],part->r_h[np],part->Fx[np],xi);
+				fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|2|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+			}
+			else if(part->detec_rg[np]==1){
+				fprintf(x_file2,"%e %e %e %e %e\n",part->cos_i[np],part->Temp[np],part->r_h[np],part->Fx[np],xi);
+				fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|3|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+			}
+			else{
+				fprintf(x_file2,"%e %e %e %e %e\n",part->cos_i[np],part->Temp[np],part->r_h[np],part->Fx[np],xi);
+				fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|4|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+			}
+		}
+	}
+	fclose(x_file);
+	fclose(x_file2);
+	printf("# Total number of pulsars emitting in thermal X-rays detected %ld \n",count_X);
+	printf("# Total number of pulsars detected in thermal X-rays which are pulsating %ld \n",count_X_pulse);
 }
 
 int detection(void *params){ //check the flux of each pulsar and if the beam sweps the Earth
@@ -545,7 +608,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			/* radio detection */
 				if(fabs(xi-alpha)<= rho){
 				       //if (cos(rho)>=cos(xi+alpha)){	
-					if ((20.0*M_PI/180.0)<=alpha+xi){
+					if (rho<=alpha+xi){
 							Nbeam++;
                 					if (detec==1){
 							Nr=1;  // mJy
@@ -817,151 +880,73 @@ int gamma_flux(void *params){
 return(0);
 }
 
-double calc_Pdotline(void *params,long np){
-
-        struct func_params *part= (struct func_params*)params;
-        double log_pdot_line;
-        log_pdot_line=3*log10(part->period[np])+log10((16*(pow(M_PI,3))*pow(R_NS,6)*1.5)/(SI_I*SI_mu0*pow(SI_C,3)))+2*(log10(0.17)+8.0);
-        return log_pdot_line;
-}
-
-double is_dead(double B,double P){ // Death line from Faucher Giguère & Kaspi (2006) 
-
-	//struct func_params *part= (struct func_params*)params;
-	double ratio=B/sq(P);
-	return ratio;
-	//double ratio2=part->Pdot[np]/(part->period[np]*sq(part->period[np]));
-	//double cmp_value=3*log10(part->period[np])+log10(16*sq(M_PI)*M_PI*sq(R_NS)*sq(R_NS)*sq(R_NS)*(1.0+sq(sin(45*M_PI/180)))*sq(0.17e8)/(SI_I*SI_mu0*sq(SI_C)*SI_C));
-	//if (log10(part->Pdot[np]) >= cmp_value) {return 1;}
-	//else if (log10(part->Pdot[np]) < cmp_value) {return 0;}
-	//if (ratio < 0.17e8) {return 0;}
-	//else if (ratio > 0.17e8) {return 1;}
-}
-
-/*int is_dead2(void *params,long np){ // Death line from Beskin & Istomin 2022 -> too restrictive 
+void X_flux(void *params){
 
 	struct func_params *part= (struct func_params*)params;
-	double xsi=11;double lambda=41;double f_star=1.9;double Kg=0.07;double F=0.7;double h_x0=3.1;
-	double beta_d=2.1*pow(xsi,-1/2)*Kg*pow((f_star/1.6),-9/4)*pow(lambda/15,-1/2)*h_x0*F;
-	double P_dot_death=1e-15*beta_d*pow(part->period[np],11/4);
-	if (part->Pdot[np]<P_dot_death) return 0;
-	else if (part->Pdot[np]>=P_dot_death) return 1;
-
-}*/
-
-/*int is_dead3(void *params,long np){ // Death line from Wu et al. (2020) -> results similar to death line one 
-
-        struct func_params *part= (struct func_params*)params;
-        if (part->Edot[np] < 1e24) {return 0;}
-        else if (part->Edot[np] > 1e24) {return 1;}
-}*/
-
-int is_dead4(void *params,long np){ // Death line from Mitra et al. (2019) 
-
-        struct func_params *part= (struct func_params*)params;
-	double eta=0.15;double alpha_l=45*(M_PI/180);double T6=2;double b=40;
-	double P_dot_lim=(3.16e-4*pow(T6,4)*sq(part->period[np])*1e-15)/(sq(eta)*b*sq(cos(alpha_l)));
-	if (part->Pdot[np]>=P_dot_lim) return 1;
-	else return 0;
+	long np=0;
+	const double kpc2m=3.0856775807e19; //kpc to m
+	double sigma=5.67e-8; // Stefan-Boltzmann constant
+	double kb=1.38e-23; //Boltzmann constant
+	double E_kev; //Temperature in keV
+	double A=1.47e9; //Constant for the relation between T, P and Pdot (Harding & Muslimov (2001))
+	double D=883.1; //Constant for the relation between r_h and r_LC
+	double L_x; //Bolometric luminosity
+	double K=(2*(G_grav*1e9)*1.4*MSUN)/(R_NS*sq(SI_C)); //Ratio of the Schwarzchild radius with the neutron star radius
+	double sigma_abs; //Value of the sigma(E) from the absorption law taken from fig. 1 of Wilms et al. (2000)
+	double Nh; //Hydrogen column density
+	double Fj;
+	for(np=0;np<part->Npulsars;np++){
+		part->Fx[np]=0;
+		Fj=fabs(gsl_ran_gaussian_ziggurat(part->r,0.1));
+		part->Temp[np]=A*pow(pow(part->Pdot[np],3.0)/pow(part->period[np],5.0),1.0/16.0)*pow(10,Fj);
+		E_kev=kb*part->Temp[np]*(1e-3/1.6e-19);
+		//part->r_h[np]=R_NS*sqrt((2*M_PI*R_NS)/(SI_C*part->period[np]));
+		part->r_h[np]=D*sqrt((2*M_PI*R_NS)/(SI_C*part->period[np])); //Pétri & Mitra (2019) r_h propto sqrt(R_NS/r_LC)
+		L_x=M_PI*sq(part->r_h[np])*sigma*pow(part->Temp[np],4.0);
+		part->cos_i[np]=part->nx[np]*part->n_mu_x[np]+part->ny[np]*part->n_mu_y[np]+part->nz[np]*part->n_mu_z[np];
+		Nh=3e19*part->DM[np]; //He, Ng & Kaspi (2013) relation
+		if(E_kev <= 0.4) sigma_abs=7.5e-21;
+		else if(E_kev <=0.55 && E_kev >0.4) sigma_abs=6.4e-22;
+		else if(E_kev <=0.75 && E_kev >0.55) sigma_abs=6.5e-22;
+		else if(E_kev <=0.9 && E_kev >0.75) sigma_abs=2.9e-22;
+		else if(E_kev <=1.5 && E_kev >0.9) sigma_abs=1.9e-22;
+		else if(E_kev <=2 && E_kev >1.5) sigma_abs=4.0e-23;
+		else if(E_kev <=2.5 && E_kev >2) sigma_abs=2.1e-23;
+		else if(E_kev <=3 && E_kev >2.5) sigma_abs=1.2e-23;
+		else if(E_kev <=4 && E_kev >3) sigma_abs=6.8e-24;
+		else if(E_kev >4) sigma_abs=2.6e-24;
+		if (part->cos_i[np]>(-K/(1.0-K))){
+			part->Fx[np]+=((1-K)*part->cos_i[np]+K)*pow(1-K,2.0)*(L_x/(4*M_PI*sq(part->dist[np]*kpc2m)))*exp(-sigma_abs*Nh);
+		}
+		if (part->cos_i[np]<(K/(1.0-K))){
+			part->Fx[np]+=(-(1-K)*part->cos_i[np]+K)*pow(1-K,2.0)*(L_x/(4*M_PI*sq(part->dist[np]*kpc2m)))*exp(-sigma_abs*Nh);
+		}
+	}
 }
 
-int radio_flux_low_freq(void *params){
+void check_x_pulse(void *params){
 
-    	struct func_params *part= (struct func_params*)params;
-	long np=0;
-	double S_0;
-	double alpha_positiv;
-	double alpha_negativ;
-	double nu_break;
-        double scale_pos=0.812;
-	double shape_pos=0.873;
-	double loc_pos=-0.014;
-	double shape_break=0.698;
-        double scale_break=152.9;
-	double loc_break=0.0;
-	double shape_neg=0.2;
-        double scale_neg=3;
-	double loc_neg=-4.6;
-	double S_1PL,S_2PL;
-	double nu_0=1.4e9; //1.4 GHz
-	double nu_nenuphar = 58e6 ; 
-	double nu=nu_nenuphar;
- 
-	//nu= 1e7;	
-	np=0;
-           	for (np=0;np<part->Npulsars;np++){ 
-        //   	while(np<part->Npulsars){  
-			part->np=np;	
-	//		np = part->np;
- 			S_0           =  part->Fr[np];
-		//	wtilde        =  part->w_r[np]*part->period[np]/(2*M_PI); // converting the width from radians to s 
-                    	alpha_positiv=  gsl_ran_lognormal(part->r,log(scale_pos),shape_pos); 
-                        alpha_positiv =  (alpha_positiv-loc_pos);
-			//printf("wtilde %e period %e \n",wtilde,part->period[np]);
-
-                    	nu_break      =  gsl_ran_lognormal(part->r,log(scale_break),shape_break); // in MHz
-			nu_break      =  (nu_break-loc_break);
-			nu_break      =  nu_break*1e6;
-                    	alpha_negativ =  gsl_ran_lognormal(part->r,log(scale_neg),shape_neg); // Problem: Fj is the same each time the function radio_flux is called...
-                        alpha_negativ =  (alpha_negativ+loc_neg);
-           	//	while(nu<5*1e10){  
-			/*if (nu_break > 1.4e9){
-		            continue;	
-			}
-*/
-					 //printf("%e %e \n",nu,S_2PL);
-				//	 printf("# nu_break %e alpha_pos %e alpha_neg %e \n",nu_break,alpha_positiv,alpha_negativ);
- //         alpha_negativ = -1.7;
-//	S_0=100;
-			//printf("%e %e \n",nu,part->flux_low_freq[np]);
-			//nu = pow(10,lognu);
-		//	printf("%e %e \n",nu,lognu);
-         //  	        while (nu<5e10){ 
-
-
-				if (np%2 == 0){
-
-					 S_1PL                   = S_0*pow((nu/nu_0),alpha_negativ);
-					 part->flux_low_freq[np] = S_1PL;	
-				//	 printf("%e %e %e \n",nu,S_1PL,part->Fr[np]);
-					 //printf("%e %e \n",nu,S_2PL);
-					 //printf("Flux (1PL), nu < nu_break %e S_1400 %e nu_break %e alpha_pos %e alpha_neg %e \n",S_1PL,S_0,nu_break,alpha_positiv,alpha_negativ);
-                                } 
-				else {
-					if(nu<nu_break) {
-
-					 S_2PL                 = S_0*pow((nu_0/nu_break),alpha_positiv)*pow((nu_break/nu_0),alpha_negativ)*pow(nu/nu_0,alpha_positiv);
-					 part->flux_low_freq[np] = S_2PL;
-				//	 printf("%e %e %e \n",nu,S_2PL,part->Fr[np]);
-					 //printf("Flux (2PL), nu < nu_break %e S_1400 %e nu_break %e alpha_pos %e alpha_neg %e \n",S_2PL,S_0,nu_break,alpha_positiv,alpha_negativ);
-
-					}
-
-					else {
-
-					 S_2PL                   = S_0*pow((nu/nu_0),alpha_negativ);
-					 part->flux_low_freq[np] = S_2PL;				
-					 //printf("%e %e \n",nu,S_2PL);
-				//	 printf("%e %e %e \n",nu,S_2PL,part->Fr[np]);
-					 //printf("Flux (2PL), nu < nu_break %e S_1400 %e nu_break %e alpha_pos %e alpha_neg %e \n",S_2PL,S_0,nu_break,alpha_positiv,alpha_negativ);
-                                        }
-			
-				}
-                            
-			//printf("%e \n",nu_break);
-			//printf("%e \n",alpha_negativ);
-			//printf("%e \n",alpha_positiv);
-	       //               }
-                       
-		//	printf("nu = %e Flux %e alpha_neg %e Flux (1.4 GHZ) %e \n",nu,part->flux_low_freq[np],alpha_negativ,S_0);
-			//printf("nu = %e Flux %e alpha_neg %e nu_break  %e \n",nu,part->flux_low_freq[np],alpha_negativ,nu_break);
-	//		printf("nu = %e Flux %e alpha_pos %e alpha_neg %e nu_break  %e S_0 %e \n",nu,part->flux_low_freq[np],alpha_positiv,alpha_negativ,nu_break,S_0);
-	//		printf("log10(nu/nu_0) %e \n",log10(nu/nu_0));
-	//		printf("nu %e Flux %e Smin %e \n",nu,part->flux_low_freq[np],part->Smin[np]);
-// 			nu *= 1.1; 
-                     np++;
-
-               } 
-
-return(0);
+	struct func_params *part= (struct func_params*)params;
+        long np=0;
+	double i; //angle between the line of sight and the magnetic axis
+	double max_ang,min_ang;
+	double K=(2*(G_grav*1e9)*1.4*MSUN)/(R_NS*sq(SI_C)); //Ratio of the Schwarzchild radius with the neutron star radius
+	double kappa=(K/(1.0-K));
+	double alpha;
+	for(np=0;np<part->Npulsars;np++){
+		if (part->alpha[np]<=M_PI/2) alpha=part->alpha[np]; // just to make it easier to read
+                else if (part->alpha[np]>M_PI/2) alpha=M_PI-part->alpha[np];
+		i=acos(part->cos_i[np]);
+		max_ang=cos(i-alpha);
+		min_ang=cos(i+alpha);
+		if(min_ang>kappa){
+			part->PF[np]=(max_ang-min_ang)/(max_ang+min_ang+2*kappa);
+		}
+		else if( ((-kappa<min_ang) && (min_ang<kappa) && (kappa<max_ang)) || (min_ang<kappa)){
+			part->PF[np]=(max_ang-kappa)/(max_ang+3*kappa);
+		}
+		else if ((-kappa<min_ang) && (min_ang<kappa) && (max_ang<kappa) && (-kappa<max_ang)){
+			part->PF[np]=0;
+		}
+	}
 }

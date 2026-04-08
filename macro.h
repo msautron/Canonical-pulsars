@@ -11,6 +11,8 @@
 
 struct func_params{
 
+	int *sky_chandra; //Info about if the position of the pulsar was observed by chandra
+	int *sky_XMM; //Info about if the position of the pulsar was observed by XMM-Newton
 	double *Smin_pmps;
 	double *Smin_fast;
 	double *w_r_fast;
@@ -22,6 +24,19 @@ struct func_params{
 	double *n_omega_x;
 	double *n_omega_y;
 	double *n_omega_z;
+	double *n_mu_x;
+	double *n_mu_y;
+	double *n_mu_z;
+	double *ex;
+	double *ey;
+	double *ez;
+	double *nx;
+	double *ny;
+	double *nz;
+	double *cos_i; //Scalar product of n_mu with n_line_of_sight (n)
+	double *r_h; //Radius of the hot spot
+	double *Temp; //Temperature of the hot spot
+	double *PF; //X-ray pulsed fraction
 	double *PA;
 	double *delta; //Stores the gamma-ray peak separation
         long birth_rate1;
@@ -81,7 +96,7 @@ struct func_params{
 	double *rho; //witdh of the beam in radian
 	double *w_r; //width of the radio profile
 	double *Fr; //radio flux table
-	double *flux_low_freq; //radio flux table
+	double *Fx; //Thermal X-ray flux
 	double *Fg; //gamma
         double *cos_a0; //a0= initial inclination angle
  	double tau_MHD_al;

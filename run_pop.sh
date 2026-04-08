@@ -5,6 +5,7 @@ nvcc -g -O0 -rdc=true -fmad=false -Xcompiler -fno-fast-math --ptxas-options=-v m
 ./YoungPop
 sed -i 's/nan/0.000000e+00/g' wint.txt
 python3 plots.py
+python3 x_ray_analysis.py
 end_time=$(date +%s)
 elapsed_time=$(( end_time - start_time ))
 hours=$(( elapsed_time / 3600 ))

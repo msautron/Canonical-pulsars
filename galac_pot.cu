@@ -23,6 +23,7 @@ void distrib_vinit(void *params){ //Give an initial speed to a pulsar
     double two_pi=2*M_PI;
     double p_align_or_anti;
     double age_pulsar_yr;
+    double alpha;
     const double yr_sec=365*24*3600;
 
     for(np=0;np<part->Npulsars;np++){
@@ -42,6 +43,15 @@ void distrib_vinit(void *params){ //Give an initial speed to a pulsar
        part->n_omega_x[np]=sqrt(1-sq(cos_theta))*cos(phi);
        part->n_omega_y[np]=sqrt(1-sq(cos_theta))*sin(phi);
        part->n_omega_z[np]=cos_theta;
+       //Computation of n_mu
+       part->ex[np]=cos_theta*cos(phi);
+       part->ey[np]=cos_theta*sin(phi);
+       part->ez[np]=-sqrt(1-sq(cos_theta));
+       if (part->alpha[np]<=M_PI/2) alpha=part->alpha[np]; // just to make it easier to read
+       else if (part->alpha[np]>M_PI/2) alpha=M_PI-part->alpha[np];
+       part->n_mu_x[np]=cos(alpha)*part->n_omega_x[np]+sin(alpha)*part->ex[np];
+       part->n_mu_y[np]=cos(alpha)*part->n_omega_y[np]+sin(alpha)*part->ey[np];
+       part->n_mu_z[np]=cos(alpha)*part->n_omega_z[np]+sin(alpha)*part->ez[np];
        while (v<0){
 	       v=sqrt(8.0/M_PI)*part->sigma_v+gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
        }
@@ -63,7 +73,6 @@ void distrib_vinit(void *params){ //Give an initial speed to a pulsar
        v=-1;
 
     }
-
 }
 
 /*__device__ double phi_tot(double *gx,double *gy,double *gz,int np){ //Compute the gravitational potential felt by a pulsar
