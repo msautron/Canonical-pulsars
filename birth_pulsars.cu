@@ -23,8 +23,8 @@ int birth(void *params){//generates Npulsars with an initial period, B and age
 	double P0;
 	double pdf_val,comp_val;
         long np=0;
-	long thres1=8000;
-	long thres2=50000;
+	//long thres1=8000;
+	//long thres2=50000;
 	//double log_age=9;
 
            	while(np<part->Npulsars){  
@@ -48,13 +48,13 @@ int birth(void *params){//generates Npulsars with an initial period, B and age
 			//Magnetic field initialization
                         part->Binit[np]=pow(10,log10(part->b_mean)+gsl_ran_gaussian_ziggurat(part->r,part->sigma_b));
 			//Age initilization
-			if(np<thres1){
+			if(np<part->thres1){
 		        	part->age_pulsar[np]  =   part->birth_rate1*np*365*24*3600+1e3*365*24*3600; //s  
 			}
-			else if(np>=thres1 && np<(part->Npulsars-thres2)){
+			else if(np>=part->thres1 && np<(part->Npulsars-part->thres2)){
 				part->age_pulsar[np]  =   part->birth_rate2*np*365*24*3600+1e3*365*24*3600; //s
 			}
-			else if(np>=(part->Npulsars-thres2)) {
+			else if(np>=(part->Npulsars-part->thres2)) {
 				part->age_pulsar[np]  =   part->birth_rate3*np*365*24*3600+1e3*365*24*3600; //s
 			}
 		        /*while(log_age>=7.7){	

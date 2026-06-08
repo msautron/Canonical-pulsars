@@ -53,6 +53,8 @@ print(f'----OBSERVATIONS----')
 print(f'Number of X-ray only pulsars: {nb_X}\nNumber of Radio/X-ray pulsars: {nb_RX}\nNumber of gamma-ray/X-ray pulsars: {nb_GX}\nNumber of Radio/Gamma-ray/X-ray pulsars: {nb_RGX}')
 print(f'Number of pulsating X-ray sources: {nb_pulse}')
 
+with open("info_supp_obs.txt","a") as f:
+    f.write(f'{nb_GX+nb_RGX}\n{nb_pulse}\n')
 #Simulation data
 P,P_dot,x,y,age,error,type_pulsar,distance,latitude,longitude,cos_alpha0,cos_alpha,Bf,z,vx,vy,vz,vx0,vy0,vz0,PA=[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[] #Refers to the simulation data
 var,var2='',''
@@ -198,18 +200,18 @@ for i in range(len(data_X['P'])):
     Edot_obs.append(4*np.pi**2*Inertia*data_X['Pdot'][i]*data_X['P'][i]**(-3))
 
 #KS test 1D python (all the data)
-KS_test=kstest(P_dot,data_X['Pdot'])
-test_stat_all1=KS_test.statistic
-p_value_all1=KS_test.pvalue
-print("----ALL THE DATA----")
-print(f"d_value of Pdot KS test = {test_stat_all1}")
-print(f"p_value of Pdot={p_value_all1}")
+#KS_test=kstest(P_dot,data_X['Pdot'])
+#test_stat_all1=KS_test.statistic
+#p_value_all1=KS_test.pvalue
+#print("----ALL THE DATA----")
+#print(f"d_value of Pdot KS test = {test_stat_all1}")
+#print(f"p_value of Pdot={p_value_all1}")
 
-KS_test=kstest(P,data_X['P'])
-test_stat_all2=KS_test.statistic
-p_value_all2=KS_test.pvalue
-print(f"d_value of P KS test = {test_stat_all2}")
-print(f"p_value of P={p_value_all2}")
+#KS_test=kstest(P,data_X['P'])
+#test_stat_all2=KS_test.statistic
+#p_value_all2=KS_test.pvalue
+#print(f"d_value of P KS test = {test_stat_all2}")
+#print(f"p_value of P={p_value_all2}")
 
 condition = [Pdot2 < Pdot3 for Pdot2, Pdot3 in zip(Pdot_line2,Pdot_line3)]
 
@@ -337,35 +339,49 @@ reglinyplus = 10**(a_lx * np.log10(reglinx) + b_lxplus)
 reglinyminus = 10**(a_lx * np.log10(reglinx) + b_lxminus)
 
 #Linear regression Lx=f(Edot) (sim: abs+redshift)
-a_lx2,b_lx2,r_value2,p_value2,std_err2=linregress(np.log10(Edot_sim),np.log10(Lx_abs_redshift))
-reglinx2 = np.logspace(np.log10(min(Edot_sim)), np.log10(max(Edot_sim)), num=len(Edot_sim))
-regliny2 = 10**(a_lx2 * np.log10(reglinx2) + b_lx2)
-residuals_y2= np.log10(Lx_abs_redshift) - np.log10(regliny2)
-sigma_y2 = np.sqrt(np.sum(residuals_y2**2) / (len(Edot_sim) - 2))
-Sxx2=np.sum((np.log10(Edot_sim) - np.mean(np.log10(Edot_sim)))**2)
-std_err_b2=sigma_y2*np.sqrt(1.0/len(Edot_sim)+((np.mean(np.log10(Edot_sim)))**2/Sxx2))
-a_lxplus2=a_lx2+std_err2
-b_lxplus2=b_lx2+std_err_b2
-a_lxminus2=a_lx2-std_err2
-b_lxminus2=b_lx2-std_err_b2
-reglinyplus2 = 10**(a_lx2 * np.log10(reglinx2) + b_lxplus2)
-reglinyminus2 = 10**(a_lx2 * np.log10(reglinx2) + b_lxminus2)
+if (len(Edot_sim)>=2 and len(Lx_abs_redshift)>=2):
+    a_lx2,b_lx2,r_value2,p_value2,std_err2=linregress(np.log10(Edot_sim),np.log10(Lx_abs_redshift))
+    reglinx2 = np.logspace(np.log10(min(Edot_sim)), np.log10(max(Edot_sim)), num=len(Edot_sim))
+    regliny2 = 10**(a_lx2 * np.log10(reglinx2) + b_lx2)
+    residuals_y2= np.log10(Lx_abs_redshift) - np.log10(regliny2)
+    sigma_y2 = np.sqrt(np.sum(residuals_y2**2) / (len(Edot_sim) - 2))
+    Sxx2=np.sum((np.log10(Edot_sim) - np.mean(np.log10(Edot_sim)))**2)
+    std_err_b2=sigma_y2*np.sqrt(1.0/len(Edot_sim)+((np.mean(np.log10(Edot_sim)))**2/Sxx2))
+    a_lxplus2=a_lx2+std_err2
+    b_lxplus2=b_lx2+std_err_b2
+    a_lxminus2=a_lx2-std_err2
+    b_lxminus2=b_lx2-std_err_b2
+    reglinyplus2 = 10**(a_lx2 * np.log10(reglinx2) + b_lxplus2)
+    reglinyminus2 = 10**(a_lx2 * np.log10(reglinx2) + b_lxminus2)
+else:
+    a_lx2,b_lx2=0,0
 
 #Linear regression Lx=f(Edot) (sim: bolometric)
-a_lx3,b_lx3,r_value3,p_value3,std_err3=linregress(np.log10(Edot_sim),np.log10(Lx_BB))
-reglinx3 = np.logspace(np.log10(min(Edot_sim)), np.log10(max(Edot_sim)), num=len(Edot_sim))
-regliny3 = 10**(a_lx3 * np.log10(reglinx3) + b_lx3)
-residuals_y3= np.log10(Lx_BB) - np.log10(regliny3)
-sigma_y3 = np.sqrt(np.sum(residuals_y3**2) / (len(Edot_sim) - 2))
-Sxx3=np.sum((np.log10(Edot_sim) - np.mean(np.log10(Edot_sim)))**2)
-std_err_b3=sigma_y3*np.sqrt(1.0/len(Edot_sim)+((np.mean(np.log10(Edot_sim)))**2/Sxx3))
-a_lxplus3=a_lx3+std_err3
-b_lxplus3=b_lx3+std_err_b3
-a_lxminus3=a_lx3-std_err3
-b_lxminus3=b_lx3-std_err_b3
-reglinyplus3 = 10**(a_lx3 * np.log10(reglinx3) + b_lxplus3)
-reglinyminus3 = 10**(a_lx3 * np.log10(reglinx3) + b_lxminus3)
+if (len(Edot_sim)>=2 and len(Lx_BB)>=2):
+    a_lx3,b_lx3,r_value3,p_value3,std_err3=linregress(np.log10(Edot_sim),np.log10(Lx_BB))
+    reglinx3 = np.logspace(np.log10(min(Edot_sim)), np.log10(max(Edot_sim)), num=len(Edot_sim))
+    regliny3 = 10**(a_lx3 * np.log10(reglinx3) + b_lx3)
+    residuals_y3= np.log10(Lx_BB) - np.log10(regliny3)
+    sigma_y3 = np.sqrt(np.sum(residuals_y3**2) / (len(Edot_sim) - 2))
+    Sxx3=np.sum((np.log10(Edot_sim) - np.mean(np.log10(Edot_sim)))**2)
+    std_err_b3=sigma_y3*np.sqrt(1.0/len(Edot_sim)+((np.mean(np.log10(Edot_sim)))**2/Sxx3))
+    a_lxplus3=a_lx3+std_err3
+    b_lxplus3=b_lx3+std_err_b3
+    a_lxminus3=a_lx3-std_err3
+    b_lxminus3=b_lx3-std_err_b3
+    reglinyplus3 = 10**(a_lx3 * np.log10(reglinx3) + b_lxplus3)
+    reglinyminus3 = 10**(a_lx3 * np.log10(reglinx3) + b_lxminus3)
+else:
+    a_lx3,b_lx3=0,0
 
+with open("info_supp.txt", "a") as f:
+    if (len(Edot_sim)>=2 and len(Lx_BB)>=2):
+        f.write(f'{a_lx3}\n')
+    else: 
+        f.write('0\n')
+
+with open("info_supp_obs.txt","a") as f:
+    f.write(f'{a_lx}\n')
 
 #Lx=f(Edot)
 plt.figure(9)
@@ -373,9 +389,10 @@ plt.scatter(Edot_sim,Lx_BB,c='green',s=5,marker='o',label=r'Sim, bolometric $L_X
 plt.scatter(Edot_sim,Lx_abs_redshift,c='red',s=5,marker='o',label='Simulation')
 plt.scatter(Edot_obs,data_X['LX'],c='blue',s=5,marker='o',label='X-ray catalog of Xu et al. (2025)')
 plt.plot(reglinx,regliny,linestyle='-',label=r'$\log$($L_X$) = %.2f $\log(\dot{E})$ + %.2f (obs)' % (a_lx, b_lx),c='blue')
-plt.plot(reglinx2,regliny2,linestyle='-',label=r'$\log$($L_X$) = %.2f $\log(\dot{E})$ + %.2f (sim)' % (a_lx2, b_lx2),c='red')
-plt.plot(reglinx3,regliny3,linestyle='-',label=r'$\log$($L_X$) = %.2f $\log(\dot{E})$ + %.2f (sim bolo)' % (a_lx3, b_lx3),c='green')
-plt.fill_between(reglinx2,reglinyminus2, reglinyplus2, color='red', alpha=0.1)
+if (len(Edot_sim)>=2 and len(Lx_BB)>=2):
+    plt.plot(reglinx2,regliny2,linestyle='-',label=r'$\log$($L_X$) = %.2f $\log(\dot{E})$ + %.2f (sim)' % (a_lx2, b_lx2),c='red')
+    plt.plot(reglinx3,regliny3,linestyle='-',label=r'$\log$($L_X$) = %.2f $\log(\dot{E})$ + %.2f (sim bolo)' % (a_lx3, b_lx3),c='green')
+    plt.fill_between(reglinx2,reglinyminus2, reglinyplus2, color='red', alpha=0.1)
 plt.fill_between(reglinx, reglinyminus, reglinyplus, color='blue', alpha=0.1)
 plt.legend(fontsize='small')
 plt.xscale('log')

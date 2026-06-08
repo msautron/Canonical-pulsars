@@ -11,6 +11,26 @@
 
 struct func_params{
 
+	double M_for_K; //Mass of neutron stars used for the computation of compactness
+	double R_for_K; //Radius of neutron stars used for the computation of compactness
+	double A_propto; //Factor for relation between T and P, Pdot
+	double D_propto; //Factor for relation between size of hotspot and sqrt(R_NS/R_L)
+	double pcst; //Power for the gamma luminosity law (constant)
+	double pb; //Power for the gamma luminosity law (Magnetic field)
+	double pe; //Power for the gamma luminosity law (Spin down luminosity)
+	double t_bevol1; //Typical decay timescale for the magnetic field associated with an initial B of b0_evol1
+	double t_bevol2; //Typical decay timescale for the magnetic field associated with an initial B of b0_evol2
+	double t_bevol3; //Typical decay timescale for the magnetic field associated with an initial B of b0_evol3
+	double b0_evol1; //Typical initial magnetic field for the decay timescale associated with an initial t of t_bevol1
+        double b0_evol2; //Typical initial magnetic field for the decay timescale associated with an initial t of t_bevol2
+        double b0_evol3; //Typical initial magnetic field for the decay timescale associated with an initial t of t_bevol3
+	double pdecay1; //Probility of having an evolution similar to b0_evol1 and t_bevol1
+	double pdecay2; //Probility of having an evolution similar to b0_evol2 and t_bevol2
+	long birth_rate1; //BR for the number thres1 of pulsars
+        long birth_rate2; //BR for the remaining of the pulsars
+        long birth_rate3; //BR for the number thres2 pulsars
+	long thres1; //Number of pulsars with BR1 
+	long thres2; //Number of pulsars with BR3 
 	int *sky_chandra; //Info about if the position of the pulsar was observed by chandra
 	int *sky_XMM; //Info about if the position of the pulsar was observed by XMM-Newton
 	double *Smin_pmps;
@@ -39,9 +59,6 @@ struct func_params{
 	double *PF; //X-ray pulsed fraction
 	double *PA;
 	double *delta; //Stores the gamma-ray peak separation
-        long birth_rate1;
-	long birth_rate2;
-	long birth_rate3;
         double R; //Radius of the neutron star
         double *alpha;//angle between the magnetic field and the rotation axis
         double *Binit; //table which returns the initial B

@@ -319,10 +319,10 @@ __global__ void evol_galac_PEFRL(double *gx,double *gy,double *gz, double *gvx,d
 
 
       /* calculates the width of the radio beam w_r, from eq 22 of our paper */
-      if(fabs(alpha-xi)<= rho && alpha >= rho){
+      if(fabs(alpha-xi)< rho && alpha+xi > rho){
       		ratio=(cos(rho)-cos(alpha)*cos(xi))/(sin(alpha)*sin(xi));
                 gw_r_fast[np]=2*acos(ratio);
-      } else if(fabs(xi-(M_PI-alpha))<=rho && alpha >= rho){
+      } else if(fabs(xi-(M_PI-alpha))<rho && alpha+xi > rho){
                 //alpha=M_PI-alpha;
                 ratio=(cos(rho)-cos(alpha)*cos(xi))/(sin(alpha)*sin(xi));
                 gw_r_fast[np]=2*acos(ratio);

@@ -485,12 +485,15 @@ void detection_X(void *params){
 	double F_min_chandra=1e-19; //Minimum flux for detectability for Chandra 
 	FILE *x_file=NULL;
 	FILE *x_file2=NULL;
+	FILE *info_supp=NULL;
 	long count_X=0;
 	long count_X_pulse=0;
+	long count_gx=0;long count_rgx=0;long count_gx_rgx=0;
 	double xi,alpha;
 	double beta_h; //Opening angle for Thermal X-ray emission
 	x_file=fopen("x_file.txt","w+");
 	x_file2=fopen("x_file2.txt","w+");
+	info_supp=fopen("info_supp.txt","a+");
 	for(np=0;np<part->Npulsars;np++){
 		if((part->Fx[np]>F_min_XMM && part->sky_XMM[np]==1) || (part->Fx[np]>F_min_chandra && part->sky_chandra[np]==1)){
 			count_X+=1;
@@ -504,10 +507,12 @@ void detection_X(void *params){
 				fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|1|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
 		}
 			else if(part->detec_gam[np]==1){
+				count_gx+=1;
 				fprintf(x_file2,"%e %e %e %e %e\n",part->cos_i[np],part->Temp[np],part->r_h[np],part->Fx[np],xi);
 				fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|2|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
 			}
 			else if(part->detec_rg[np]==1){
+				count_rgx+=1;
 				fprintf(x_file2,"%e %e %e %e %e\n",part->cos_i[np],part->Temp[np],part->r_h[np],part->Fx[np],xi);
 				fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|3|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
 			}
@@ -517,10 +522,12 @@ void detection_X(void *params){
 			}
 		}
 	}
+	count_gx_rgx=count_gx+count_rgx;
 	fclose(x_file);
 	fclose(x_file2);
 	printf("# Total number of pulsars emitting in thermal X-rays detected %ld \n",count_X);
-	printf("# Total number of pulsars detected in thermal X-rays which are pulsating %ld \n",count_X_pulse);
+	printf("# Total number of pulsars detected in thermal X-rays which are pulsating %ld \n",count_X_pulse);fprintf(info_supp,"%ld\n%ld\n",count_X_pulse,count_gx_rgx);
+	fclose(info_supp);
 }
 
 int detection(void *params){ //check the flux of each pulsar and if the beam sweps the Earth
@@ -552,12 +559,16 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 	long Nbeam=0;
         int detec;
 	double ratio;
+	FILE *info_supp=NULL;
 	FILE *file_data=NULL;
 	FILE *Fg_flux;
 	FILE *save_tempo=NULL;
 	FILE *file_wr=NULL;
         FILE *file_wint=NULL;
 	FILE *check_nb_orbit;
+	FILE *init_val=NULL;
+	//FILE *get_Bf=NULL;
+	//FILE *all_Bf=NULL;
 	double eta=0.15;double alpha_l=45*(M_PI/180);double T6=2;double b=40;
 	double alpha_l2;double T6_2;double b2;
 	double P_dot_line;
@@ -571,8 +582,13 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 	check_nb_orbit=fopen("nb_orbit.txt","w+");
 	file_wint=fopen("wint.txt","w+");
 	file_wr=fopen("wr.txt","w+");
+	info_supp=fopen("info_supp.txt","w+");
+	init_val=fopen("init_P_B.txt","w+");
+	//get_Bf=fopen("Bf_info.txt","a+");
+	//all_Bf=fopen("all_bf_pulsars.txt","a+");
 			
            	for (np=0;np<part->Npulsars;np++){ 
+			//fprintf(all_Bf,"%e\n",part->B[np]);
 			if (part->xi[np]<=M_PI/2.0) xi=part->xi[np];
                         else if (part->xi[np]>M_PI/2.0) xi=M_PI-part->xi[np];
 			rho=part->rho[np];
@@ -587,10 +603,10 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			}
 
 			/* calculates the width of the radio beam w_r, from eq 22 of our paper */
-                        if(fabs(alpha-xi)<= rho){
+                        if(fabs(alpha-xi)< rho){
                                 ratio=(cos(rho)-cos(alpha)*cos(xi))/(sin(alpha)*sin(xi));
                                 part->w_int[np]=2*acos(ratio);
-                        } else if(fabs(xi-(M_PI-alpha))<=rho){
+                        } else if(fabs(xi-(M_PI-alpha))<rho){
                                 ratio=(cos(rho)-cos(alpha)*cos(xi))/(sin(alpha)*sin(xi));
                                 part->w_int[np]=2*acos(ratio);
                                 }
@@ -606,9 +622,9 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
                         if (isnan(part->w_r_fast[np])==false && part->Fr[np]/part->Smin_pmps[np] > S_Nmin_pmps && part->Smin_pmps[np]!=0 && (part->gl[np]<=50 || part->gl[np]>=260) && abs(part->gb[np])<5) {detec = 1;detec_pmps+=1;current_detec_pmps=1;}
 			        					        
 			/* radio detection */
-				if(fabs(xi-alpha)<= rho){
+				if(fabs(xi-alpha)<rho){
 				       //if (cos(rho)>=cos(xi+alpha)){	
-					if (rho<=alpha+xi){
+					if (rho<alpha+xi){
 							Nbeam++;
                 					if (detec==1){
 							Nr=1;  // mJy
@@ -695,6 +711,8 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 				  fprintf(save_tempo,"%e %e\n",xi,rho);
 				  if (current_detec_fast==1) fprintf(file_wr,"%e\n",part->w_r_fast[np]*180.0/M_PI);
                                   else if (current_detec_pmps==1) fprintf(file_wr,"%e\n",part->w_r_pmps[np]*180.0/M_PI);
+				  //fprintf(get_Bf,"%e\n",part->B[np]);
+				  fprintf(init_val,"%e %e\n",part->Binit[np],part->Pinit[np]);
 				
                         }
 
@@ -707,6 +725,8 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 				  fprintf(file_wr,"%e\n",part->w_r_fast[np]*180.0/M_PI);
 				  fprintf(file_wint,"%e\n",part->w_int[np]*180/M_PI);
                                   fprintf(save_tempo,"%e %e\n",xi,rho);
+				  //fprintf(get_Bf,"%e\n",part->B[np]);
+				  fprintf(init_val,"%e %e\n",part->Binit[np],part->Pinit[np]);
                         }
 
                                else if(part->detec_rg[np]==1){
@@ -719,6 +739,8 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
                                   else if (current_detec_pmps==1) fprintf(file_wr,"%e\n",part->w_r_pmps[np]*180.0/M_PI);
 				  fprintf(file_wint,"%e\n",part->w_int[np]*180/M_PI);
                                   fprintf(save_tempo,"%e %e\n",xi,rho);
+				  //fprintf(get_Bf,"%e\n",part->B[np]);
+				  fprintf(init_val,"%e %e\n",part->Binit[np],part->Pinit[np]);
                         }
 		}
 
@@ -739,7 +761,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			printf("# Number of radio+gamma pulsars with Edot > 1e33 erg.s-1: %ld \n",Nsup2_radio_gamma);
 			printf(" \n");
 			printf("# Total number of detected pulsars  %ld \n",Ntot);
-			printf("# Total number of radio-only pulsars detected %ld \n",count_radio);
+			printf("# Total number of radio-only pulsars detected %ld \n",count_radio);fprintf(info_supp,"%ld\n",count_radio);
 			printf("# Total number of gamma-only pulsars detected %ld \n",count_gamma);
 			printf("# Total number of radio+gamma pulsars detected %ld \n",count_radio_gamma);
 			printf("# Number of radio pulsars beaming to us %ld \n",Nbeam);
@@ -753,6 +775,10 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			fclose(save_tempo);
 			fclose(file_wint);
 			fclose(file_wr);
+			fclose(info_supp);
+			fclose(init_val);
+			//fclose(get_Bf);
+			//fclose(all_Bf);
 
 return(0);
 }
@@ -836,8 +862,8 @@ int gamma_flux(void *params){
         const double kpc2m=3.0856775807e19; //kpc to m
         //fac=0.3;
         long np=0;
-        double pcst,pb;
-        double pedot=-1.0;
+        //double pcst,pb;
+        //double pedot=-1.0;
         double alpha,xi;
         int alpha_int,xi_int;
                 for (np=0;np<part->Npulsars;np++){
@@ -846,9 +872,9 @@ int gamma_flux(void *params){
                         //pcst=26.15+gsl_ran_gaussian_ziggurat(part->r, 2.6);
                         //pb=0.11+gsl_ran_gaussian_ziggurat(part->r, 0.05);
                         //while (pedot<0) {pedot=0.51+gsl_ran_gaussian_ziggurat(part->r, 0.09);}
-                        pcst=26.15;pb=0.06;pedot=0.6;
+                        //pcst=26.15;pb=0.06;pedot=0.6;
                         //pb=0.11;pedot=0.51;
-                        lgamma = pow(10,pcst)*pow(part->B[np]/1e8,pb)*pow(part->Edot[np]/1e26,pedot); //(W) from Kalapotharakos et al 2019
+                        lgamma = pow(10,part->pcst)*pow(part->B[np]/1e8,part->pb)*pow(part->Edot[np]/1e26,part->pe); //(W) from Kalapotharakos et al 2019
                         if (part->alpha[np]<=M_PI/2) alpha=part->alpha[np];
                         else if (part->alpha[np]>M_PI/2) alpha=M_PI-part->alpha[np];
                         if (part->xi[np]<=M_PI/2) xi=part->xi[np]; // just to make it easier to read
@@ -888,20 +914,20 @@ void X_flux(void *params){
 	double sigma=5.67e-8; // Stefan-Boltzmann constant
 	double kb=1.38e-23; //Boltzmann constant
 	double E_kev; //Temperature in keV
-	double A=1.47e9; //Constant for the relation between T, P and Pdot (Harding & Muslimov (2001))
-	double D=883.1; //Constant for the relation between r_h and r_LC
+	//double A=1.47e9; //Constant for the relation between T, P and Pdot (Harding & Muslimov (2001))
+	//double D=883.1; //Constant for the relation between r_h and r_LC
 	double L_x; //Bolometric luminosity
-	double K=(2*(G_grav*1e9)*1.4*MSUN)/(R_NS*sq(SI_C)); //Ratio of the Schwarzchild radius with the neutron star radius
+	double K=(2*(G_grav*1e9)*part->M_for_K*MSUN)/(part->R_for_K*sq(SI_C)); //Ratio of the Schwarzchild radius with the neutron star radius
 	double sigma_abs; //Value of the sigma(E) from the absorption law taken from fig. 1 of Wilms et al. (2000)
 	double Nh; //Hydrogen column density
 	double Fj;
 	for(np=0;np<part->Npulsars;np++){
 		part->Fx[np]=0;
 		Fj=fabs(gsl_ran_gaussian_ziggurat(part->r,0.1));
-		part->Temp[np]=A*pow(pow(part->Pdot[np],3.0)/pow(part->period[np],5.0),1.0/16.0)*pow(10,Fj);
+		part->Temp[np]=part->A_propto*pow(pow(part->Pdot[np],3.0)/pow(part->period[np],5.0),1.0/16.0)*pow(10,Fj);
 		E_kev=kb*part->Temp[np]*(1e-3/1.6e-19);
 		//part->r_h[np]=R_NS*sqrt((2*M_PI*R_NS)/(SI_C*part->period[np]));
-		part->r_h[np]=D*sqrt((2*M_PI*R_NS)/(SI_C*part->period[np])); //Pétri & Mitra (2019) r_h propto sqrt(R_NS/r_LC)
+		part->r_h[np]=part->D_propto*sqrt((2*M_PI*part->R_for_K)/(SI_C*part->period[np])); //Pétri & Mitra (2019) r_h propto sqrt(R_NS/r_LC)
 		L_x=M_PI*sq(part->r_h[np])*sigma*pow(part->Temp[np],4.0);
 		part->cos_i[np]=part->nx[np]*part->n_mu_x[np]+part->ny[np]*part->n_mu_y[np]+part->nz[np]*part->n_mu_z[np];
 		Nh=3e19*part->DM[np]; //He, Ng & Kaspi (2013) relation
@@ -930,7 +956,7 @@ void check_x_pulse(void *params){
         long np=0;
 	double i; //angle between the line of sight and the magnetic axis
 	double max_ang,min_ang;
-	double K=(2*(G_grav*1e9)*1.4*MSUN)/(R_NS*sq(SI_C)); //Ratio of the Schwarzchild radius with the neutron star radius
+	double K=(2*(G_grav*1e9)*part->M_for_K*MSUN)/(part->R_for_K*sq(SI_C)); //Ratio of the Schwarzchild radius with the neutron star radius
 	double kappa=(K/(1.0-K));
 	double alpha;
 	for(np=0;np<part->Npulsars;np++){

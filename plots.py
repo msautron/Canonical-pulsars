@@ -68,6 +68,9 @@ with open("xi_rho_data.txt","r") as f:
 with open("wr.txt","r") as f:
     data_wr=re.findall(reg_5,f.read())
 
+with open("init_P_B.txt","r") as f:
+    init_P_B=re.findall(reg_5,f.read())
+
 df=pd.read_excel('3PC_Catalog_20230803.xls')
 data_3PC=Table.from_pandas(df)
 
@@ -125,6 +128,12 @@ rho_sim,xi_sim=[],[]
 for i in range(int(len(xi_rho_data)/2)):
     xi_sim.append(float(xi_rho_data[2*i])*180/np.pi)
     rho_sim.append(float(xi_rho_data[2*i+1])*180/np.pi)
+
+#Get initial P and B from sim
+P0_sim,B0_sim=[],[]
+for i in range(int(len(init_P_B)/2)):
+    B0_sim.append(float(init_P_B[2*i]))
+    P0_sim.append(float(init_P_B[2*i+1]))
 
 #Get data from 3PC and filter the MSPs
 df=pd.read_excel('3PC_Catalog_20230803.xls')
@@ -236,6 +245,8 @@ for i in range(len(type_pulsar_obs2)):
         longitude5+=[longitude2[i]]
         w10_rg+=[(float(w10_atnf2[i])*(1e-3)*(360/P2[i]))%360]
 
+with open("info_supp_obs.txt","w") as f:
+    f.write(f'{len(P3)}\n')
 print(f'Number of observed radio pulsars (FAST GPPS + PMPS + Arecibo): {len(P3)}')
 print(f'Number of observed gamma pulsars (Fermi): {len(P4)}')
 print(f'Number of observed radio+gamma pulsars: {len(P5)}')
@@ -364,6 +375,16 @@ for i in range(len(PA)):
 for i in range(len(wr_cano)):
     if wr_cano[i]>360:
         wr_cano[i]=wr_cano[i]-int(wr_cano[i]/360.0)*360
+
+#List of magnetic obliquity angle
+alpha_all,tau_MHD_align0,tau_MHD_align,alpha_all0=[],[],[],[]
+for i in range(len(cos_alpha)):
+    al=min(180*np.arccos(cos_alpha[i])/np.pi,180-180*np.arccos(cos_alpha[i])/np.pi)
+    al0=min(180*np.arccos(cos_alpha0[i])/np.pi,180-180*np.arccos(cos_alpha0[i])/np.pi)
+    alpha_all.append(al)
+    alpha_all0.append(al0)
+    tau_MHD_align0.append(np.log10(((Inertia*mu_0*c_light**3*P0_sim[i]**2*np.sin(al0*np.pi/180)**2)/(16*np.pi**3*R_NS**6*B0_sim[i]**2*np.cos(al0*np.pi/180)**4))/(365*24*3600))) #in yr + logscale
+    tau_MHD_align.append(np.log10(((Inertia*mu_0*c_light**3*P[i]**2*np.sin(al*np.pi/180)**2)/(16*np.pi**3*R_NS**6*Bf[i]**2*np.cos(al*np.pi/180)**4))/(365*24*3600))) #in yr + logscale
 
 #Lists depending on the pulsar emission type
 P_radio,P_dot_radio,x_radio,y_radio,age_radio,error_radio,distance_radio=[],[],[],[],[],[],[]
@@ -571,18 +592,18 @@ cdf3=cum_counts_3/total_count3
 cdf4=cum_counts_4/total_count4
 
 #KS test 1D python (all the data)
-KS_test=kstest(P_dot,P_dota)
-test_stat_all1=KS_test.statistic
-p_value_all1=KS_test.pvalue
-print("----ALL THE DATA----\n")
-print(f"d_value of Pdot KS test = {test_stat_all1}")
-print(f"p_value of Pdot={p_value_all1}")
+#KS_test=kstest(P_dot,P_dota)
+#test_stat_all1=KS_test.statistic
+#p_value_all1=KS_test.pvalue
+#print("----ALL THE DATA----\n")
+#print(f"d_value of Pdot KS test = {test_stat_all1}")
+#print(f"p_value of Pdot={p_value_all1}")
 
-KS_test=kstest(P,Pa)
-test_stat_all2=KS_test.statistic
-p_value_all2=KS_test.pvalue
-print(f"d_value of P KS test = {test_stat_all2}")
-print(f"p_value of P={p_value_all2}")
+#KS_test=kstest(P,Pa)
+#test_stat_all2=KS_test.statistic
+#p_value_all2=KS_test.pvalue
+#print(f"d_value of P KS test = {test_stat_all2}")
+#print(f"p_value of P={p_value_all2}")
 
 #KS test 1D python (gamma-ray only population)
 KS_test=kstest(P_dot_gamma,data_3PC_filtered['P1'])
@@ -599,18 +620,18 @@ print(f"d_value of P KS test for the gamma only pulsars= {test_stat}")
 print(f"p_value of P for the gamma only pulsars={p_value}")
 
 #KS test 1D python (radio/gamma-ray population)
-KS_test=kstest(P_dot_radio_gamma,P_dot5)
-test_stat=KS_test.statistic
-p_value=KS_test.pvalue
-print("----ALL RADIO/GAMMA PULSARS----\n")
-print(f"d_value of Pdot KS test for the radio/gamma pulsars= {test_stat}")
-print(f"p_value of Pdot for the radio/gamma pulsars={p_value}")
+#KS_test=kstest(P_dot_radio_gamma,P_dot5)
+#test_stat=KS_test.statistic
+#p_value=KS_test.pvalue
+#print("----ALL RADIO/GAMMA PULSARS----\n")
+#print(f"d_value of Pdot KS test for the radio/gamma pulsars= {test_stat}")
+#print(f"p_value of Pdot for the radio/gamma pulsars={p_value}")
 
-KS_test=kstest(P_radio_gamma,P5)
-test_stat=KS_test.statistic
-p_value=KS_test.pvalue
-print(f"d_value of P KS test for the radio/gamma pulsars= {test_stat}")
-print(f"p_value of P for the radio/gamma pulsars={p_value}")
+#KS_test=kstest(P_radio_gamma,P5)
+#test_stat=KS_test.statistic
+#p_value=KS_test.pvalue
+#print(f"d_value of P KS test for the radio/gamma pulsars= {test_stat}")
+#print(f"p_value of P for the radio/gamma pulsars={p_value}")
 
 #KS test 1D python (radio population)
 KS_test=kstest(P_dot_radio,P_dot3)
@@ -778,27 +799,33 @@ plt.close()
 plt.figure(5)
 plt.scatter(P_radio,P_dot_radio,c='red',marker='o',s=10,label='Simulation')
 plt.scatter(P3,P_dot3,c='blue',marker='o',s=10,label='ATNF data')
+
 #Plot the Edot lines
-plt.plot(P_line,P_dot_Edot1e23W,linestyle='dotted',c='orange',zorder=0)
-plt.text(P_line[6]*1.0,P_dot_Edot1e23W[6]*1.5,r'$\dot{E} = 10^{23}$W',fontsize=7,color='orange',rotation=45,zorder=3)
-plt.plot(P_line,P_dot_Edot1e28W,linestyle='dotted',c='orange',zorder=0)
-plt.text(P_line[15]*1.0,P_dot_Edot1e28W[15]*1.5,r'$\dot{E} = 10^{28}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+plt.plot(P_line,P_dot_Edot1e22W,linestyle='dotted',c='orange',zorder=0)
+plt.text(P_line[1800]*0.85,P_dot_Edot1e22W[1800]*1.05,r'$\dot{E} = 10^{22}$W',fontsize=7,color='orange',rotation=45,zorder=3)
 plt.plot(P_line,P_dot_Edot1e25W,linestyle='dotted',c='orange',zorder=0)
-plt.text(P_line[1]*0.68,P_dot_Edot1e25W[1]*0.5,r'$\dot{E} = 10^{25}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+plt.text(P_line[800]*0.85,P_dot_Edot1e25W[800]*1.05,r'$\dot{E} = 10^{25}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+plt.plot(P_line,P_dot_Edot1e28W,linestyle='dotted',c='orange',zorder=0)
+plt.text(P_line[77]*0.85,P_dot_Edot1e28W[77]*1.05,r'$\dot{E} = 10^{28}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+plt.plot(P_line,P_dot_Edot1e31W,linestyle='dotted',c='orange',zorder=0)
+plt.text(P_line[7]*0.85,P_dot_Edot1e31W[7]*1.05,r'$\dot{E} = 10^{31}$W',fontsize=7,color='orange',rotation=45,zorder=3)
 #Plot the B lines
-plt.plot(P_line,P_dot_B5e6,linestyle='dotted',c='black',zorder=0)
-plt.text(P_line[60]*0.6,P_dot_B5e6[50]*0.64,r'$B =5\times10^{6}$T',fontsize=7,color='black',rotation=-17,zorder=3)
-#plt.plot(P_line,P_dot_B1e3,linestyle='dotted',c='black',zorder=0)
-#plt.text(P_line[100]*0.6,P_dot_B1e3[90]*0.95,r'$B= 10^{3}$T',fontsize=7,color='black',rotation=-17,zorder=3)
-plt.plot(P_line,P_dot_B1e4,linestyle='dotted',c='black',zorder=0)
-plt.text(P_line[800]*0.6,P_dot_B1e4[750]*0.95,r'$B= 10^{4}$T',fontsize=7,color='black',rotation=-17,zorder=3)
-plt.plot(P_line,P_dot_B1e5,linestyle='dotted',c='black',zorder=0)
-plt.text(P_line[900]*0.6,P_dot_B1e5[750]*0.9,r'$B= 10^{5}$T',fontsize=7,color='black',rotation=-17,zorder=3)
 plt.plot(P_line,P_dot_B1e6,linestyle='dotted',c='black',zorder=0)
-plt.text(P_line[900]*0.6,P_dot_B1e6[750]*0.9,r'$B= 10^{6}$T',fontsize=7,color='black',rotation=-17,zorder=3)
+plt.text(P_line[80]*0.6,P_dot_B1e6[80]*0.95,r'$B =10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+#plt.plot(P_line,P_dot_B5e6,linestyle='dotted',c='black',zorder=0)
+#plt.text(P_line[1500]*0.6,P_dot_B5e6[1500]*0.75,r'$B =5\times10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+plt.plot(P_line,P_dot_B1e7,linestyle='dotted',c='black',zorder=0)
+plt.text(P_line[2000]*0.6,P_dot_B1e7[2000]*0.95,r'$B= 10^{7}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+plt.plot(P_line,P_dot_B1e8,linestyle='dotted',c='black',zorder=0)
+plt.text(P_line[2300]*0.6,P_dot_B1e8[2300]*0.95,r'$B= 10^{8}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+plt.plot(P_line,P_dot_B1e9,linestyle='dotted',c='black',zorder=0)
+plt.text(P_line[2500]*0.6,P_dot_B1e9[2500]*0.95,r'$B= 10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+#plt.plot(P_line,P_dot_B4_4e9,linestyle='dotted',c='black',zorder=0)
+#plt.text(P_line[2500]*0.6,P_dot_B4_4e9[2500]*0.95,r'$B= 4.4\times10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+
 plt.legend()
 plt.xlim(1e-2,3e1)
-plt.ylim(1e-18,1e-11)
+plt.ylim(1e-19,1e-11)
 plt.yscale('log')
 plt.xscale('log')
 plt.xlabel(r'$P$ (s)')
@@ -968,10 +995,10 @@ plt.close()
 
 #cos(alpha0) and cos(alpha) histogram
 plt.figure(16)
-plt.hist(cos_alpha,bins=20,range=(-1,1),edgecolor='black',color='red',alpha=0.5,label=r'cos($\alpha$)')
-plt.hist(cos_alpha0,bins=20,range=(-1,1),edgecolor='black',color='blue',alpha=0.5,label=r'cos($\alpha_0$)')
+plt.hist(cos_alpha,bins=20,range=(-1,1),edgecolor='red',color='red',alpha=0.5,histtype='step',label=r'cos($\chi$)')
+plt.hist(cos_alpha0,bins=20,range=(-1,1),edgecolor='blue',color='blue',alpha=0.5,histtype='step',label=r'cos($\chi_0$)')
 plt.legend()
-plt.xlabel(r'cos($\alpha$) and cos($\alpha_0$)')
+plt.xlabel(r'cos($\chi$) and cos($\chi_0$)')
 plt.ylabel('Number of pulsars')
 plt.savefig('histo_cosalpha.pdf')
 plt.close()
@@ -1136,6 +1163,13 @@ plt.ylabel('p.d.f')
 plt.savefig('histo_gpeaksep.pdf',dpi=300)
 plt.close()
 
+KS_test=kstest(g_peak_sep_sim,g_peak_sep_obs)
+test_gpeak=KS_test.statistic
+p_value_gpeak=KS_test.pvalue
+print("----KS TEST GAMMA-RAY PEAK SEPARATION----\n")
+print(f"d_value={test_gpeak}")
+print(f"p_value={p_value_gpeak}")
+
 #Rho histogram
 plt.figure(31)
 plt.hist(rho_rg,bins=20,range=(0,30),edgecolor='blue',color='blue',alpha=0.5,label='Pulsars in both radio and gamma-ray surveys',zorder=3,histtype='step')
@@ -1172,19 +1206,22 @@ plt.savefig('zeta_chi_all.pdf',dpi=300)
 plt.close()
 
 #For w_r with ISM+instrument effects
-a_wr,b_wr,r_value,p_value,std_err=linregress(np.log10(P_r_or_rg),np.log10(wr_r_or_rg))
-reglinx = np.logspace(np.log10(min(P_r_or_rg)), np.log10(max(P_r_or_rg)), num=len(P_r_or_rg))
-regliny = 10**(a_wr * np.log10(reglinx) + b_wr)
-residuals_y= np.log10(wr_r_or_rg) - np.log10(regliny)
-sigma_y = np.sqrt(np.sum(residuals_y**2) / (len(P_r_or_rg) - 2))
-Sxx=np.sum((np.log10(P_r_or_rg) - np.mean(np.log10(P_r_or_rg)))**2)
-std_err_b=sigma_y*np.sqrt(1.0/len(P_r_or_rg)+((np.mean(np.log10(P_r_or_rg)))**2/Sxx))
-a_wrplus=a_wr+std_err
-b_wrplus=b_wr+std_err_b
-a_wrminus=a_wr-std_err
-b_wrminus=b_wr-std_err_b
-reglinyplus = 10**(a_wr * np.log10(reglinx) + b_wrplus)
-reglinyminus = 10**(a_wr * np.log10(reglinx) + b_wrminus)
+if (len(P_r_or_rg)>=2 and len(wr_r_or_rg)>=2):
+    a_wr,b_wr,r_value,p_value,std_err=linregress(np.log10(P_r_or_rg),np.log10(wr_r_or_rg))
+    reglinx = np.logspace(np.log10(min(P_r_or_rg)), np.log10(max(P_r_or_rg)), num=len(P_r_or_rg))
+    regliny = 10**(a_wr * np.log10(reglinx) + b_wr)
+    residuals_y= np.log10(wr_r_or_rg) - np.log10(regliny)
+    sigma_y = np.sqrt(np.sum(residuals_y**2) / (len(P_r_or_rg) - 2))
+    Sxx=np.sum((np.log10(P_r_or_rg) - np.mean(np.log10(P_r_or_rg)))**2)
+    std_err_b=sigma_y*np.sqrt(1.0/len(P_r_or_rg)+((np.mean(np.log10(P_r_or_rg)))**2/Sxx))
+    a_wrplus=a_wr+std_err
+    b_wrplus=b_wr+std_err_b
+    a_wrminus=a_wr-std_err
+    b_wrminus=b_wr-std_err_b
+    reglinyplus = 10**(a_wr * np.log10(reglinx) + b_wrplus)
+    reglinyminus = 10**(a_wr * np.log10(reglinx) + b_wrminus)
+else:
+    a_wr,b_wr=0,0
 
 #print(w_geometry_r_or_rg)
 
@@ -1192,19 +1229,22 @@ reglinyminus = 10**(a_wr * np.log10(reglinx) + b_wrminus)
 indices=[i for i, val in enumerate(P_r_or_rg)]
 P_r_or_rg2=[P_r_or_rg[i] for i in indices]
 w_geometry_r_or_rg2=[w_geometry_r_or_rg[i] for i in indices]
-a_wr2,b_wr2,r_value2,p_value2,std_err2=linregress(np.log10(P_r_or_rg2),np.log10(w_geometry_r_or_rg2))
-reglinx2 = np.logspace(np.log10(min(P_r_or_rg2)), np.log10(max(P_r_or_rg2)), num=len(P_r_or_rg2))
-regliny2 = 10**(a_wr2 * np.log10(reglinx2) + b_wr2)
-residuals_y2= np.log10(w_geometry_r_or_rg2) - np.log10(regliny2)
-sigma_y2 = np.sqrt(np.sum(residuals_y2**2) / (len(P_r_or_rg2) - 2))
-Sxx2=np.sum((np.log10(P_r_or_rg2) - np.mean(np.log10(P_r_or_rg2)))**2)
-std_err_b2=sigma_y2*np.sqrt(1.0/len(P_r_or_rg2)+((np.mean(np.log10(P_r_or_rg2)))**2/Sxx2))
-a_wrplus2=a_wr2+std_err2
-b_wrplus2=b_wr2+std_err_b2
-a_wrminus2=a_wr2-std_err2
-b_wrminus2=b_wr2-std_err_b2
-reglinyplus2 = 10**(a_wr2 * np.log10(reglinx2) + b_wrplus2)
-reglinyminus2 = 10**(a_wr2 * np.log10(reglinx2) + b_wrminus2)
+if (len(P_r_or_rg2)>=2 and len(w_geometry_r_or_rg2)>=2):
+    a_wr2,b_wr2,r_value2,p_value2,std_err2=linregress(np.log10(P_r_or_rg2),np.log10(w_geometry_r_or_rg2))
+    reglinx2 = np.logspace(np.log10(min(P_r_or_rg2)), np.log10(max(P_r_or_rg2)), num=len(P_r_or_rg2))
+    regliny2 = 10**(a_wr2 * np.log10(reglinx2) + b_wr2)
+    residuals_y2= np.log10(w_geometry_r_or_rg2) - np.log10(regliny2)
+    sigma_y2 = np.sqrt(np.sum(residuals_y2**2) / (len(P_r_or_rg2) - 2))
+    Sxx2=np.sum((np.log10(P_r_or_rg2) - np.mean(np.log10(P_r_or_rg2)))**2)
+    std_err_b2=sigma_y2*np.sqrt(1.0/len(P_r_or_rg2)+((np.mean(np.log10(P_r_or_rg2)))**2/Sxx2))
+    a_wrplus2=a_wr2+std_err2
+    b_wrplus2=b_wr2+std_err_b2
+    a_wrminus2=a_wr2-std_err2
+    b_wrminus2=b_wr2-std_err_b2
+    reglinyplus2 = 10**(a_wr2 * np.log10(reglinx2) + b_wrplus2)
+    reglinyminus2 = 10**(a_wr2 * np.log10(reglinx2) + b_wrminus2)
+else:
+    a_wr2,b_wr2=0,0
 
 #W10 Obs
 P_obs_combined=P3+P5
@@ -1229,16 +1269,27 @@ reglinyminus3 = 10**(a_wr3 * np.log10(reglinx3) + b_wrminus3)
 #print(len(w10_combined_filtered))
 #print(len(w_geometry_r_or_rg))
 
+with open("info_supp.txt", "a") as f:
+    if (len(P_r_or_rg2)>=2 and len(w_geometry_r_or_rg2)>=2):
+        f.write(f'{a_wr2}\n')
+    else:
+        f.write('0\n')
+
+with open("info_supp_obs.txt","a") as f:
+    f.write(f'{a_wr3}\n')
+
 #f(log(wr))=logP
 plt.figure(34)
 #plt.scatter(P_r_or_rg,wr_r_or_rg,c='green',marker='o',s=5,label='Simulation with ISM and instrumental effect')
 plt.scatter(P_r_or_rg2,w_geometry_r_or_rg2,c='red',marker='o',s=5,label='Simulation (geometry only)')
 #plt.plot(reglinx,regliny,linestyle='-',label=r'$\log$($w_r$) = (%.2f$\pm%.2f$) $\log(P)$ + (%.2f$\pm$%.2f)' % (a_wr,std_err, b_wr,std_err_b),c='green')
-plt.plot(reglinx2,regliny2,linestyle='-',label=r'$\log$($w_r$) = (%.2f$\pm$%.2f) $\log(P)$ + (%.2f$\pm$%.2f) ' % (a_wr2,std_err2,b_wr2,std_err_b2),c='red')
+if (len(P_r_or_rg2)>=2 and len(w_geometry_r_or_rg2)>=2):
+    plt.plot(reglinx2,regliny2,linestyle='-',label=r'$\log$($w_r$) = (%.2f$\pm$%.2f) $\log(P)$ + (%.2f$\pm$%.2f) ' % (a_wr2,std_err2,b_wr2,std_err_b2),c='red')
 plt.scatter(P3,w10_r,c='blue',marker='o',s=5)
 plt.scatter(P5,w10_rg,c='blue',marker='o',s=5,label='ATNF data')
 plt.plot(reglinx3,regliny3,linestyle='-',label=r'$\log$($w^{ATNF}_{10}$) = (%.2f$\pm$%.2f) $\log(P)$ + (%.2f$\pm$%.2f)' % (a_wr3,std_err3,b_wr3,std_err_b3),c='blue')
-plt.fill_between(reglinx2, reglinyminus2, reglinyplus2, color='red', alpha=0.1)#, label=r'$\pm 1\sigma$ interval')
+if (len(P_r_or_rg2)>=2 and len(w_geometry_r_or_rg2)>=2):
+    plt.fill_between(reglinx2, reglinyminus2, reglinyplus2, color='red', alpha=0.1)#, label=r'$\pm 1\sigma$ interval')
 plt.fill_between(reglinx3, reglinyminus3, reglinyplus3, color='blue', alpha=0.1)
 #plt.fill_between(reglinx, reglinyminus, reglinyplus, color='green', alpha=0.1)
 plt.xscale('log')
@@ -1277,4 +1328,27 @@ plt.xlim(0,90)
 plt.ylim(0,90)
 plt.axvline(x=20,linestyle='--')
 plt.savefig('zeta_chi_elim2.pdf',dpi=300)
+plt.close()
+
+#chi=f(tau_c)
+plt.figure(37)
+plt.scatter(log_charac_age,alpha_all,c='red',marker='o',s=5,label='Detected pulsar (simulation)')
+plt.ylabel(r'$\chi$ in °')
+plt.legend(fontsize='small')
+plt.xlabel(r'$\log\left(\tau_c\right)$ ($\tau_c$ in yr)')
+plt.xlim(1,10)
+plt.ylim(0,90)
+plt.savefig('chi_f_tau_c.pdf',dpi=300)
+plt.close()
+
+#chi=f(tau^MHD_align)
+plt.figure(38)
+plt.scatter(tau_MHD_align0,alpha_all0,c='red',marker='o',s=5,label=r'$\tau_{\rm align}^{\rm MHD}$ computed with birth values')
+plt.scatter(tau_MHD_align,alpha_all,c='blue',marker='o',s=5,label=r'$\tau_{\rm align}^{\rm MHD}$ computed with today values')
+plt.ylabel(r'$\chi$ in °')
+plt.legend(fontsize='small')
+plt.xlabel(r'$\log\left(\tau_{\rm align}^{\rm MHD}\right)$ ($\tau_{\rm align}^{\rm MHD}$ in yr)')
+plt.xlim(1,10)
+plt.ylim(0,90)
+plt.savefig('chi_f_tau_MHD.pdf',dpi=300)
 plt.close()
