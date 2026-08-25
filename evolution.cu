@@ -27,7 +27,7 @@ double func_angle_mhd(double x, void *params){ // function for which we want to 
       double t_used;
       double sin2a0=1.-sq(cosa0);
 
-	     if (part->Bfield_var==1) t_used  =   (alpha_d*tau_d)*(pow(1.+age/tau_d,1.-2/alpha_d)-1)/(alpha_d-2.); //Eq.19 from Dirson et al. 2022
+	     if (part->Bfield_var==1) t_used  =   (tau_d)*(pow(1.+(alpha_d*age/tau_d),1.-2/alpha_d)-1)/(alpha_d-2.); //Eq.19 from Dirson et al. 2022
 
 	            else              t_used  =   part->age_pulsar[np];  // Eq.20 From Phillipov 2014
 
@@ -74,15 +74,6 @@ int evolution(void *params){
 		omega_0           =    two_pi/(part->Pinit[np]);
 		part->tau_MHD_al  =    (2.0/3.0)*tau_0*(1.0-cos2a0)/(cos2a0*cos2a0);
 		part->tau_vac_al  =    tau_0 / cos2a0;
-		double pdecay     =    gsl_rng_uniform(part->r);
-		//part->tau0_B0     =    part->k_tau0_B0*exp(log(1e7-1e5)*pdecay+log(1e5))*pow(2.5e8,part->alpha_d)*365*24*3600; //from Vigano
-		//part->tau_d       =    part->tau0_B0*pow(part->Binit[np],-part->alpha_d);
-                if (pdecay< part->pdecay1) part->tau_d       =    part->tau0_B0*pow(part->Binit[np],-part->alpha_d);
-		else if (pdecay>= part->pdecay1 && pdecay <part->pdecay2) {
-			part->tau_d       =    part->tau0_B0_2*pow(part->Binit[np],-part->alpha_d);
-		}
-		else if (pdecay>= part->pdecay2) part->tau_d       =    part->tau0_B0_3*pow(part->Binit[np],-part->alpha_d);
-		//else if (pdecay>=0.8) part->tau_d       =    part->tau0_B0_4*pow(part->Binit[np],-part->alpha_d);
 
 			if(part->ff_evol){  	//evolution of the angle alpha in the MHD case
   				double x_lo = 1.0e-17, x_hi = sqrt(1-cos2a0);
@@ -150,7 +141,7 @@ int evolution(void *params){
 			    part->period[np] = two_pi/omega;
 
 			    if(part->Bfield_var==1){ 
-			       part->B[np] = part->Binit[np]*pow(1+part->age_pulsar[np]/part->tau_d,-1./part->alpha_d);
+			       part->B[np] = part->Binit[np]*pow(1+(part->alpha_d*part->age_pulsar[np]/part->tau_d),-1./part->alpha_d);
 			    } else {
 			       part->B[np] = part->Binit[np];
 			    }

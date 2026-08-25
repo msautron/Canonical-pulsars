@@ -59,6 +59,7 @@ def xmm_observed(l_list, b_list, sources, max_sep=30*u.arcmin):
 
 X_obs_XMM=xmm_observed(l,b,sources,max_sep=30*u.arcmin)
 np.savetxt("sky_X_obs_XMM.txt",X_obs_XMM,fmt="%d")
+print('Sky coverage XMM Newton done')
 
 #Chandra sky coverage
 moc_chandra=MOC.from_fits("ChandraMOC11_nograting.fits")
@@ -69,3 +70,4 @@ def chandra_observed(l,b):
 
 X_obs_chandra=chandra_observed(l,b)
 np.savetxt("sky_X_obs_chandra.txt",X_obs_chandra,fmt="%d")
+print('Sky coverage chandra done')

@@ -19,8 +19,8 @@
 #include <math_constants.h>
 #define TAILLE_MAX 1000 // Tableau de taille 1000
 
-#define NTHREAD (250)
-#define NBLOCK (500)
+#define NTHREAD (128)
+#define NBLOCK (15626)
 #define NPOINTS (NBLOCK*NTHREAD)
 
 __device__ double phi_tot(double *gx,double *gy,double *gz,int np){ //Compute the gravitational potential felt by a pulsar
@@ -143,14 +143,14 @@ __global__ void evol_galac_PEFRL(double *gx,double *gy,double *gz, double *gvx,d
        double E0=tot_energy(gx,gy,gz,gvx,gvy,gvz,np);
        for(double t=(*gtmilky)-gage_pulsar[np];t<(*gtmilky);t+=step){
 
-	 if(gage_pulsar[np]<=1e2*yr_sec) {step=10*yr_sec;}
-	 else if(gage_pulsar[np]>1e2*yr_sec && gage_pulsar[np]<=1e3*yr_sec) {step=25*yr_sec;}
-	 else if(gage_pulsar[np]>1e3*yr_sec && gage_pulsar[np]<=1e4*yr_sec) {step=5e1*yr_sec;}
-	 else if(gage_pulsar[np]>1e4*yr_sec && gage_pulsar[np]<=1e5*yr_sec) {step=5e2*yr_sec;}
-	 else if(gage_pulsar[np]>1e5*yr_sec && gage_pulsar[np]<=1e6*yr_sec) {step=2.5e3*yr_sec;}
-	 else if(gage_pulsar[np]>1e6*yr_sec && gage_pulsar[np]<=1e7*yr_sec) {step=2.5e4*yr_sec;}
-	 else if(gage_pulsar[np]>1e7*yr_sec && gage_pulsar[np]<=1e8*yr_sec) {step=1e5*yr_sec;}
-	 else if(gage_pulsar[np]>1e8*yr_sec) {step=1e5*yr_sec;}
+	 if(gage_pulsar[np]<=1e2*yr_sec) {step=40*yr_sec;}
+	 else if(gage_pulsar[np]>1e2*yr_sec && gage_pulsar[np]<=1e3*yr_sec) {step=75*yr_sec;}
+	 else if(gage_pulsar[np]>1e3*yr_sec && gage_pulsar[np]<=1e4*yr_sec) {step=1e2*yr_sec;}
+	 else if(gage_pulsar[np]>1e4*yr_sec && gage_pulsar[np]<=1e5*yr_sec) {step=1e3*yr_sec;}
+	 else if(gage_pulsar[np]>1e5*yr_sec && gage_pulsar[np]<=1e6*yr_sec) {step=2.5e4*yr_sec;}
+	 else if(gage_pulsar[np]>1e6*yr_sec && gage_pulsar[np]<=1e7*yr_sec) {step=1e5*yr_sec;}
+	 else if(gage_pulsar[np]>1e7*yr_sec && gage_pulsar[np]<=1e8*yr_sec) {step=5e5*yr_sec;}
+	 else if(gage_pulsar[np]>1e8*yr_sec) {step=5e5*yr_sec;}
 
 	 step_wd=step/T0;
 
@@ -388,7 +388,7 @@ int main(int argc, char **argv){
 	srand((unsigned)time(NULL));
 	gsl_rng_set(params.r, time(NULL));
 
-	printf("## birth_rate (yr) %ld \n",params.birth_rate2);
+	printf("## birth_rate (yr) %ld \n",params.birth_rate);
 	printf("## sigma_P (s or log(s)) %e \n",params.sigma_p);
 	printf("## sigma_B (logB) %e \n",params.sigma_b);
 	printf("## Pmean (s) %e \n",params.p_mean);
@@ -465,6 +465,7 @@ int main(int argc, char **argv){
 	cudaMemcpy(ggl,params.gl,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
 	cudaMemcpy(ggb,params.gb,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
 	cudaMemcpy(gage_pulsar,params.age_pulsar,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
+	cudaMemcpy(error_rel,params.err_rel_g,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
 	cudaMemcpy(gsize,&size,sizeof(int),cudaMemcpyHostToDevice);
 	cudaMemcpy(gtmilky,&tmilky,sizeof(double),cudaMemcpyHostToDevice);
 	cudaMemcpy(gDM,params.DM,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
@@ -482,6 +483,8 @@ int main(int argc, char **argv){
 	cudaMemcpy(gnz,params.nz,params.Npulsars*sizeof(double),cudaMemcpyHostToDevice);
 
         evol_galac_PEFRL<<<dimgrid,dimblock>>>(gx,gy,gz,gvx,gvy,gvz,gage_pulsar,gsize,error_rel,gtmilky,ggl,ggb,gDM,gperiod,gw_r_fast,gw_r_pmps,galpha,g_nomegax,g_nomegay,g_nomegaz,gxi,grho,time(NULL),params.Npulsars,gnx,gny,gnz); // Use when you want to run the simulation with the galactic potential + compute DM + geometry of emission
+	printf("launch=%s\n",cudaGetErrorString(cudaGetLastError()));
+	printf("sync=%s\n",cudaGetErrorString(cudaDeviceSynchronize()));
 	cudaDeviceSynchronize();
 
 	cudaMemcpy(x_bis,gx,params.Npulsars*sizeof(double),cudaMemcpyDeviceToHost);
@@ -552,13 +555,27 @@ int main(int argc, char **argv){
 	/* Detection */
 	//geometry(&params); // calculates the angles xi and w_r
         //pulse_profile_complete_2(&params); //Computes the pulse profile taking into account the DM + scattering + instrument
+	//time_t start_time_temp,end_time_temp;
+        //time(&start_time_temp);
 	sky_temp_Fmin_fermi(&params); //Get the sky temperatur at the position (l,b) of the pulsar. Maps of Haslam et al. (1982), reworked by Remazailles et al. (2015) + get the sensitivity of Fermi/LAT at a given position with python code from fermi 
+	//time(&end_time_temp);
+        //int elapsed_time_temp=difftime(end_time_temp,start_time_temp);
+        //double hour_temp=((double)elapsed_time_temp)/3600.0;double minu_temp=(hour_temp-((int)hour_temp))*60;double sec_temp=(minu_temp-((int)minu_temp))*60;
+        //int hour_s_temp=(int)hour_temp;int min_s_temp=(int)minu_temp;int sec_s_temp=(int)sec_temp;
+        //printf("Time taken for temperature computation in h:m:s : %d:%d:%d\n",hour_s_temp,min_s_temp,sec_s_temp);
+	//time_t start_time_X,end_time_X;
+        //time(&start_time_X);
 	X_telescope_sky_coverage(&params); //allows to get info if the pulsar's position was observed by either XMM-Newton or Chandra
+	//time(&end_time_X);
+        //int elapsed_time_X=difftime(end_time_X,start_time_X);
+        //double hour_X=((double)elapsed_time_X)/3600.0;double minu_X=(hour_X-((int)hour_X))*60;double sec_X=(minu_X-((int)minu_X))*60;
+        //int hour_s_X=(int)hour_X;int min_s_X=(int)minu_X;int sec_s_X=(int)sec_X;
+        //printf("Time taken for X coverage computation in h:m:s : %d:%d:%d\n",hour_s_X,min_s_X,sec_s_X);
 	radio_flux(&params); //calculates the radio flux of each pulsar
 	get_fomega(&params); //Get all the different values of f_omega for the different angles of chi and zeta
 	gamma_flux(&params); //idem for gamma flux
-	X_flux(&params); //Idem Thermal X-ray flux
-	check_x_pulse(&params); //Compute the X-ray pulsed fractions
+	X_flux(&params); //Idem Thermal X-ray flux + Pulsed fractions
+	//check_x_pulse(&params); //Compute the X-ray pulsed fractions
 	spinvel_angle(&params); //Computes the angle between the velocity vector and the rotation axis
 	gamma_ray_peak_sep(&params); //Computes the gamma-ray peak separation 
 	detection(&params); // check if the pulsar is beaming to us and if its flux is high enough to be detected
@@ -633,9 +650,22 @@ int main(int argc, char **argv){
 	free(params.nx);
 	free(params.ny);
 	free(params.nz);
-	free(params.cos_i);
-	free(params.Temp);
-	free(params.r_h);
+	free(params.jn);
+	free(params.js);
+	free(params.n_nx);
+        free(params.n_ny);
+        free(params.n_nz);
+	free(params.n_sx);
+        free(params.n_sy);
+        free(params.n_sz);
+	free(params.theta_n);
+	free(params.theta_s);
+	free(params.cos_in);
+	free(params.cos_is);
+	free(params.Temp_n);
+	free(params.Temp_s);
+	free(params.r_hn);
+	free(params.r_hs);
 	free(params.PF);
 
 	gsl_rng_free(params.r);

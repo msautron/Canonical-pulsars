@@ -490,7 +490,8 @@ void detection_X(void *params){
 	long count_X_pulse=0;
 	long count_gx=0;long count_rgx=0;long count_gx_rgx=0;
 	double xi,alpha;
-	double beta_h; //Opening angle for Thermal X-ray emission
+	FILE *PF_check=NULL;
+        PF_check=fopen("PF_check.txt","w+");
 	x_file=fopen("x_file.txt","w+");
 	x_file2=fopen("x_file2.txt","w+");
 	info_supp=fopen("info_supp.txt","a+");
@@ -503,28 +504,81 @@ void detection_X(void *params){
 				count_X_pulse+=1;
 			}
 			if(part->detec_rad[np]==1){
-				fprintf(x_file2,"%e %e %e %e %e\n",part->cos_i[np],part->Temp[np],part->r_h[np],part->Fx[np],xi);
-				fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|1|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
-		}
+				if (part->see_n[np]==1 && part->see_s[np]==1){
+					fprintf(x_file2,"%e %e %e %e %e %e %e %e %e %e %e %e %e %e\n",part->cos_in[np],part->Temp_n[np],part->r_hn[np],part->Fx[np],xi,part->cos_is[np],part->theta_n[np],part->phi_n[np],part->theta_s[np],part->phi_s[np],part->mu_hot_ang1[np],part->mu_hot_ang2[np],part->r_hs[np],part->Temp_s[np]);
+					fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|1|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+					fprintf(PF_check,"%e %e %e\n",part->PF[np],part->Fxmax[np],part->Fxmin[np]);
+				}
+				else if (part->see_n[np]==1 && part->see_s[np]==0){
+					fprintf(x_file2,"%e %e %e %e %e %e %e %e %e %e %e %e %e %e\n",part->cos_in[np],part->Temp_n[np],part->r_hn[np],part->Fx[np],xi,1e55,part->theta_n[np],part->phi_n[np],1e55,1e55,part->mu_hot_ang1[np],1e55,1e55,1e55);
+                                        fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|1|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+					fprintf(PF_check,"%e %e %e\n",part->PF[np],part->Fxmax[np],part->Fxmin[np]);		
+				}
+				else if (part->see_n[np]==0 && part->see_s[np]==1){
+					fprintf(x_file2,"%e %e %e %e %e %e %e %e %e %e %e %e %e %e\n",1e55,1e55,1e55,part->Fx[np],xi,part->cos_is[np],1e55,1e55,part->theta_s[np],part->phi_s[np],1e55,part->mu_hot_ang2[np],part->r_hs[np],part->Temp_s[np]);
+                                        fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|1|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+					fprintf(PF_check,"%e %e %e\n",part->PF[np],part->Fxmax[np],part->Fxmin[np]);
+				}	
+			}
 			else if(part->detec_gam[np]==1){
 				count_gx+=1;
-				fprintf(x_file2,"%e %e %e %e %e\n",part->cos_i[np],part->Temp[np],part->r_h[np],part->Fx[np],xi);
-				fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|2|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+				if (part->see_n[np]==1 && part->see_s[np]==1){
+					fprintf(x_file2,"%e %e %e %e %e %e %e %e %e %e %e %e %e %e\n",part->cos_in[np],part->Temp_n[np],part->r_hn[np],part->Fx[np],xi,part->cos_is[np],part->theta_n[np],part->phi_n[np],part->theta_s[np],part->phi_s[np],part->mu_hot_ang1[np],part->mu_hot_ang2[np],part->r_hs[np],part->Temp_s[np]);
+					fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|2|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+					fprintf(PF_check,"%e %e %e\n",part->PF[np],part->Fxmax[np],part->Fxmin[np]);
+				}
+				else if (part->see_n[np]==1 && part->see_s[np]==0){
+                                        fprintf(x_file2,"%e %e %e %e %e %e %e %e %e %e %e %e %e %e\n",part->cos_in[np],part->Temp_n[np],part->r_hn[np],part->Fx[np],xi,1e55,part->theta_n[np],part->phi_n[np],1e55,1e55,part->mu_hot_ang1[np],1e55,1e55,1e55);
+					fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|2|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+					fprintf(PF_check,"%e %e %e\n",part->PF[np],part->Fxmax[np],part->Fxmin[np]);
+				}
+				else if (part->see_n[np]==0 && part->see_s[np]==1){
+					fprintf(x_file2,"%e %e %e %e %e %e %e %e %e %e %e %e %e %e\n",1e55,1e55,1e55,part->Fx[np],xi,part->cos_is[np],1e55,1e55,part->theta_s[np],part->phi_s[np],1e55,part->mu_hot_ang2[np],part->r_hs[np],part->Temp_s[np]);
+					fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|2|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+					fprintf(PF_check,"%e %e %e\n",part->PF[np],part->Fxmax[np],part->Fxmin[np]);
+				}
 			}
 			else if(part->detec_rg[np]==1){
 				count_rgx+=1;
-				fprintf(x_file2,"%e %e %e %e %e\n",part->cos_i[np],part->Temp[np],part->r_h[np],part->Fx[np],xi);
-				fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|3|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+				if (part->see_n[np]==1 && part->see_s[np]==1){
+                                        fprintf(x_file2,"%e %e %e %e %e %e %e %e %e %e %e %e %e %e\n",part->cos_in[np],part->Temp_n[np],part->r_hn[np],part->Fx[np],xi,part->cos_is[np],part->theta_n[np],part->phi_n[np],part->theta_s[np],part->phi_s[np],part->mu_hot_ang1[np],part->mu_hot_ang2[np],part->r_hs[np],part->Temp_s[np]);
+					fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|3|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+					fprintf(PF_check,"%e %e %e\n",part->PF[np],part->Fxmax[np],part->Fxmin[np]);
+				}
+				else if (part->see_n[np]==1 && part->see_s[np]==0){
+                                        fprintf(x_file2,"%e %e %e %e %e %e %e %e %e %e %e %e %e %e\n",part->cos_in[np],part->Temp_n[np],part->r_hn[np],part->Fx[np],xi,1e55,part->theta_n[np],part->phi_n[np],1e55,1e55,part->mu_hot_ang1[np],1e55,1e55,1e55);
+					fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|3|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+					fprintf(PF_check,"%e %e %e\n",part->PF[np],part->Fxmax[np],part->Fxmin[np]);	
+				}
+				else if (part->see_n[np]==0 && part->see_s[np]==1){
+					fprintf(x_file2,"%e %e %e %e %e %e %e %e %e %e %e %e %e %e\n",1e55,1e55,1e55,part->Fx[np],xi,part->cos_is[np],1e55,1e55,part->theta_s[np],part->phi_s[np],1e55,part->mu_hot_ang2[np],part->r_hs[np],part->Temp_s[np]);
+					fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|3|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+					fprintf(PF_check,"%e %e %e\n",part->PF[np],part->Fxmax[np],part->Fxmin[np]);
+				}
 			}
 			else{
-				fprintf(x_file2,"%e %e %e %e %e\n",part->cos_i[np],part->Temp[np],part->r_h[np],part->Fx[np],xi);
-				fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|4|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+				if (part->see_n[np]==1 && part->see_s[np]==1){
+                                        fprintf(x_file2,"%e %e %e %e %e %e %e %e %e %e %e %e %e %e\n",part->cos_in[np],part->Temp_n[np],part->r_hn[np],part->Fx[np],xi,part->cos_is[np],part->theta_n[np],part->phi_n[np],part->theta_s[np],part->phi_s[np],part->mu_hot_ang1[np],part->mu_hot_ang2[np],part->r_hs[np],part->Temp_s[np]);
+					fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|4|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+					fprintf(PF_check,"%e %e %e\n",part->PF[np],part->Fxmax[np],part->Fxmin[np]);
+				}
+				else if (part->see_n[np]==1 && part->see_s[np]==0){
+                                        fprintf(x_file2,"%e %e %e %e %e %e %e %e %e %e %e %e %e %e\n",part->cos_in[np],part->Temp_n[np],part->r_hn[np],part->Fx[np],xi,1e55,part->theta_n[np],part->phi_n[np],1e55,1e55,part->mu_hot_ang1[np],1e55,1e55,1e55);
+					fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|4|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+					fprintf(PF_check,"%e %e %e\n",part->PF[np],part->Fxmax[np],part->Fxmin[np]);
+				}
+				else if (part->see_n[np]==0 && part->see_s[np]==1){
+                                        fprintf(x_file2,"%e %e %e %e %e %e %e %e %e %e %e %e %e %e\n",1e55,part->Temp_n[np],1e55,part->Fx[np],xi,part->cos_is[np],1e55,1e55,part->theta_s[np],part->phi_s[np],1e55,part->mu_hot_ang2[np],part->r_hs[np],part->Temp_s[np]);
+					fprintf(x_file,"%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|%e|4|\n",part->period[np],part->Pdot[np],part->x[np],part->y[np],part->age_pulsar[np],part->err_rel_g[np],part->dist[np],part->gl[np],part->gb[np],part->cos_a0[np],part->alpha[np],part->B[np],part->z[np],part->vx[np],part->vy[np],part->vz[np],part->vx0[np],part->vy0[np],part->vz0[np],part->PA[np]);
+					fprintf(PF_check,"%e %e %e\n",part->PF[np],part->Fxmax[np],part->Fxmin[np]);
+				}
 			}
 		}
 	}
 	count_gx_rgx=count_gx+count_rgx;
 	fclose(x_file);
 	fclose(x_file2);
+	fclose(PF_check);
 	printf("# Total number of pulsars emitting in thermal X-rays detected %ld \n",count_X);
 	printf("# Total number of pulsars detected in thermal X-rays which are pulsating %ld \n",count_X_pulse);fprintf(info_supp,"%ld\n%ld\n",count_X_pulse,count_gx_rgx);
 	fclose(info_supp);
@@ -572,6 +626,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 	double eta=0.15;double alpha_l=45*(M_PI/180);double T6=2;double b=40;
 	double alpha_l2;double T6_2;double b2;
 	double P_dot_line;
+	double p_survive;double survive_rate=0.4;int survived=1;int nb_killed=0; //Death valley survival parameters new
 	int detec_fast=0;int detec_pmps=0;int detec_htru=0;
         int current_detec_fast,current_detec_pmps,current_detec_htru;
 	FILE *gamma_peak_sep=NULL;
@@ -588,6 +643,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 	//all_Bf=fopen("all_bf_pulsars.txt","a+");
 			
            	for (np=0;np<part->Npulsars;np++){ 
+			survived=1;
 			//fprintf(all_Bf,"%e\n",part->B[np]);
 			if (part->xi[np]<=M_PI/2.0) xi=part->xi[np];
                         else if (part->xi[np]>M_PI/2.0) xi=M_PI-part->xi[np];
@@ -595,12 +651,16 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			if (part->alpha[np]<=M_PI/2) alpha=part->alpha[np]; // just to make it easier to read
                         else if (part->alpha[np]>M_PI/2) alpha=M_PI-part->alpha[np];
 			P_dot_line=(3.16e-4*pow(T6,4)*sq(part->period[np])*1e-15)/(sq(eta)*b*sq(cos(alpha_l)));
-			if (P_dot_line/part->Pdot[np] >= pow(10,-0.55) && P_dot_line/part->Pdot[np] <= pow(10,1.15)) {
-				alpha_l2=65*(M_PI/180)*gsl_rng_uniform(part->r);
+			//if (P_dot_line/part->Pdot[np] >= pow(10,-0.55) && P_dot_line/part->Pdot[np] <= pow(10,1.15)) {
+			if (part->Pdot[np] >= pow(10,-0.55)*P_dot_line && part->Pdot[np] <= pow(10,1.15)*P_dot_line) {
+				/*alpha_l2=65*(M_PI/180)*gsl_rng_uniform(part->r);
 				T6_2=(2.8-1.9)*gsl_rng_uniform(part->r)+1.9;
 				b2=30*gsl_rng_uniform(part->r)+30;
-				P_dot_line=(3.16e-4*pow(T6_2,4)*sq(part->period[np])*1e-15)/(sq(eta)*b2*sq(cos(alpha_l2)));
+				P_dot_line=(3.16e-4*pow(T6_2,4)*sq(part->period[np])*1e-15)/(sq(eta)*b2*sq(cos(alpha_l2)));*/ //Sautron et al. (2024)
+				p_survive=gsl_rng_uniform(part->r);
+				if (p_survive>survive_rate) {survived=0;}
 			}
+			else if (part->Pdot[np] <= pow(10,-0.55)*P_dot_line) {survived=0;}
 
 			/* calculates the width of the radio beam w_r, from eq 22 of our paper */
                         if(fabs(alpha-xi)< rho){
@@ -622,8 +682,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
                         if (isnan(part->w_r_fast[np])==false && part->Fr[np]/part->Smin_pmps[np] > S_Nmin_pmps && part->Smin_pmps[np]!=0 && (part->gl[np]<=50 || part->gl[np]>=260) && abs(part->gb[np])<5) {detec = 1;detec_pmps+=1;current_detec_pmps=1;}
 			        					        
 			/* radio detection */
-				if(fabs(xi-alpha)<rho){
-				       //if (cos(rho)>=cos(xi+alpha)){	
+				if(fabs(xi-alpha)<rho){	
 					if (rho<alpha+xi){
 							Nbeam++;
                 					if (detec==1){
@@ -631,18 +690,9 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 							part->detec[np]=1;
                                                 	part->detec_rad[np]=1;
 							count_radio_tot++;
+			}
 					}
-				       
-					}
-				/*} else if (fabs(xi-(M_PI-alpha))<=rho && (cos(rho)>=cos(xi+alpha))){ 
-					Nbeam++;
-                			if (detec==1){
-						count_radio_tot++;
-						part->detec[np]=1;
-                                                part->detec_rad[np]=1;
-						Nr=1;  
-						}*/
-					}
+				}
 				
 			
 			/* gamma detection */
@@ -651,7 +701,8 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 				}  
 
 				if(Ng==1 && Nr==1){  //both radio and gamma are detected
-				        if (P_dot_line>part->Pdot[np]) {Ng=0;Nr=0;part->detec_rg[np]=0;part->detec[np]=0;part->detec_rad[np]=0;part->detec_gam[np]=0;}
+				        //if (P_dot_line>part->Pdot[np]) {Ng=0;Nr=0;part->detec_rg[np]=0;part->detec[np]=0;part->detec_rad[np]=0;part->detec_gam[np]=0;} //Sautron et al. (2024)
+					if (survived==0) {Ng=0;Nr=0;part->detec_rg[np]=0;part->detec[np]=0;part->detec_rad[np]=0;part->detec_gam[np]=0;nb_killed+=1;}
 					else{
 					   count_radio_gamma++;part->detec_rg[np]=1;part->detec[np]=1;part->detec_rad[np]=0;part->detec_gam[np]=0;	
 		
@@ -665,7 +716,8 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 				}
 				else if(Nr==1 && Ng==0){ //radio only
                        
-					if (P_dot_line>part->Pdot[np]) {part->detec[np]=0;part->detec_rad[np]=0;}
+					//if (P_dot_line>part->Pdot[np]) {part->detec[np]=0;part->detec_rad[np]=0;} //Sautron et al. (2024)
+					if (survived==0) {part->detec[np]=0;part->detec_rad[np]=0;nb_killed+=1;}
 					else{
 					   count_radio++;part->detec[np]=1;part->detec_rad[np]=1;
 
@@ -679,7 +731,9 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 				}
 				else if(Ng==1 && Nr==0){ //gamma only
 				
-					if (P_dot_line>part->Pdot[np]) {part->detec[np]=0;part->detec_gam[np]=0;}
+					
+					//if (P_dot_line>part->Pdot[np]) {part->detec[np]=0;part->detec_gam[np]=0;} //Sautron et al. (2024)
+					if (survived==0) {part->detec[np]=0;part->detec_gam[np]=0;nb_killed+=1;} 
 					else{
 					   count_gamma++;part->detec[np]=1;part->detec_gam[np]=1;
 
@@ -767,6 +821,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			printf("# Number of radio pulsars beaming to us %ld \n",Nbeam);
 			printf("# Number of radio pulsars detected with PMPS: %d\n",detec_pmps);
                         printf("# Number of radio pulsars detected with fast: %d\n",detec_fast);
+			printf("# Number of pulsars which died in the death valley: %d\n",nb_killed);
 			printf(" \n");
 			fclose(file_data);
 			fclose(Fg_flux);
@@ -913,66 +968,140 @@ void X_flux(void *params){
 	const double kpc2m=3.0856775807e19; //kpc to m
 	double sigma=5.67e-8; // Stefan-Boltzmann constant
 	double kb=1.38e-23; //Boltzmann constant
-	double E_kev; //Temperature in keV
+	double E_kevn,E_kevs; //Temperature in keV
 	//double A=1.47e9; //Constant for the relation between T, P and Pdot (Harding & Muslimov (2001))
 	//double D=883.1; //Constant for the relation between r_h and r_LC
-	double L_x; //Bolometric luminosity
+	double L_xn,L_xs; //Bolometric luminosity <<north>> and <<south>> hotspot
 	double K=(2*(G_grav*1e9)*part->M_for_K*MSUN)/(part->R_for_K*sq(SI_C)); //Ratio of the Schwarzchild radius with the neutron star radius
-	double sigma_abs; //Value of the sigma(E) from the absorption law taken from fig. 1 of Wilms et al. (2000)
+	double sigma_absn,sigma_abss; //Value of the sigma(E) from the absorption law taken from fig. 1 of Wilms et al. (2000)
 	double Nh; //Hydrogen column density
-	double Fj;
+	double Fj_n,Fj_s;
+	double zeta;double alpha;
+	double is,in,max_angs,max_angn,min_angs,min_angn;
+	double jn,js;
+	//FILE *PF_check=NULL;
+	//PF_check=fopen("PF_check.txt","w+");
 	for(np=0;np<part->Npulsars;np++){
 		part->Fx[np]=0;
-		Fj=fabs(gsl_ran_gaussian_ziggurat(part->r,0.1));
-		part->Temp[np]=part->A_propto*pow(pow(part->Pdot[np],3.0)/pow(part->period[np],5.0),1.0/16.0)*pow(10,Fj);
-		E_kev=kb*part->Temp[np]*(1e-3/1.6e-19);
+		part->Fxmax[np]=0;part->Fxmin[np]=0;
+		part->see_n[np]=0;part->see_s[np]=0;
+		/*if (part->xi[np]<=M_PI/2.0) zeta=part->xi[np];
+                else if (part->xi[np]>M_PI/2.0) zeta=M_PI-part->xi[np];
+		if (part->js[np]<=M_PI/2.0) js=part->js[np];
+		else if (part->js[np]>M_PI/2.0) js=M_PI-part->js[np];
+		if (part->jn[np]<=M_PI/2.0) jn=part->jn[np];
+                else if (part->jn[np]>M_PI/2.0) jn=M_PI-part->jn[np];*/
+		js=part->js[np];jn=part->jn[np];zeta=part->xi[np];
+		Fj_n=fabs(gsl_ran_gaussian_ziggurat(part->r,0.1));
+		part->Temp_n[np]=part->A_propto1*pow(pow(part->Pdot[np],1.0)/pow(part->period[np],2.28),9.0/50.0)*pow(10,Fj_n);
+		Fj_s=fabs(gsl_ran_gaussian_ziggurat(part->r,0.1));
+                part->Temp_s[np]=part->A_propto2*pow(pow(part->Pdot[np],1.0)/pow(part->period[np],2.28),9.0/50.0)*pow(10,Fj_s);
+		E_kevn=kb*(part->Temp_n[np])*(1e-3/1.6e-19);
+		E_kevs=kb*(part->Temp_s[np])*(1e-3/1.6e-19);
 		//part->r_h[np]=R_NS*sqrt((2*M_PI*R_NS)/(SI_C*part->period[np]));
-		part->r_h[np]=part->D_propto*sqrt((2*M_PI*part->R_for_K)/(SI_C*part->period[np])); //Pétri & Mitra (2019) r_h propto sqrt(R_NS/r_LC)
-		L_x=M_PI*sq(part->r_h[np])*sigma*pow(part->Temp[np],4.0);
-		part->cos_i[np]=part->nx[np]*part->n_mu_x[np]+part->ny[np]*part->n_mu_y[np]+part->nz[np]*part->n_mu_z[np];
+		part->r_hn[np]=part->D_propto1*sqrt((2*M_PI*part->R_for_K)/(SI_C*part->period[np])); //Pétri & Mitra (2019) r_h propto sqrt(R_NS/r_LC)
+		part->r_hs[np]=part->D_propto2*sqrt((2*M_PI*part->R_for_K)/(SI_C*part->period[np])); //Pétri & Mitra (2019) r_h propto sqrt(R_NS/r_LC)
+		L_xn=M_PI*sq(part->r_hn[np])*sigma*pow(part->Temp_n[np],4.0);
+		L_xs=M_PI*sq(part->r_hs[np])*sigma*pow(part->Temp_s[np],4.0);
+		part->cos_in[np]=part->nx[np]*part->n_nx[np]+part->ny[np]*part->n_ny[np]+part->nz[np]*part->n_nz[np];
+		part->cos_is[np]=part->nx[np]*part->n_sx[np]+part->ny[np]*part->n_sy[np]+part->nz[np]*part->n_sz[np];
 		Nh=3e19*part->DM[np]; //He, Ng & Kaspi (2013) relation
-		if(E_kev <= 0.4) sigma_abs=7.5e-21;
-		else if(E_kev <=0.55 && E_kev >0.4) sigma_abs=6.4e-22;
-		else if(E_kev <=0.75 && E_kev >0.55) sigma_abs=6.5e-22;
-		else if(E_kev <=0.9 && E_kev >0.75) sigma_abs=2.9e-22;
-		else if(E_kev <=1.5 && E_kev >0.9) sigma_abs=1.9e-22;
-		else if(E_kev <=2 && E_kev >1.5) sigma_abs=4.0e-23;
-		else if(E_kev <=2.5 && E_kev >2) sigma_abs=2.1e-23;
-		else if(E_kev <=3 && E_kev >2.5) sigma_abs=1.2e-23;
-		else if(E_kev <=4 && E_kev >3) sigma_abs=6.8e-24;
-		else if(E_kev >4) sigma_abs=2.6e-24;
-		if (part->cos_i[np]>(-K/(1.0-K))){
-			part->Fx[np]+=((1-K)*part->cos_i[np]+K)*pow(1-K,2.0)*(L_x/(4*M_PI*sq(part->dist[np]*kpc2m)))*exp(-sigma_abs*Nh);
+		if(E_kevn <= 0.4) sigma_absn=7.5e-21;
+		else if(E_kevn <=0.55 && E_kevn >0.4) sigma_absn=6.4e-22;
+		else if(E_kevn <=0.75 && E_kevn >0.55) sigma_absn=6.5e-22;
+		else if(E_kevn <=0.9 && E_kevn >0.75) sigma_absn=2.9e-22;
+		else if(E_kevn <=1.5 && E_kevn >0.9) sigma_absn=1.9e-22;
+		else if(E_kevn <=2 && E_kevn >1.5) sigma_absn=4.0e-23;
+		else if(E_kevn <=2.5 && E_kevn >2) sigma_absn=2.1e-23;
+		else if(E_kevn <=3 && E_kevn >2.5) sigma_absn=1.2e-23;
+		else if(E_kevn <=4 && E_kevn >3) sigma_absn=6.8e-24;
+		else if(E_kevn >4) sigma_absn=2.6e-24;
+		if(E_kevs <= 0.4) sigma_abss=7.5e-21;
+                else if(E_kevs <=0.55 && E_kevs >0.4) sigma_abss=6.4e-22;
+                else if(E_kevs <=0.75 && E_kevs >0.55) sigma_abss=6.5e-22;
+                else if(E_kevs <=0.9 && E_kevs >0.75) sigma_abss=2.9e-22;
+                else if(E_kevs <=1.5 && E_kevs >0.9) sigma_abss=1.9e-22;
+                else if(E_kevs <=2 && E_kevs >1.5) sigma_abss=4.0e-23;
+                else if(E_kevs <=2.5 && E_kevs >2) sigma_abss=2.1e-23;
+                else if(E_kevs <=3 && E_kevs >2.5) sigma_abss=1.2e-23;
+                else if(E_kevs <=4 && E_kevs >3) sigma_abss=6.8e-24;
+                else if(E_kevs >4) sigma_abss=2.6e-24;
+                max_angs=cos(min(js-zeta,2*M_PI-(js-zeta)));
+                min_angs=cos(min(js+zeta,2*M_PI-(js+zeta)));
+                max_angn=cos(min(jn-zeta,2*M_PI-(jn-zeta)));
+                min_angn=cos(min(jn+zeta,2*M_PI-(jn+zeta)));
+		/*max_angs=cos(js-zeta);
+                min_angs=cos(js+zeta);
+                max_angn=cos(jn-zeta);
+                min_angn=cos(jn+zeta);*/
+		if (jn<M_PI/2){
+			if (part->cos_in[np]>(-K/(1.0-K))){
+				part->Fx[np]+=((1-K)*part->cos_in[np]+K)*pow(1-K,2.0)*(L_xn/(4*M_PI*sq(part->dist[np]*kpc2m)))*exp(-sigma_absn*Nh);
+				part->Fxmax[np]+=fabs(((1-K)*max_angn+K)*pow(1-K,2.0)*(L_xn/(4*M_PI*sq(part->dist[np]*kpc2m)))*exp(-sigma_absn*Nh));
+				part->Fxmin[np]+=fabs(((1-K)*min_angn+K)*pow(1-K,2.0)*(L_xn/(4*M_PI*sq(part->dist[np]*kpc2m)))*exp(-sigma_absn*Nh));
+				part->see_n[np]=1;
+			}
 		}
-		if (part->cos_i[np]<(K/(1.0-K))){
-			part->Fx[np]+=(-(1-K)*part->cos_i[np]+K)*pow(1-K,2.0)*(L_x/(4*M_PI*sq(part->dist[np]*kpc2m)))*exp(-sigma_abs*Nh);
+		else if (jn>=M_PI/2){
+			 if (part->cos_in[np]<(K/(1.0-K))){
+                                part->Fx[np]+=(-(1-K)*part->cos_in[np]+K)*pow(1-K,2.0)*(L_xn/(4*M_PI*sq(part->dist[np]*kpc2m)))*exp(-sigma_absn*Nh);
+				part->Fxmax[np]+=fabs((-(1-K)*max_angn+K)*pow(1-K,2.0)*(L_xn/(4*M_PI*sq(part->dist[np]*kpc2m)))*exp(-sigma_absn*Nh));
+				part->Fxmin[np]+=fabs((-(1-K)*min_angn+K)*pow(1-K,2.0)*(L_xn/(4*M_PI*sq(part->dist[np]*kpc2m)))*exp(-sigma_absn*Nh));
+				part->see_n[np]=1;
+                        }
 		}
+		if (js>=M_PI/2){
+			if (part->cos_is[np]<(K/(1.0-K))){
+				part->Fx[np]+=(-(1-K)*part->cos_is[np]+K)*pow(1-K,2.0)*(L_xs/(4*M_PI*sq(part->dist[np]*kpc2m)))*exp(-sigma_abss*Nh);
+				part->Fxmax[np]+=fabs((-(1-K)*max_angs+K)*pow(1-K,2.0)*(L_xs/(4*M_PI*sq(part->dist[np]*kpc2m)))*exp(-sigma_abss*Nh));
+				part->Fxmin[np]+=fabs((-(1-K)*min_angs+K)*pow(1-K,2.0)*(L_xs/(4*M_PI*sq(part->dist[np]*kpc2m)))*exp(-sigma_abss*Nh));
+				part->see_s[np]=1;
+			}
+		}
+		else if (js<M_PI/2){
+			if (part->cos_is[np]>(-K/(1.0-K))){
+                                part->Fx[np]+=((1-K)*part->cos_is[np]+K)*pow(1-K,2.0)*(L_xs/(4*M_PI*sq(part->dist[np]*kpc2m)))*exp(-sigma_abss*Nh);
+				part->Fxmax[np]+=fabs(((1-K)*max_angs+K)*pow(1-K,2.0)*(L_xs/(4*M_PI*sq(part->dist[np]*kpc2m)))*exp(-sigma_abss*Nh));
+				part->Fxmin[np]+=fabs(((1-K)*min_angs+K)*pow(1-K,2.0)*(L_xs/(4*M_PI*sq(part->dist[np]*kpc2m)))*exp(-sigma_abss*Nh));
+				part->see_s[np]=1;
+                        }
+		}
+		if (part->Fxmax[np]==0) {part->PF[np]=0;}
+		else {part->PF[np]=(part->Fxmax[np]-part->Fxmin[np])/(part->Fxmax[np]+part->Fxmin[np]);}
+		//fprintf(PF_check,"%e %e %e\n",part->PF[np],part->Fxmax[np],part->Fxmin[np]);
 	}
+	//fclose(PF_check);
 }
 
-void check_x_pulse(void *params){
+/*void check_x_pulse(void *params){
 
 	struct func_params *part= (struct func_params*)params;
         long np=0;
-	double i; //angle between the line of sight and the magnetic axis
-	double max_ang,min_ang;
+	double is;double in; //angle between the line of sight and the magnetic axis
+	double max_angs,min_angs,max_angn,min_angn;
 	double K=(2*(G_grav*1e9)*part->M_for_K*MSUN)/(part->R_for_K*sq(SI_C)); //Ratio of the Schwarzchild radius with the neutron star radius
 	double kappa=(K/(1.0-K));
 	double alpha;
+	double zeta;
 	for(np=0;np<part->Npulsars;np++){
 		if (part->alpha[np]<=M_PI/2) alpha=part->alpha[np]; // just to make it easier to read
                 else if (part->alpha[np]>M_PI/2) alpha=M_PI-part->alpha[np];
-		i=acos(part->cos_i[np]);
-		max_ang=cos(i-alpha);
-		min_ang=cos(i+alpha);
+		if (part->xi[np]<=M_PI/2.0) zeta=part->xi[np];
+                else if (part->xi[np]>M_PI/2.0) zeta=M_PI-part->xi[np];
+		is=acos(part->cos_is[np]);
+		in=acos(part->cos_in[np]);
+		max_angs=cos(is-zeta);
+		min_angs=cos(is+zeta);
+		max_angn=cos(in-zeta);
+                min_angn=cos(in+zeta);
 		if(min_ang>kappa){
 			part->PF[np]=(max_ang-min_ang)/(max_ang+min_ang+2*kappa);
 		}
-		else if( ((-kappa<min_ang) && (min_ang<kappa) && (kappa<max_ang)) || (min_ang<kappa)){
+		else if( ((-kappa<min_ang) && (min_ang<kappa) && (kappa<max_ang)) || (min_ang<-kappa)){
 			part->PF[np]=(max_ang-kappa)/(max_ang+3*kappa);
 		}
 		else if ((-kappa<min_ang) && (min_ang<kappa) && (max_ang<kappa) && (-kappa<max_ang)){
 			part->PF[np]=0;
 		}
 	}
-}
+}*/

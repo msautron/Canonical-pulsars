@@ -13,16 +13,6 @@
 #param12=${12}
 #param13=${13}
 #param14=${14}
-#param15=${15}
-#param16=${16}
-#param17=${17}
-#param18=${18}
-#param19=${19}
-#param20=${20}
-#param21=${21}
-#param22=${22}
-#param23=${23}
-#param24=${24}
 echo "Run of the normal pulsar population synthesis in progress" 
 ./YoungPop "$@"
 sed -i 's/nan/0.000000e+00/g' wint.txt

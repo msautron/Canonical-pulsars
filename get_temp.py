@@ -38,6 +38,7 @@ phi = np.radians(np.array(l))
 pix = hp.ang2pix(nside, theta, phi)
 temperatures = sky_map[pix]
 np.savetxt('temp.txt', temperatures, fmt='%.6e')
+print('Sky temperatures computed')
 
 # Convert equatorial coordinates in galactic coordinates
 #for i in range(number_of_sources):

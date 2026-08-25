@@ -4,8 +4,8 @@
 #include<gsl/gsl_randist.h>
 #include<stdbool.h>
 #define cube(a) ((a)*(a)*(a))
-#define maximum(a,b) ((a)>(b)?(a):(b))
-#define minimum(a,b) ((a)<(b)?(a):(b))
+#define max(a,b) ((a)>(b)?(a):(b))
+#define min(a,b) ((a)<(b)?(a):(b))
 #define N_MAX   10000000 // maximum number of pulsars
 #define sq(a) ((a)*(a))
 
@@ -13,24 +13,14 @@ struct func_params{
 
 	double M_for_K; //Mass of neutron stars used for the computation of compactness
 	double R_for_K; //Radius of neutron stars used for the computation of compactness
-	double A_propto; //Factor for relation between T and P, Pdot
-	double D_propto; //Factor for relation between size of hotspot and sqrt(R_NS/R_L)
+	double A_propto1; //Factor for relation between T and P, Pdot <<north>>
+	double A_propto2; //Factor for relation between T and P, Pdot <<south>>
+	double D_propto1; //Factor for relation between size of hotspot and sqrt(R_NS/R_L) <<north>>
+	double D_propto2; //Factor for relation between size of hotspot and sqrt(R_NS/R_L) <<south>>
 	double pcst; //Power for the gamma luminosity law (constant)
 	double pb; //Power for the gamma luminosity law (Magnetic field)
 	double pe; //Power for the gamma luminosity law (Spin down luminosity)
-	double t_bevol1; //Typical decay timescale for the magnetic field associated with an initial B of b0_evol1
-	double t_bevol2; //Typical decay timescale for the magnetic field associated with an initial B of b0_evol2
-	double t_bevol3; //Typical decay timescale for the magnetic field associated with an initial B of b0_evol3
-	double b0_evol1; //Typical initial magnetic field for the decay timescale associated with an initial t of t_bevol1
-        double b0_evol2; //Typical initial magnetic field for the decay timescale associated with an initial t of t_bevol2
-        double b0_evol3; //Typical initial magnetic field for the decay timescale associated with an initial t of t_bevol3
-	double pdecay1; //Probility of having an evolution similar to b0_evol1 and t_bevol1
-	double pdecay2; //Probility of having an evolution similar to b0_evol2 and t_bevol2
-	long birth_rate1; //BR for the number thres1 of pulsars
-        long birth_rate2; //BR for the remaining of the pulsars
-        long birth_rate3; //BR for the number thres2 pulsars
-	long thres1; //Number of pulsars with BR1 
-	long thres2; //Number of pulsars with BR3 
+	long birth_rate; //BR for the number thres1 of pulsars
 	int *sky_chandra; //Info about if the position of the pulsar was observed by chandra
 	int *sky_XMM; //Info about if the position of the pulsar was observed by XMM-Newton
 	double *Smin_pmps;
@@ -47,15 +37,34 @@ struct func_params{
 	double *n_mu_x;
 	double *n_mu_y;
 	double *n_mu_z;
+	double *n_nx;
+	double *n_ny;
+	double *n_nz;
+	double *n_sx;
+        double *n_sy;
+        double *n_sz;
 	double *ex;
 	double *ey;
 	double *ez;
 	double *nx;
 	double *ny;
 	double *nz;
-	double *cos_i; //Scalar product of n_mu with n_line_of_sight (n)
-	double *r_h; //Radius of the hot spot
-	double *Temp; //Temperature of the hot spot
+	double *jn; //Angle between rotation axis and <<north>> hotspot
+	double *js; //Angle between rotation axis and <<south>> hotspot 
+	double *cos_in; //Scalar product of n_in with n_line_of_sight (n)
+	double *cos_is; //Scalar product of n_is with n_line_of_sight (n)
+	double *theta_n; //saves the localisation of the <<north>> hotspot to check if it is indeed in the north
+	double *theta_s; //saves the localisation of the <<south>> hotspot to check if it is indeed in the south
+	double *phi_n; //loc <<north>> hotspot
+	double *phi_s; //loc <<south>> hotspot
+	double *mu_hot_ang1; //angle between <<north>> hotspot and magnetic axis
+	double *mu_hot_ang2; //angle between <<south>> hotspot and magnetic axis
+	int *see_n; //1 or 0 depending on if we see the <<north>> hotspot
+	int *see_s; //1 or 0 depending on if we see the <<south>> hotspot
+	double *r_hn; //Radius of the hot spot <<north>>
+	double *r_hs; //Radius of the hot spot <<south>>
+	double *Temp_n; //Temperature of the hot spot <<north>>
+	double *Temp_s; //Temperature of the hot spot <<south>>
 	double *PF; //X-ray pulsed fraction
 	double *PA;
 	double *delta; //Stores the gamma-ray peak separation
@@ -114,14 +123,11 @@ struct func_params{
 	double *w_r; //width of the radio profile
 	double *Fr; //radio flux table
 	double *Fx; //Thermal X-ray flux
+	double *Fxmax; //Max of the thermal X-ray flux
+	double *Fxmin; //Min of the termal X-ray flux
 	double *Fg; //gamma
         double *cos_a0; //a0= initial inclination angle
  	double tau_MHD_al;
- 	double tau0_B0;
-	double tau0_B0_2;
-	double tau0_B0_3;
-	//double tau0_B0_4;
-	long k_tau0_B0;
  	double alpha_d; // dB/dt = -a B^(1+alpha_d)
 	double tau_vac_al;
 	double tau_d;
@@ -137,7 +143,7 @@ struct func_params{
 #define TMILKY 13.5e9 /* Age of the Milky Way in years */
 #define KPC2CM 3.0856775807e21 /* kpc in cm */
 #define SI_I 1e38   /*Moment of Inertia in kg.m2 */ 
-#define R_NS 12000   /*Moment of Inertia in kg.m2 */ 
+#define R_NS 10000   /*Moment of Inertia in kg.m2 */ 
 #define M_PI 3.14159265358979323846 /* pi */
 #define SI_mu0 1.25663706212e-6 /* vacuum permeability in H/m */
 #define G_grav 6.67430e-20 //gravitational constant km^-3 kg^-1 s^-2

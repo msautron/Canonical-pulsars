@@ -7,6 +7,7 @@ from scipy.stats import mannwhitneyu
 from matplotlib.colors import LogNorm
 from astropy.table import Table
 import pandas as pd
+import matplotlib as mpl
 
 #Variable initialization
 P,P_dot,x,y,age,error,type_pulsar,distance,latitude,longitude,cos_alpha0,cos_alpha,Bf,z,vx,vy,vz,vx0,vy0,vz0,PA=[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[] #Refers to the simulation data
@@ -73,6 +74,12 @@ with open("init_P_B.txt","r") as f:
 
 df=pd.read_excel('3PC_Catalog_20230803.xls')
 data_3PC=Table.from_pandas(df)
+
+#Data Alex
+alpha_tab=pd.read_csv("alpha_vs_aligntime_alex.csv")
+rho_tab=pd.read_csv("rho_vs_P_alex.csv")
+
+tc_alex_sample=((alpha_tab['Period(s)'])/(2*alpha_tab['Pdot']))/(365*24*3600)
 
 #Get the flux from the 3PC catalog for the canonical pulsars
 flux_3PC_cano,g_peak_sep_obs=[],[]
@@ -247,7 +254,7 @@ for i in range(len(type_pulsar_obs2)):
 
 with open("info_supp_obs.txt","w") as f:
     f.write(f'{len(P3)}\n')
-print(f'Number of observed radio pulsars (FAST GPPS + PMPS + Arecibo): {len(P3)}')
+print(f'Number of observed radio pulsars (FAST GPPS + PMPS): {len(P3)}')
 print(f'Number of observed gamma pulsars (Fermi): {len(P4)}')
 print(f'Number of observed radio+gamma pulsars: {len(P5)}')
 
@@ -340,7 +347,7 @@ for i in range(len(P)):
     log_Pdot+=[(np.log(P_dot[i]))/(np.log(10))]
 
 #Prep death line Ruderman & Sutherland 1975
-R_NS=12000
+R_NS=10000
 mu_0=1.25663706212e-6 
 c_light=2.997924858e8
 P_dot_death,P_dot_death2=[],[]
@@ -377,7 +384,7 @@ for i in range(len(wr_cano)):
         wr_cano[i]=wr_cano[i]-int(wr_cano[i]/360.0)*360
 
 #List of magnetic obliquity angle
-alpha_all,tau_MHD_align0,tau_MHD_align,alpha_all0=[],[],[],[]
+alpha_all,tau_MHD_align0,tau_MHD_align,alpha_all0,t0_tau,tc_tau=[],[],[],[],[],[]
 for i in range(len(cos_alpha)):
     al=min(180*np.arccos(cos_alpha[i])/np.pi,180-180*np.arccos(cos_alpha[i])/np.pi)
     al0=min(180*np.arccos(cos_alpha0[i])/np.pi,180-180*np.arccos(cos_alpha0[i])/np.pi)
@@ -385,6 +392,72 @@ for i in range(len(cos_alpha)):
     alpha_all0.append(al0)
     tau_MHD_align0.append(np.log10(((Inertia*mu_0*c_light**3*P0_sim[i]**2*np.sin(al0*np.pi/180)**2)/(16*np.pi**3*R_NS**6*B0_sim[i]**2*np.cos(al0*np.pi/180)**4))/(365*24*3600))) #in yr + logscale
     tau_MHD_align.append(np.log10(((Inertia*mu_0*c_light**3*P[i]**2*np.sin(al*np.pi/180)**2)/(16*np.pi**3*R_NS**6*Bf[i]**2*np.cos(al*np.pi/180)**4))/(365*24*3600))) #in yr + logscale
+
+tau_MHD_alex_sample=((Inertia*mu_0*c_light**3*alpha_tab['Period(s)']**2*np.sin(alpha_tab['Alpha(deg)']*np.pi/180)**2)/(16*np.pi**3*R_NS**6*(((Inertia*mu_0*c_light**3)/(16*np.pi**3*R_NS**6*(1+np.sin(alpha_tab['Alpha(deg)']*np.pi/180)**2)))*alpha_tab['Period(s)']*alpha_tab['Pdot'])**1*np.cos(alpha_tab['Alpha(deg)']*np.pi/180)**4))/(365*24*3600)
+ratio_tc_tau_MHD_alex=tc_alex_sample/tau_MHD_alex_sample
+ratio_tau_MHD_tc_alex=tau_MHD_alex_sample/tc_alex_sample
+
+for i in range(len(age)):
+    tc_tau.append((charac_age[i])/(10**tau_MHD_align[i])) #Ratio age/tau_MHD_align
+
+tau_tc=[]
+for i in range(len(age)):
+    tau_tc.append((10**tau_MHD_align[i])/(charac_age[i])) #Ratio tau_MHD_align/age_charac
+
+#Simulated sample
+countless1e5,count1e5,count1e6,count1e7,count1e8,count1e9,count1e10=0,0,0,0,0,0,0
+for i in range(len(tau_MHD_align)):
+    if tau_MHD_align[i]<5:
+        countless1e5+=1
+    elif tau_MHD_align[i]>=5 and tau_MHD_align[i]<6:
+        count1e5+=1
+    elif tau_MHD_align[i]>=6 and tau_MHD_align[i]<7:
+        count1e6+=1
+    elif tau_MHD_align[i]>=7 and tau_MHD_align[i]<8:
+        count1e7+=1
+    elif tau_MHD_align[i]>=8 and tau_MHD_align[i]<9:
+        count1e8+=1
+    elif tau_MHD_align[i]>=9 and tau_MHD_align[i]<10:
+        count1e9+=1
+    elif tau_MHD_align[i]>=10:
+        count1e10+=1
+
+print(f'----------SIMULATION-----------')
+print(f'Proportion of pulsars with an alignment timescale below 1e5 yr: {countless1e5/len(tau_MHD_align)}')
+print(f'Proportion of pulsars with an alignment timescale between 1e5 and 1e6 yr: {count1e5/len(tau_MHD_align)}')
+print(f'Proportion of pulsars with an alignment timescale between 1e6 and 1e7 yr: {count1e6/len(tau_MHD_align)}')
+print(f'Proportion of pulsars with an alignment timescale between 1e7 and 1e8 yr: {count1e7/len(tau_MHD_align)}')
+print(f'Proportion of pulsars with an alignment timescale between 1e8 and 1e9 yr: {count1e8/len(tau_MHD_align)}')
+print(f'Proportion of pulsars with an alignment timescale between 1e9 and 1e10 yr: {count1e9/len(tau_MHD_align)}')
+print(f'Proportion of pulsars with an alignment timescale above 1e10 yr: {count1e10/len(tau_MHD_align)}')
+
+#Observed sample
+#countless1e5,count1e5,count1e6,count1e7,count1e8,count1e9,count1e10=0,0,0,0,0,0,0
+#tau_MHD_alex_sample=np.array(tau_MHD_alex_sample)
+#for i in range(len(tau_MHD_alex_sample)):
+#    if tau_MHD_alex_sample[i]<1e5:
+#        countless1e5+=1
+#    elif tau_MHD_alex_sample[i]>=1e5 and tau_MHD_alex_sample[i]<1e6:
+#        count1e5+=1
+#    elif tau_MHD_alex_sample[i]>=1e6 and tau_MHD_alex_sample[i]<1e7:
+#        count1e6+=1
+#    elif tau_MHD_alex_sample[i]>=1e7 and tau_MHD_alex_sample[i]<1e8:
+#        count1e7+=1
+#    elif tau_MHD_alex_sample[i]>=1e8 and tau_MHD_alex_sample[i]<1e9:
+#        count1e8+=1
+#    elif tau_MHD_alex_sample[i]>=1e9 and tau_MHD_alex_sample[i]<1e10:
+#        count1e9+=1
+#    elif tau_MHD_alex_sample[i]>=1e10:
+#        count1e10+=1
+
+#print(f'----------OBSERVATION-----------')
+#print(f'Proportion of pulsars with an alignment timescale below 1e5 yr: {countless1e5/len(tau_MHD_alex_sample)}')
+#print(f'Proportion of pulsars with an alignment timescale between 1e5 and 1e6 yr: {count1e5/len(tau_MHD_alex_sample)}')
+#print(f'Proportion of pulsars with an alignment timescale between 1e6 and 1e7 yr: {count1e6/len(tau_MHD_alex_sample)}')
+#print(f'Proportion of pulsars with an alignment timescale between 1e7 and 1e8 yr: {count1e7/len(tau_MHD_alex_sample)}')
+#print(f'Proportion of pulsars with an alignment timescale between 1e8 and 1e9 yr: {count1e8/len(tau_MHD_alex_sample)}')
+#print(f'Proportion of pulsars with an alignment timescale between 1e9 and 1e10 yr: {count1e9/len(tau_MHD_alex_sample)}')
+#print(f'Proportion of pulsars with an alignment timescale above 1e10 yr: {count1e10/len(tau_MHD_alex_sample)}')
 
 #Lists depending on the pulsar emission type
 P_radio,P_dot_radio,x_radio,y_radio,age_radio,error_radio,distance_radio=[],[],[],[],[],[],[]
@@ -606,18 +679,18 @@ cdf4=cum_counts_4/total_count4
 #print(f"p_value of P={p_value_all2}")
 
 #KS test 1D python (gamma-ray only population)
-KS_test=kstest(P_dot_gamma,data_3PC_filtered['P1'])
-test_stat=KS_test.statistic
-p_value=KS_test.pvalue
-print("----GAMMA ONLY PULSARS----\n")
-print(f"d_value of Pdot KS test for the gamma only pulsars= {test_stat}")
-print(f"p_value of Pdot for the gamma only pulsars={p_value}")
+#KS_test=kstest(P_dot_gamma,data_3PC_filtered['P1'])
+#test_stat=KS_test.statistic
+#p_value=KS_test.pvalue
+#print("----GAMMA ONLY PULSARS----\n")
+#print(f"d_value of Pdot KS test for the gamma only pulsars= {test_stat}")
+#print(f"p_value of Pdot for the gamma only pulsars={p_value}")
 
-KS_test=kstest(P_gamma,data_3PC_filtered['P0'])
-test_stat=KS_test.statistic
-p_value=KS_test.pvalue
-print(f"d_value of P KS test for the gamma only pulsars= {test_stat}")
-print(f"p_value of P for the gamma only pulsars={p_value}")
+#KS_test=kstest(P_gamma,data_3PC_filtered['P0'])
+#test_stat=KS_test.statistic
+#p_value=KS_test.pvalue
+#print(f"d_value of P KS test for the gamma only pulsars= {test_stat}")
+#print(f"p_value of P for the gamma only pulsars={p_value}")
 
 #KS test 1D python (radio/gamma-ray population)
 #KS_test=kstest(P_dot_radio_gamma,P_dot5)
@@ -634,18 +707,18 @@ print(f"p_value of P for the gamma only pulsars={p_value}")
 #print(f"p_value of P for the radio/gamma pulsars={p_value}")
 
 #KS test 1D python (radio population)
-KS_test=kstest(P_dot_radio,P_dot3)
-test_stat=KS_test.statistic
-p_value=KS_test.pvalue
-print("----ALL RADIO ONLY PULSARS----\n")
-print(f"d_value of Pdot KS test for the radio only pulsars= {test_stat}")
-print(f"p_value of Pdot for the radio only pulsars={p_value}")
+#KS_test=kstest(P_dot_radio,P_dot3)
+#test_stat=KS_test.statistic
+#p_value=KS_test.pvalue
+#print("----ALL RADIO ONLY PULSARS----\n")
+#print(f"d_value of Pdot KS test for the radio only pulsars= {test_stat}")
+#print(f"p_value of Pdot for the radio only pulsars={p_value}")
 
-KS_test=kstest(P_radio,P3)
-test_stat=KS_test.statistic
-p_value=KS_test.pvalue
-print(f"d_value of P KS test for the radio only pulsars= {test_stat}")
-print(f"p_value of P for the radio only pulsars={p_value}")
+#KS_test=kstest(P_radio,P3)
+#test_stat=KS_test.statistic
+#p_value=KS_test.pvalue
+#print(f"d_value of P KS test for the radio only pulsars= {test_stat}")
+#print(f"p_value of P for the radio only pulsars={p_value}")
 
 #Plot the CDF
 plt.plot(bin_edges[1:], cdf1, marker='o', linestyle='-',label='Simulation data')
@@ -752,7 +825,7 @@ plt.xscale('log')
 #plt.title("Spin period derivative - Spin period diagram")
 plt.xlabel(r'$P$ (s)')
 plt.ylabel(r'$\dot{P} \ (s.s^{-1})$')
-plt.legend(loc='lower left',fontsize='x-small')
+plt.legend(loc='lower right',fontsize='x-small')
 plt.savefig('P_Pdot_plot.pdf',dpi=300)
 plt.close()
 
@@ -1163,12 +1236,12 @@ plt.ylabel('p.d.f')
 plt.savefig('histo_gpeaksep.pdf',dpi=300)
 plt.close()
 
-KS_test=kstest(g_peak_sep_sim,g_peak_sep_obs)
-test_gpeak=KS_test.statistic
-p_value_gpeak=KS_test.pvalue
-print("----KS TEST GAMMA-RAY PEAK SEPARATION----\n")
-print(f"d_value={test_gpeak}")
-print(f"p_value={p_value_gpeak}")
+#KS_test=kstest(g_peak_sep_sim,g_peak_sep_obs)
+#test_gpeak=KS_test.statistic
+#p_value_gpeak=KS_test.pvalue
+#print("----KS TEST GAMMA-RAY PEAK SEPARATION----\n")
+#print(f"d_value={test_gpeak}")
+#print(f"p_value={p_value_gpeak}")
 
 #Rho histogram
 plt.figure(31)
@@ -1331,24 +1404,221 @@ plt.savefig('zeta_chi_elim2.pdf',dpi=300)
 plt.close()
 
 #chi=f(tau_c)
-plt.figure(37)
-plt.scatter(log_charac_age,alpha_all,c='red',marker='o',s=5,label='Detected pulsar (simulation)')
-plt.ylabel(r'$\chi$ in °')
-plt.legend(fontsize='small')
-plt.xlabel(r'$\log\left(\tau_c\right)$ ($\tau_c$ in yr)')
-plt.xlim(1,10)
-plt.ylim(0,90)
-plt.savefig('chi_f_tau_c.pdf',dpi=300)
-plt.close()
+#plt.figure(37)
+#plt.scatter(charac_age,alpha_all,c='blue',marker='o',s=5,label='Detected pulsar (simulation)')
+#plt.scatter(tc_alex_sample,alpha_tab['Alpha(deg)'],c='red',marker='o',s=5,label='Observed sample')
+#plt.ylabel(r'$\alpha$ in °')
+#plt.legend(fontsize='small')
+#plt.xlabel(r'$\tau_c$ (yr)')
+#plt.xlim(1,10)
+#plt.xscale('log')
+#plt.ylim(0,90)
+#plt.savefig('chi_f_tau_c.pdf',dpi=300)
+#plt.close()
 
 #chi=f(tau^MHD_align)
-plt.figure(38)
-plt.scatter(tau_MHD_align0,alpha_all0,c='red',marker='o',s=5,label=r'$\tau_{\rm align}^{\rm MHD}$ computed with birth values')
-plt.scatter(tau_MHD_align,alpha_all,c='blue',marker='o',s=5,label=r'$\tau_{\rm align}^{\rm MHD}$ computed with today values')
-plt.ylabel(r'$\chi$ in °')
+#plt.figure(38)
+#plt.scatter(np.log10(tau_MHD_alex_sample),alpha_tab['Alpha(deg)'],c='red',marker='o',s=5,label=r'Observed sample',zorder=2)
+#plt.scatter(tau_MHD_align,alpha_all,c='blue',marker='o',s=5,label=r'Simulation',zorder=1)
+#plt.ylabel(r'$\chi$ in °')
+#plt.legend(fontsize='small')
+#plt.xlabel(r'$\log\left(\tau_{\rm align}^{\rm MHD}\right)$ ($\tau_{\rm align}^{\rm MHD}$ in yr)')
+#plt.xlim(1,10)
+#plt.ylim(0,90)
+#plt.savefig('chi_f_tau_MHD.pdf',dpi=300)
+#plt.close()
+
+#P=f(tau^MHD_align)
+#plt.figure(39)
+#plt.scatter(tau_MHD_align0,P0_sim,c='red',marker='o',s=5,label=r'$\tau_{\rm align}^{\rm MHD}$ computed with birth values')
+#plt.scatter(tau_MHD_align,P,c='blue',marker='o',s=5,label=r'$\tau_{\rm align}^{\rm MHD}$ computed with today values')
+#plt.ylabel(r'$P$ in s')
+#plt.legend(fontsize='small')
+#plt.xlabel(r'$\log\left(\tau_{\rm align}^{\rm MHD}\right)$ ($\tau_{\rm align}^{\rm MHD}$ in yr)')
+#plt.xlim(1,10)
+#plt.ylim(1e-2,20)
+#plt.yscale('log')
+#plt.savefig('P_f_tau_MHD.pdf',dpi=300)
+#plt.close()
+
+#chi=f(tc/tau^MHD_align)
+#plt.figure(40)
+#plt.scatter(tc_tau,alpha_all,c='blue',marker='o',s=5,label=r'Simulation (with today values)')
+#plt.scatter(ratio_tc_tau_MHD_alex,alpha_tab['Alpha(deg)'],c='red',marker='o',s=5,label=r'Observed sample')
+#plt.ylabel(r'$\alpha$ in °')
+#plt.legend(fontsize='small')
+#plt.xlabel(r'$\frac{\tau_c}{\tau_{\rm align}^{\rm MHD}}$')
+#plt.xlim(1e-11,1e3)
+#plt.xscale('log')
+#plt.ylim(0,90)
+#plt.savefig('chi_f_tc_tau_MHD.pdf',dpi=300)
+#plt.close()
+
+#chi=f(P)
+#plt.figure(41)
+#plt.scatter(np.array(age),alpha_all,c='red',marker='o',s=5,label='Detected pulsar (simulation)')
+#plt.ylabel(r'$\chi$ in °')
+#plt.legend(fontsize='small')
+#plt.xlabel(r'$P$ (s)')
+#plt.xlabel(r'age (yr)')
+#plt.xlim(1,10)
+#plt.xscale('log')
+#plt.ylim(0,95)
+#plt.savefig('chi_f_P.pdf',dpi=300)
+#plt.close()
+
+#rho vs 1/sqrt(P) (Alex data)
+#fit
+#mask=(rho_tab['Rho(deg)'] < 90)
+#rho_tab=rho_tab[mask]
+#a_rho,b_rho,r_value3,p_value3,std_err3=linregress(1/np.sqrt(rho_tab['Period(s)']),rho_tab['Rho(deg)']*np.pi/180)
+#reglinx3 = np.linspace(min(1/np.sqrt(rho_tab['Period(s)'])), max(1/np.sqrt(rho_tab['Period(s)'])), num=len(rho_tab['Rho(deg)']))
+#regliny3 = a_rho * reglinx3 + b_rho
+#residuals_y3= rho_tab['Rho(deg)']*np.pi/180 - regliny3
+#sigma_y3 = np.sqrt(np.sum(residuals_y3**2) / (len(rho_tab['Rho(deg)']) - 2))
+#Sxx3=np.sum(((1/np.sqrt(rho_tab['Period(s)'])) - np.mean(1/np.sqrt(rho_tab['Period(s)'])))**2)
+#std_err_b3=sigma_y3*np.sqrt((1.0/len(rho_tab['Period(s)']))+((np.mean(1/np.sqrt(rho_tab['Period(s)'])))**2/Sxx3))
+#a_rhoplus=a_rho+std_err3
+#b_rhoplus=b_rho+std_err_b3
+#a_rhominus=a_rho-std_err3
+#b_rhominus=b_rho-std_err_b3
+#reglinyplus = a_rhoplus * reglinx3 + b_rhoplus
+#reglinyminus = a_rhominus * reglinx3 + b_rhominus
+
+#h_em=(2*a_rho**2*c_light/(9*np.pi))*1e-3
+#h_em_min=(2*a_rhoplus**2*c_light/(9*np.pi))*1e-3
+#h_em_plus=(2*a_rhominus**2*c_light/(9*np.pi))*1e-3
+#print(h_em)
+#print(h_em_min)
+#print(h_em_plus)
+#plot
+#plt.figure(42)
+#plt.scatter(1/np.sqrt(rho_tab['Period(s)']),rho_tab['Rho(deg)']*np.pi/180,c='black',marker='o',s=5,label='Observed sample')
+#plt.plot(reglinx3,regliny3,linestyle='-',label=r'$\rho$ = (%.2f$\pm$%.2f) $1/\sqrt{P}$ + (%.2f$\pm$%.2f)' % (a_rho,std_err3,b_rho,std_err_b3),c='blue')
+#plt.ylabel(r'$\rho$ (rad)')
+#plt.legend(fontsize='small')
+#plt.xlabel(r'$1/\sqrt{P}$ ($P$ in s)')
+#plt.xlim(1,10)
+#plt.xscale('log')
+#plt.ylim(0,180)
+#plt.savefig('rho_p_alex.pdf',dpi=300)
+#plt.close()
+
+#cos(alpha) histogram with observed sample of Alex
+#cos_alpha2=cos_alpha.copy()
+#for i in range(len(cos_alpha)):
+#    if (np.arccos(cos_alpha[i])>np.pi/2):
+#        cos_alpha2[i]=-cos_alpha[i]
+#plt.figure(43)
+#plt.hist(cos_alpha2,bins=20,range=(0,1),edgecolor='blue',color='blue',alpha=0.5,histtype='step',density=True,label=r'Simulation')
+#plt.hist(np.cos(alpha_tab['Alpha(deg)']*np.pi/180),bins=20,range=(0,1),edgecolor='red',color='red',alpha=0.5,histtype='step',density=True,label=r'Observed sample')
+#plt.legend()
+#plt.xlabel(r'cos($\alpha$)')
+#plt.ylabel('p.d.f')
+#plt.savefig('histo_cosalpha_alex_comp.pdf')
+#plt.close()
+
+#histogram hem for Alex sample
+#h_em_alex=((2*(rho_tab['Rho(deg)']*np.pi/180)**2*rho_tab['Period(s)']*c_light)/(9*np.pi))*1e-3
+#count_big_hem=((h_em_alex<562) & (h_em_alex>390)).sum()
+#count_less_1000=(h_em_alex<1000).sum()
+#print(count_big_hem)
+#plt.figure(44)
+#plt.hist(h_em_alex,bins=10,range=(0,2000),edgecolor='blue',color='blue',alpha=0.5,histtype='step',label='Observed sample')
+#plt.legend()
+#plt.xlabel(r'$h_{\rm em}$ (km)')
+#plt.ylabel(r'Number of pulsars')
+#plt.savefig('h_em_alex.pdf',dpi=300)
+#plt.close()
+
+#tau_MHD=f(tc)
+#chi=f(tau^MHD_align)
+#norm=mpl.colors.Normalize(vmin=0,vmax=90)
+#plt.figure(45)
+#sc1=plt.scatter(tc_alex_sample,np.log10(tau_MHD_alex_sample),c=alpha_tab['Alpha(deg)'],cmap='plasma',norm=norm,marker='o',s=5,label=r'Observed sample',zorder=2)
+#sc2=plt.scatter(charac_age,tau_MHD_align,c=alpha_all,marker='o',cmap='plasma',norm=norm,s=5,label=r'Simulation',zorder=1)
+#cbar=plt.colorbar(sc1)
+#cbar.set_label(r'$\alpha$ in °')
+#plt.scatter(tc_alex_sample,np.log10(tau_MHD_alex_sample),c='red',marker='o',s=5,label=r'Observed sample',zorder=2)
+#plt.scatter(charac_age,tau_MHD_align,c='blue',marker='o',s=5,label=r'Simulation',zorder=1)
+#plt.xlabel(r'$\tau_c$ in yr')
+#plt.legend(fontsize='small')
+#plt.ylabel(r'$\log\left(\tau_{\rm align}^{\rm MHD}\right)$ ($\tau_{\rm align}^{\rm MHD}$ in yr)')
+#plt.ylim(2,15)
+#plt.xlim(1e3,1e10)
+#plt.xscale('log')
+#plt.savefig('tc_tauMHD.pdf',dpi=300)
+#plt.close()
+
+#log(rho) vs log(P) (Alex data)
+#fit
+#a_rho,b_rho,r_value3,p_value3,std_err3=linregress(np.log10(rho_tab['Period(s)']),np.log10(rho_tab['Rho(deg)']*np.pi/180))
+#reglinx3 = np.logspace(min(np.log10(rho_tab['Period(s)'])), max(np.log10(rho_tab['Period(s)'])), num=len(rho_tab['Rho(deg)']))
+#regliny3 = 10**(a_rho * np.log10(reglinx3) + b_rho)
+#residuals_y3= np.log10(rho_tab['Rho(deg)']*np.pi/180) - np.log10(regliny3)
+#sigma_y3 = np.sqrt(np.sum(residuals_y3**2) / (len(rho_tab['Rho(deg)']) - 2))
+#Sxx3=np.sum(((np.log10(rho_tab['Period(s)'])) - np.mean(np.log10(rho_tab['Period(s)'])))**2)
+#std_err_b3=sigma_y3*np.sqrt((1.0/len(rho_tab['Period(s)']))+((np.mean(np.log10(rho_tab['Period(s)'])))**2/Sxx3))
+#a_rhoplus=a_rho+std_err3
+#b_rhoplus=b_rho+std_err_b3
+#a_rhominus=a_rho-std_err3
+#b_rhominus=b_rho-std_err_b3
+#reglinyplus = 10**(a_rhoplus * np.log10(reglinx3) + b_rhoplus)
+#reglinyminus = 10**(a_rhominus * np.log10(reglinx3) + b_rhominus)
+
+#h_em=((10**(2*b_rho)*2*c_light)/(9*np.pi))*1e-3
+#h_em_min=((10**(2*b_rhoplus)*2*c_light)/(9*np.pi))*1e-3
+#h_em_plus=((10**(2*b_rhominus)*2*c_light)/(9*np.pi))*1e-3
+#print(h_em)
+#print(h_em_min)
+#print(h_em_plus)
+#plot
+#plt.figure(46)
+#plt.scatter(rho_tab['Period(s)'],rho_tab['Rho(deg)']*np.pi/180,c='black',marker='o',s=5,label='Observed sample')
+#plt.plot(reglinx3,regliny3,linestyle='-',label=r'$\log(\rho)$ = (%.2f$\pm$%.2f) $\log({P})$ + (%.2f$\pm$%.2f)' % (a_rho,std_err3,b_rho,std_err_b3),c='blue')
+#plt.fill_between(reglinx3,reglinyminus,reglinyplus,color='blue',alpha=0.2)
+#plt.ylabel(r'$\rho$ (rad)')
+#plt.legend(fontsize='small')
+#plt.xlabel(r'$P$ (s)')
+#plt.xscale('log')
+#plt.yscale('log')
+#plt.xlim(1,10)
+#plt.xscale('log')
+#plt.ylim(0,180)
+#plt.savefig('rho_p_alex2.pdf',dpi=300)
+#plt.close()
+
+#histo tau_MHD_align comp with uniform and isotrope alpha distribution
+#alpha_uni=np.random.uniform(0,91,2000)*np.pi/180.0
+#cos_alpha_uni=np.random.uniform(0,1.0,2000)
+#alpha_iso=np.arccos(cos_alpha_uni)
+#tau_MHD_align_alpha_uni=(2*np.sin(alpha_uni)**2*(1.0+np.sin(alpha_uni)**2))/(np.cos(alpha_uni)**4)
+#tau_MHD_align_alpha_iso=(2*(1.0-cos_alpha_uni**2)*(2.0-cos_alpha_uni**2))/(cos_alpha_uni**4)
+#plt.figure(47)
+#plt.hist(tau_tc,bins=20,range=(0,20),edgecolor='blue',color='blue',alpha=0.5,histtype='step',label='Simulation',density=True)
+#plt.hist(tau_MHD_align_alpha_uni,bins=20,range=(0,20),edgecolor='red',color='red',alpha=0.5,histtype='step',label=r'$\alpha$ from uniform distribution',density=True)
+#plt.hist(tau_MHD_align_alpha_iso,bins=20,range=(0,20),edgecolor='red',color='red',alpha=0.5,histtype='step',label=r'$\cos\alpha$ from uniform distribution',density=True)
+#plt.legend()
+#plt.xlabel(r'$\tau_{\rm align}^{\rm MHD}/\tau_c$')
+#plt.ylabel(r'p.d.f')
+#plt.savefig('histo_tau_MHD_comp_alpha_iso.pdf',dpi=300)
+#plt.close()
+
+#KS_test=kstest(tau_tc,tau_MHD_align_alpha_uni)
+#test_stat_all2=KS_test.statistic
+#p_value_all2=KS_test.pvalue
+#print(f"p_value of P={p_value_all2}")
+
+#alpha=f(tau_MHD_align/tau_c)
+plt.figure(48)
+plt.scatter(tau_tc,charac_age,c='blue',marker='o',s=5,label='Detected pulsar (simulation)')
+plt.scatter(ratio_tau_MHD_tc_alex,tc_alex_sample,c='red',marker='o',s=5,label='Observed sample')
+plt.axvline(x=20/3,color='purple',linestyle='--',linewidth=2,label=r'Mean value for an isotropic distribution of $\alpha$')
+plt.axvline(x=2,color='green',linestyle='--',linewidth=2,label=r'Mean value for a uniform distribution of $\alpha$')
+plt.ylabel(r'$\tau_c$ (yr)')
 plt.legend(fontsize='small')
-plt.xlabel(r'$\log\left(\tau_{\rm align}^{\rm MHD}\right)$ ($\tau_{\rm align}^{\rm MHD}$ in yr)')
-plt.xlim(1,10)
-plt.ylim(0,90)
-plt.savefig('chi_f_tau_MHD.pdf',dpi=300)
+plt.xlabel(r'$\tau_{\rm align}^{\rm MHD}/\tau_c$ (yr)')
+plt.xlim(0,20)
+plt.yscale('log')
+plt.savefig('chi_f_ratio_tauMHD_tau_c.pdf',dpi=300)
 plt.close()

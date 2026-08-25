@@ -17,4 +17,4 @@ int radio_flux(void *params);
 int get_fomega(void *params);
 int gamma_flux(void *params);
 void X_flux(void *params);
-void check_x_pulse(void *params);
+//void check_x_pulse(void *params);

@@ -23,18 +23,11 @@ int birth(void *params){//generates Npulsars with an initial period, B and age
 	double P0;
 	double pdf_val,comp_val;
         long np=0;
-	//long thres1=8000;
-	//long thres2=50000;
-	//double log_age=9;
 
            	while(np<part->Npulsars){  
 
                         //part->Pinit[np]=part->p_mean+gsl_ran_gaussian_ziggurat(part->r,part->sigma_p); //Normal distribution from most of the litterature
 			part->Pinit[np]=pow(10,log10(part->p_mean)+gsl_ran_gaussian_ziggurat(part->r,part->sigma_p)); //Log normal distribution found in Igoshev et al. (2022)
-			/*if (part->Pinit[np] < 0){
-		            continue;	
-			}*/
-
 		        //Weibull distribution for the spin period Du et al. (2024) 
 		        /*while (sample==false){
                                 P0=(200e-3-1e-3)*gsl_rng_uniform(part->r)+1e-3;
@@ -48,21 +41,8 @@ int birth(void *params){//generates Npulsars with an initial period, B and age
 			//Magnetic field initialization
                         part->Binit[np]=pow(10,log10(part->b_mean)+gsl_ran_gaussian_ziggurat(part->r,part->sigma_b));
 			//Age initilization
-			if(np<part->thres1){
-		        	part->age_pulsar[np]  =   part->birth_rate1*np*365*24*3600+1e3*365*24*3600; //s  
-			}
-			else if(np>=part->thres1 && np<(part->Npulsars-part->thres2)){
-				part->age_pulsar[np]  =   part->birth_rate2*np*365*24*3600+1e3*365*24*3600; //s
-			}
-			else if(np>=(part->Npulsars-part->thres2)) {
-				part->age_pulsar[np]  =   part->birth_rate3*np*365*24*3600+1e3*365*24*3600; //s
-			}
-		        /*while(log_age>=7.7){	
-				log_age  =   5.5+gsl_ran_gaussian_ziggurat(part->r,3.5);
-			}
-			part->age_pulsar[np]=pow(10,log_age)*365*24*3600;
-			log_age=9;*/
-		        //part->age_pulsar[np]=(2e8*gsl_rng_uniform(part->r))*365*24*3600;	
+		        part->age_pulsar[np]  =   part->birth_rate*np*365*24*3600+1e2*365*24*3600; //s  
+			//part->age_pulsar[np]=9e7*gsl_rng_uniform(part->r)*365*24*60*60;
 		        np++;
                 }
        return(0);

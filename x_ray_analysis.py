@@ -12,7 +12,7 @@ from astropy.coordinates import SkyCoord
 import astropy.units as u
 from mocpy import MOC
 
-#Get data from X-ray catalog
+#Get data from X-ray catalog (no BB column)
 df=pd.read_excel('X_ray_data_wu_et_al.ods')
 #df["Pdot"]=(df["Pdot"].str.replace("\u00D710","E",regex=False).astype(float))
 #df["LX"]=(df["LX"].str.replace("\u00D710","E",regex=False).astype(str))
@@ -36,25 +36,73 @@ data_X['LX']=data_X['LX']*1e-7
 #df.to_excel("X_ray_data_wu_et_al.ods", engine="odf", index=False)
 #print(data_X)
 
-#Count the pulsars (observed)
-nb_X,nb_RX,nb_GX,nb_RGX,nb_pulse=0,0,0,0,0
-for i in range(len(data_X["P"])):
-    if data_X['X_pulsation'][i]==1:
-        nb_pulse+=1
-    if data_X["Type"][i]==4:
-        nb_X+=1
-    elif data_X["Type"][i]==1:
-        nb_RX+=1
-    elif data_X["Type"][i]==2:
-        nb_GX+=1
-    elif data_X["Type"][i]==3:
-        nb_RGX+=1
+#Get data from X-ray catalog (BB column)
+df2=pd.read_excel('X_ray_data_wu_et_al_colspec.ods')
+#df["Pdot"]=(df["Pdot"].str.replace("\u00D710","E",regex=False).astype(float))
+#df["LX"]=(df["LX"].str.replace("\u00D710","E",regex=False).astype(str))
+#df["LSX"]=(df["LSX"].str.replace("\u00D710","E",regex=False).astype(str))
+#df["LHX"]=(df["LHX"].str.replace("\u00D710","E",regex=False).astype(str))
+#df["LG"]=(df["LG"].str.replace("\u00D710","E",regex=False).astype(str))
+data_X2=Table.from_pandas(df2)
+for i in range(len(data_X2['Sorting_distance'])):
+    if str(data_X2['Sorting_distance'][i])[0]!='<':
+        data_X2['Sorting_distance'][i]=float(data_X2['Sorting_distance'][i])
+    else:
+        val=str(data_X2['Sorting_distance'][i])[1:]
+        data_X2['Sorting_distance'][i]=val
+        data_X2['Sorting_distance'][i]=float(data_X2['Sorting_distance'][i])
+mask=data_X2['Sorting_distance'] < 25
+data_X2_filtered=data_X2[mask]
+data_X2=data_X2_filtered
+data_X2['LX_upper_limit'] = [str(x).startswith('<') for x in data_X2['LX']]
+data_X2['LX'] = [float(str(x).replace('<','')) for x in data_X2['LX']]
+data_X2['LX']=data_X2['LX']*1e-7
+mask=data_X2['Spectrum_BB'] == 1
+data_X2_fil=data_X2[mask]
+data_X2=data_X2_fil
+#df.to_excel("X_ray_data_wu_et_al.ods", engine="odf", index=False)
+#print(data_X2)
+
+#Count the pulsars (observed) -> without filter on BB spectrum component 
+#nb_X,nb_RX,nb_GX,nb_RGX,nb_pulse=0,0,0,0,0
+#for i in range(len(data_X["P"])):
+#    if data_X['X_pulsation'][i]==1:
+#        nb_pulse+=1
+#    if data_X["Type"][i]==4:
+#        nb_X+=1
+#    elif data_X["Type"][i]==1:
+#        nb_RX+=1
+#    elif data_X["Type"][i]==2:
+#        nb_GX+=1
+#    elif data_X["Type"][i]==3:
+#        nb_RGX+=1
+#print(f'----OBSERVATIONS----')
+#print(f'Number of X-ray only pulsars: {nb_X}\nNumber of Radio/X-ray pulsars: {nb_RX}\nNumber of gamma-ray/X-ray pulsars: {nb_GX}\nNumber of Radio/Gamma-ray/X-ray pulsars: {nb_RGX}')
+#print(f'Number of pulsating X-ray sources: {nb_pulse}')
+
+#with open("info_supp_obs.txt","a") as f:
+#    f.write(f'{nb_GX+nb_RGX}\n{nb_pulse}\n')
+
+#Count the pulsars (observed) -> with filter on BB spectrum component
+nb_X2,nb_RX2,nb_GX2,nb_RGX2,nb_pulse2=0,0,0,0,0
+for i in range(len(data_X2["P"])):
+    if data_X2['X_pulsation'][i]==1:
+        nb_pulse2+=1
+    if data_X2["Type"][i]==4:
+        nb_X2+=1
+    elif data_X2["Type"][i]==1:
+        nb_RX2+=1
+    elif data_X2["Type"][i]==2:
+        nb_GX2+=1
+    elif data_X2["Type"][i]==3:
+        nb_RGX2+=1
 print(f'----OBSERVATIONS----')
-print(f'Number of X-ray only pulsars: {nb_X}\nNumber of Radio/X-ray pulsars: {nb_RX}\nNumber of gamma-ray/X-ray pulsars: {nb_GX}\nNumber of Radio/Gamma-ray/X-ray pulsars: {nb_RGX}')
-print(f'Number of pulsating X-ray sources: {nb_pulse}')
+print(f'Number of X-ray only pulsars: {nb_X2}\nNumber of Radio/X-ray pulsars: {nb_RX2}\nNumber of gamma-ray/X-ray pulsars: {nb_GX2}\nNumber of Radio/Gamma-ray/X-ray pulsars: {nb_RGX2}')
+print(f'Number of pulsating X-ray sources: {nb_pulse2}')
 
 with open("info_supp_obs.txt","a") as f:
-    f.write(f'{nb_GX+nb_RGX}\n{nb_pulse}\n')
+    f.write(f'{nb_GX2+nb_RGX2}\n{nb_pulse2}\n')
+
 #Simulation data
 P,P_dot,x,y,age,error,type_pulsar,distance,latitude,longitude,cos_alpha0,cos_alpha,Bf,z,vx,vy,vz,vx0,vy0,vz0,PA=[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[] #Refers to the simulation data
 var,var2='',''
@@ -71,11 +119,19 @@ with open("x_file.txt","r") as f:
 with open("x_file2.txt","r") as f:
     data2=re.findall(reg_3,f.read())
 
+with open("PF_check.txt","r") as f:
+    data_PF=re.findall(reg_3,f.read())
+
+Fxmax,Fxmin,PF=[],[],[]
+for i in range(int(len(data_PF)/3)):
+    PF.append(float(data_PF[3*i+0]))
+    Fxmax.append(float(data_PF[3*i+1]))
+    Fxmin.append(float(data_PF[3*i+2]))
+
 for i in range(len(data_type)):
     var2+=data_type[i][1]
     type_pulsar+=[int(var2)]
     var2=''
-
 
 for i in range(len(data)):
     for j in range(len(data[i])-1):
@@ -127,18 +183,62 @@ alpha=[]
 for i in range(len(cos_alpha)):
     alpha.append(min(180*np.arccos(cos_alpha[i])/np.pi,180-180*np.arccos(cos_alpha[i])/np.pi))
 
-T,r_h,cos_i,F_x,xi=[],[],[],[],[]
-for i in range(int(len(data2)/5)):
-    cos_i.append(float(data2[5*i])) #cos of the angle between magnetic axis and the line of sight
-    T.append(float(data2[5*i+1])) #Temperature of the hot spot in K
-    r_h.append(float(data2[5*i+2])) #Radius of the hot spot in meter
-    F_x.append(float(data2[5*i+3])) #Flux in thermal X-ray in W.m^-2
-    xi.append(float(data2[5*i+4])*180/np.pi) #Viewing angle in degree
+T_n,T_s,r_hn,cos_in,F_x,xi,r_hs=[],[],[],[],[],[],[]
+cos_is,theta_n,phi_n,theta_s,phi_s,mu_hot_ang1,mu_hot_ang2=[],[],[],[],[],[],[]
+for i in range(int(len(data2)/14)):
+    cos_in.append(float(data2[14*i])) #cos of the angle between magnetic axis and the line of sight (north)
+    T_n.append(float(data2[14*i+1])) #Temperature of the hot spot in K
+    r_hn.append(float(data2[14*i+2])) #Radius of the hot spot in meter
+    F_x.append(float(data2[14*i+3])) #Flux in thermal X-ray in W.m^-2
+    xi.append(float(data2[14*i+4])*180/np.pi) #Viewing angle in degree
+    cos_is.append(float(data2[14*i+5])) #cos of the angle between magnetic axis and the line of sight (south)
+    theta_n.append(float(data2[14*i+6])) #Position in spherical coordinate in rad (theta and north)
+    phi_n.append(float(data2[14*i+7])) #Position in spherical coordinate in rad (phi and north)
+    theta_s.append(float(data2[14*i+8])) #Position in spherical coordinate in rad (theta and south)
+    phi_s.append(float(data2[14*i+9])) #Position in spherical coordinate in rad (phi and south)
+    mu_hot_ang1.append(float(data2[14*i+10])*180/np.pi) #Angle in degree between magnetic axis and hotspot (north)
+    mu_hot_ang2.append(float(data2[14*i+11])*180/np.pi) #Angle in degree between magnetic axis and hotspot (south)
+    r_hs.append(float(data2[14*i+12])) #Radius of the hot spot in meter (south)
+    T_s.append(float(data2[14*i+13])) #Temperature of the hot spot in K (south)
+
+cos_in=[None if x==1e55 else x for x in cos_in]
+cos_is=[None if x==1e55 else x for x in cos_is]
+theta_n=[None if x==1e55 else x for x in theta_n]
+theta_s=[None if x==1e55 else x for x in theta_s]
+phi_n=[None if x==1e55 else x for x in phi_n]
+phi_s=[None if x==1e55 else x for x in phi_s]
+mu_hot_ang1=[None if x==1e55 else x for x in mu_hot_ang1]
+mu_hot_ang2=[None if x==1e55 else x for x in mu_hot_ang2]
+r_hn=[None if x==1e55 else x for x in r_hn]
+r_hs=[None if x==1e55 else x for x in r_hs]
+T_n=[None if x==1e55 else x for x in T_n]
+T_s=[None if x==1e55 else x for x in T_s]
+
+all_rh=r_hn+r_hs
+all_theta=theta_n+theta_s
+all_phi=phi_n+phi_s
+all_mu_hot_ang=mu_hot_ang1+mu_hot_ang2
+all_cos_i=cos_in+cos_is
+all_T=T_n+T_s
+
+all_theta=np.array(all_theta,dtype=float)
+all_phi=np.array(all_phi,dtype=float)
+all_cos_i = np.array(all_cos_i, dtype=float)
+all_rh=np.array(all_rh,dtype=float)
+all_T=np.array(all_T,dtype=float)
+
+count_big_T=(all_T>7e6).sum()
+print(count_big_T)
 
 Lx_BB=[]
 sigma=5.67e-8
-for i in range(len(T)):
-    Lx_BB.append(np.pi*(r_h[i])**2*sigma*T[i]**4)
+for i in range(len(F_x)):
+    if (r_hn[i]!=None and r_hs[i]!=None):
+        Lx_BB.append((np.pi*(r_hn[i])**2*sigma*T_n[i]**4)+(np.pi*(r_hs[i])**2*sigma*T_s[i]**4))
+    elif (r_hs[i]!=None and r_hn[i]==None):
+        Lx_BB.append(np.pi*(r_hs[i])**2*sigma*T_s[i]**4)
+    elif (r_hs[i]==None and r_hn[i]!=None):
+        Lx_BB.append(np.pi*(r_hn[i])**2*sigma*T_n[i]**4)
 
 Lx_abs_redshift=[]
 for i in range(len(F_x)):
@@ -196,8 +296,8 @@ Edot_obs,Edot_sim=[],[]
 for i in range(len(P)):
     Edot_sim.append(4*np.pi**2*Inertia*P_dot[i]*P[i]**(-3))
 
-for i in range(len(data_X['P'])):
-    Edot_obs.append(4*np.pi**2*Inertia*data_X['Pdot'][i]*data_X['P'][i]**(-3))
+for i in range(len(data_X2['P'])):
+    Edot_obs.append(4*np.pi**2*Inertia*data_X2['Pdot'][i]*data_X2['P'][i]**(-3))
 
 #KS test 1D python (all the data)
 #KS_test=kstest(P_dot,data_X['Pdot'])
@@ -218,7 +318,7 @@ condition = [Pdot2 < Pdot3 for Pdot2, Pdot3 in zip(Pdot_line2,Pdot_line3)]
 #P-Pdot plot all pulsars
 plt.figure(1)
 plt.scatter(P,P_dot,c='red',marker='o',s=5,label='Simulation data',zorder=2)
-plt.scatter(data_X['P'],data_X['Pdot'],c='blue',marker='o',s=5,label='X-ray catalog of Xu et al. (2025)',zorder=1) #Only canonical pop 
+plt.scatter(data_X2['P'],data_X2['Pdot'],c='blue',marker='o',s=5,label='X-ray catalog of Xu et al. (2025)',zorder=1) #Only canonical pop 
 plt.plot(P_line,Pdot_line,c='green',label='Death line',linestyle='-',linewidth=1) #Death line Mitra et al. 2019
 plt.fill_between(P_line,Pdot_line4,Pdot_line5,where=condition,facecolor='green',alpha=0.4,label='Death Valley' )
 
@@ -266,17 +366,17 @@ plt.savefig('histo_cosalphaX.pdf',dpi=300)
 plt.close()
 
 #cos(i) histogram
-plt.figure(3)
-plt.hist(cos_i,bins=20,range=(-1,1),edgecolor='red',color='red',histtype='step',alpha=0.5,label=r'cos($i$)')
-plt.legend()
-plt.xlabel(r'cos($i$)')
-plt.ylabel('Number of pulsars')
-plt.savefig('histo_cos_i.pdf',dpi=300)
-plt.close()
+#plt.figure(3)
+#plt.hist(cos_i,bins=20,range=(-1,1),edgecolor='red',color='red',histtype='step',alpha=0.5,label=r'cos($i$)')
+#plt.legend()
+#plt.xlabel(r'cos($i$)')
+#plt.ylabel('Number of pulsars')
+#plt.savefig('histo_cos_i.pdf',dpi=300)
+#plt.close()
 
 #Lx histogram
 plt.figure(4)
-plt.hist(np.log10(data_X['LX']),bins=20,range=(21,28),edgecolor='blue',color='blue',histtype='step',alpha=0.5,label=r'X-ray catalog of Xu et al. (2025)')
+plt.hist(np.log10(data_X2['LX']),bins=20,range=(21,28),edgecolor='blue',color='blue',histtype='step',alpha=0.5,label=r'X-ray catalog of Xu et al. (2025)')
 plt.hist(np.log10(Lx_abs_redshift),bins=20,range=(21,28),edgecolor='red',color='red',histtype='step',alpha=0.5,label=r'Simulation')
 plt.legend()
 plt.xlabel(r'$L_X$ in logscale (W)')
@@ -286,7 +386,7 @@ plt.close()
 
 #T histogram
 plt.figure(5)
-plt.hist(np.log10(T),bins=20,range=(5,8),edgecolor='red',color='red',histtype='step',alpha=0.5,label=r'Simulation')
+plt.hist(np.log10(all_T),bins=20,edgecolor='red',color='red',histtype='step',alpha=0.5,label=r'Simulation')
 plt.legend()
 #plt.xscale('log')
 plt.xlabel(r'Temperature of the hot spot in logscale (K)')
@@ -296,7 +396,7 @@ plt.close()
 
 #r_h histogram
 plt.figure(6)
-plt.hist(r_h,bins=20,range=(0,200),edgecolor='red',color='red',histtype='step',alpha=0.5,label=r'Simulation')
+plt.hist(all_rh,bins=20,edgecolor='red',color='red',histtype='step',alpha=0.5,label=r'Simulation')
 plt.legend()
 plt.xlabel(r'Radius of the hot spot (m)')
 plt.ylabel('Number of pulsars')
@@ -324,10 +424,10 @@ plt.savefig('histo_flux.pdf',dpi=300)
 plt.close()
 
 #Linear regression Lx=f(Edot) (obs)
-a_lx,b_lx,r_value,p_value,std_err=linregress(np.log10(Edot_obs),np.log10(data_X['LX']))
+a_lx,b_lx,r_value,p_value,std_err=linregress(np.log10(Edot_obs),np.log10(data_X2['LX']))
 reglinx = np.logspace(np.log10(min(Edot_obs)), np.log10(max(Edot_obs)), num=len(Edot_obs))
 regliny = 10**(a_lx * np.log10(reglinx) + b_lx)
-residuals_y= np.log10(data_X['LX']) - np.log10(regliny)
+residuals_y= np.log10(data_X2['LX']) - np.log10(regliny)
 sigma_y = np.sqrt(np.sum(residuals_y**2) / (len(Edot_obs) - 2))
 Sxx=np.sum((np.log10(Edot_obs) - np.mean(np.log10(Edot_obs)))**2)
 std_err_b=sigma_y*np.sqrt(1.0/len(Edot_obs)+((np.mean(np.log10(Edot_obs)))**2/Sxx))
@@ -337,6 +437,9 @@ a_lxminus=a_lx-std_err
 b_lxminus=b_lx-std_err_b
 reglinyplus = 10**(a_lx * np.log10(reglinx) + b_lxplus)
 reglinyminus = 10**(a_lx * np.log10(reglinx) + b_lxminus)
+
+print(a_lxplus)
+print(a_lxminus)
 
 #Linear regression Lx=f(Edot) (sim: abs+redshift)
 if (len(Edot_sim)>=2 and len(Lx_abs_redshift)>=2):
@@ -387,7 +490,7 @@ with open("info_supp_obs.txt","a") as f:
 plt.figure(9)
 plt.scatter(Edot_sim,Lx_BB,c='green',s=5,marker='o',label=r'Sim, bolometric $L_X$')
 plt.scatter(Edot_sim,Lx_abs_redshift,c='red',s=5,marker='o',label='Simulation')
-plt.scatter(Edot_obs,data_X['LX'],c='blue',s=5,marker='o',label='X-ray catalog of Xu et al. (2025)')
+plt.scatter(Edot_obs,data_X2['LX'],c='blue',s=5,marker='o',label='X-ray catalog of Xu et al. (2025)')
 plt.plot(reglinx,regliny,linestyle='-',label=r'$\log$($L_X$) = %.2f $\log(\dot{E})$ + %.2f (obs)' % (a_lx, b_lx),c='blue')
 if (len(Edot_sim)>=2 and len(Lx_BB)>=2):
     plt.plot(reglinx2,regliny2,linestyle='-',label=r'$\log$($L_X$) = %.2f $\log(\dot{E})$ + %.2f (sim)' % (a_lx2, b_lx2),c='red')
@@ -411,4 +514,64 @@ plt.legend()
 plt.xlabel(r'Age in log space (yr)')
 plt.ylabel('Number of pulsars')
 plt.savefig('histo_ageX.pdf',dpi=300)
+plt.close()
+
+#Position of the hotspot
+plt.figure(11)
+ax=plt.axes(projection='3d')
+#Sphere
+us = np.linspace(0, 2*np.pi, 100)
+vs = np.linspace(0, np.pi, 100)
+xsph = np.outer(np.cos(us), np.sin(vs))
+ysph = np.outer(np.sin(us), np.sin(vs))
+zsph = np.outer(np.ones_like(us), np.cos(vs))
+ax.plot_surface(xsph, ysph, zsph, alpha=0.1)
+#Cartesian coordinates
+xhot = np.sin(all_theta) * np.cos(all_phi)
+yhot = np.sin(all_theta) * np.sin(all_phi)
+zhot = np.cos(all_theta)
+ax.scatter(xhot, yhot, zhot, s=5)
+ax.set_box_aspect([1,1,1])
+plt.savefig('loc_hotspot_on_sphere.pdf',dpi=300)
+plt.close()
+
+#Angle between magnetic axis and hotspot histogram
+plt.figure(12)
+plt.hist(all_mu_hot_ang,bins=20,range=(0,180),edgecolor='red',color='red',histtype='step',alpha=0.5,label=r'Simulation')
+plt.legend()
+plt.xlabel(r'Angle between the magnetic axis and the hotspots centers (°)')
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_mu_hot_ang.pdf',dpi=300)
+plt.close()
+
+#Angle between magnetic axis and hotspot histogram
+plt.figure(13)
+plt.hist(all_cos_i,bins=20,range=(-1,1),edgecolor='red',color='red',histtype='step',alpha=0.5,label=r'Simulation')
+plt.legend()
+plt.xlabel(r'$\cos(i)$')
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_all_cosi.pdf',dpi=300)
+plt.close()
+
+#Position of the hotspot 2D projection
+all_theta_proj=np.pi/2-all_theta
+all_phi_proj=all_phi
+all_phi_proj[all_phi_proj>np.pi]-=2*np.pi
+plt.figure(14)
+plt.axes(projection="mollweide")
+plt.scatter(all_phi_proj,all_theta_proj,s=10,c='red',alpha=1,label='Simulation data',zorder=2)
+plt.grid(alpha=0.3)
+plt.legend(loc="upper right", bbox_to_anchor=(1.05, 1.15), borderaxespad=0.)
+plt.xlabel('Longitude in °')
+plt.ylabel('Colatitude in °')
+plt.savefig('loc_hotspot_2Dproj.pdf',dpi=300)
+plt.close()
+
+#PF histogram
+plt.figure(15)
+plt.hist(PF,bins=20,range=(0,1),edgecolor='red',color='red',histtype='step',alpha=0.5,label=r'Simulation')
+plt.legend()
+plt.xlabel(r'Pulsed fraction')
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_PF.pdf',dpi=300)
 plt.close()

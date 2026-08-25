@@ -8,6 +8,7 @@ import healpy as hp
 import re
 import numpy as np
 import os
+import math
 filename='3PC_SensitivityMap_20230629.fits'
 
 # Generate plot similar to 3PC Figure 25.
@@ -48,12 +49,17 @@ def sensitivity(l,b):
     """
     return sensitivity_map[hp.ang2pix(hp.get_nside(sensitivity_map),l,b, lonlat=True)]
 
+s=sensitivity(l,b)*1e-3
+s=[1e55 if math.isnan(x) else x for x in s]
+np.savetxt('fermi_fmin.txt', s, fmt='%.6e')
+print('Sensitivities of fermi computed')
+
 # demonstrations
 #print( f'Sensitvity at  (270,0.3) is {sensitivity (-90,0.3):.2e} erg s-1 cm-2')
-for i in range(number_of_sources):
-    s=sensitivity(l[i],b[i])*1e-3 #Conversion in W.m^-2
-    if (np.isnan(s)):
-        s=1.0e55
-    with open('fermi_fmin.txt','a') as f:
-        f.write(f'{s}\n')
+#for i in range(number_of_sources):
+#    s=sensitivity(l[i],b[i])*1e-3 #Conversion in W.m^-2
+#    if (np.isnan(s)):
+#        s=1.0e55
+#    with open('fermi_fmin.txt','a') as f:
+#        f.write(f'{s}\n')
 

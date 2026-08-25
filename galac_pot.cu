@@ -18,12 +18,16 @@ void distrib_vinit(void *params){ //Give an initial speed to a pulsar
     long np;
     double vx,vy,vz;
     double v=-1;
-    double cos_theta;
-    double phi;
+    double cos_theta;double cos_theta_bis;
+    double phi;double phi_bis;
     double two_pi=2*M_PI;
     double p_align_or_anti;
     double age_pulsar_yr;
-    double alpha;
+    double alpha;double temp_ang;
+    double deg_var=0.001;double deg_var2=0.001;double deg_var3=0.001;double deg_var4=0.001;
+    double p_n;double p_s;
+    double norm_nmu,norm_nn,norm_ns;
+    double norm_nom;
     const double yr_sec=365*24*3600;
 
     for(np=0;np<part->Npulsars;np++){
@@ -43,6 +47,10 @@ void distrib_vinit(void *params){ //Give an initial speed to a pulsar
        part->n_omega_x[np]=sqrt(1-sq(cos_theta))*cos(phi);
        part->n_omega_y[np]=sqrt(1-sq(cos_theta))*sin(phi);
        part->n_omega_z[np]=cos_theta;
+       norm_nom=sqrt(sq(part->n_omega_x[np])+sq(part->n_omega_y[np])+sq(part->n_omega_z[np]));
+       part->n_omega_x[np]=part->n_omega_x[np]/norm_nom;
+       part->n_omega_y[np]=part->n_omega_y[np]/norm_nom;
+       part->n_omega_z[np]=part->n_omega_z[np]/norm_nom;
        //Computation of n_mu
        part->ex[np]=cos_theta*cos(phi);
        part->ey[np]=cos_theta*sin(phi);
@@ -52,6 +60,64 @@ void distrib_vinit(void *params){ //Give an initial speed to a pulsar
        part->n_mu_x[np]=cos(alpha)*part->n_omega_x[np]+sin(alpha)*part->ex[np];
        part->n_mu_y[np]=cos(alpha)*part->n_omega_y[np]+sin(alpha)*part->ey[np];
        part->n_mu_z[np]=cos(alpha)*part->n_omega_z[np]+sin(alpha)*part->ez[np];
+       norm_nmu=sqrt(sq(part->n_mu_x[np])+sq(part->n_mu_y[np])+sq(part->n_mu_z[np]));
+       part->n_mu_x[np]=part->n_mu_x[np]/norm_nmu;
+       part->n_mu_y[np]=part->n_mu_y[np]/norm_nmu;
+       part->n_mu_z[np]=part->n_mu_z[np]/norm_nmu;
+       //Unit vector for north hotspot -> shifted from the magnetic axis method, chosen area 
+       //cos_theta_bis=cos(acos(cos_theta)+(M_PI*deg_var/180)*gsl_rng_uniform(part->r)-(M_PI*deg_var*0.5/180));
+       p_n=gsl_rng_uniform(part->r);
+       if (p_n>=0.5) {temp_ang=min(acos(cos_theta)+(M_PI*deg_var/180),M_PI);cos_theta_bis=cos(temp_ang);}
+       else if (p_n<0.5) {temp_ang=max(acos(cos_theta)-(M_PI*deg_var/180),0);cos_theta_bis=cos(temp_ang);}
+       part->theta_n[np]=acos(cos_theta_bis);
+       p_n=gsl_rng_uniform(part->r);
+       //phi_bis=fmod(phi+((M_PI*deg_var/180)*gsl_rng_uniform(part->r)-(M_PI*deg_var*0.5/180)),2.0*M_PI);
+       if (p_n>=0.5) {phi_bis=fmod(phi+(M_PI*deg_var2/180),2.0*M_PI);}
+       else if (p_n<0.5) {phi_bis=fmod(phi-(M_PI*deg_var2/180),2.0*M_PI);}
+       part->phi_n[np]=phi_bis;
+       part->n_nx[np]=cos(alpha)*(sqrt(1-sq(cos_theta_bis))*cos(phi_bis))+sin(alpha)*(cos_theta_bis*cos(phi_bis));
+       part->n_ny[np]=cos(alpha)*(sqrt(1-sq(cos_theta_bis))*sin(phi_bis))+sin(alpha)*(cos_theta_bis*sin(phi_bis));
+       part->n_nz[np]=cos(alpha)*(cos_theta_bis)+sin(alpha)*(-sqrt(1-sq(cos_theta_bis)));
+       norm_nn=sqrt(sq(part->n_nx[np])+sq(part->n_ny[np])+sq(part->n_nz[np]));
+       part->n_nx[np]=part->n_nx[np]/norm_nn;
+       part->n_ny[np]=part->n_ny[np]/norm_nn;
+       part->n_nz[np]=part->n_nz[np]/norm_nn;
+       //Unit vector for the north hotspot -> random area
+       /*cos_theta_bis=  2*gsl_rng_uniform(part->r)-1;part->theta_n[np]=acos(cos_theta_bis);
+       phi_bis      =  two_pi*gsl_rng_uniform(part->r);part->phi_n[np]=phi_bis;
+       part->n_nx[np]=sqrt(1-sq(cos_theta_bis))*cos(phi_bis);
+       part->n_ny[np]=sqrt(1-sq(cos_theta_bis))*sin(phi_bis);
+       part->n_nz[np]=cos_theta_bis;*/
+       //Unit vector for south hotspot -> shifted from the magnetic axis method, chosen area
+       //cos_theta_bis=cos((acos(-cos_theta))+(M_PI*deg_var/180)*gsl_rng_uniform(part->r)-(M_PI*deg_var*0.5/180));
+       p_s=gsl_rng_uniform(part->r);
+       if (p_s>=0.5) {temp_ang=min(acos(-cos_theta)+(M_PI*deg_var3/180),M_PI);cos_theta_bis=cos(temp_ang);}
+       else if (p_s<0.5) {temp_ang=max(acos(-cos_theta)-(M_PI*deg_var3/180),0);cos_theta_bis=cos(temp_ang);}
+       part->theta_s[np]=acos(cos_theta_bis);
+       //phi_bis=fmod((fmod(phi+M_PI,2.0*M_PI))+((M_PI*deg_var/180)*gsl_rng_uniform(part->r)-(M_PI*deg_var*0.5/180)),2.0*M_PI);
+       p_s=gsl_rng_uniform(part->r);
+       if (p_s>=0.5) {phi_bis=fmod(phi+M_PI+(M_PI*deg_var4/180),2.0*M_PI);}
+       else if (p_s<0.5) {phi_bis=fmod(phi+M_PI-(M_PI*deg_var4/180),2.0*M_PI);}
+       part->phi_s[np]=phi_bis;
+       part->n_sx[np]=cos(alpha)*(sqrt(1-sq(cos_theta_bis))*cos(phi_bis))+sin(-alpha)*(cos_theta_bis*cos(phi_bis));
+       part->n_sy[np]=cos(alpha)*(sqrt(1-sq(cos_theta_bis))*sin(phi_bis))+sin(-alpha)*(cos_theta_bis*sin(phi_bis));
+       part->n_sz[np]=cos(alpha)*(cos_theta_bis)+sin(-alpha)*(-sqrt(1-sq(cos_theta_bis)));
+       norm_ns=sqrt(sq(part->n_sx[np])+sq(part->n_sy[np])+sq(part->n_sz[np]));
+       part->n_sx[np]=part->n_sx[np]/norm_ns;
+       part->n_sy[np]=part->n_sy[np]/norm_ns;
+       part->n_sz[np]=part->n_sz[np]/norm_ns;
+       //Unit vector for the south hotspot -> random area
+       /*cos_theta_bis=  2*gsl_rng_uniform(part->r)-1;part->theta_s[np]=acos(cos_theta_bis);
+       phi_bis      =  two_pi*gsl_rng_uniform(part->r);part->phi_s[np]=phi_bis;
+       part->n_sx[np]=sqrt(1-sq(cos_theta_bis))*cos(phi_bis);
+       part->n_sy[np]=sqrt(1-sq(cos_theta_bis))*sin(phi_bis);
+       part->n_sz[np]=cos_theta_bis;*/
+       //Save angles between hotspots and magnetic axis
+       part->mu_hot_ang1[np]=min(acos(part->n_mu_x[np]*part->n_nx[np]+part->n_mu_y[np]*part->n_ny[np]+part->n_mu_z[np]*part->n_nz[np]),acos(-part->n_mu_x[np]*part->n_nx[np]-part->n_mu_y[np]*part->n_ny[np]-part->n_mu_z[np]*part->n_nz[np]));
+       part->mu_hot_ang2[np]=min(acos(-part->n_mu_x[np]*part->n_sx[np]-part->n_mu_y[np]*part->n_sy[np]-part->n_mu_z[np]*part->n_sz[np]),acos(part->n_mu_x[np]*part->n_sx[np]+part->n_mu_y[np]*part->n_sy[np]+part->n_mu_z[np]*part->n_sz[np]));
+       //Save angles between hotspots and rotation axis
+       part->js[np]=min(acos(part->n_sx[np]*(-part->n_omega_x[np])+part->n_sy[np]*(-part->n_omega_y[np])+part->n_sz[np]*(-part->n_omega_z[np])),acos(part->n_sx[np]*part->n_omega_x[np]+part->n_sy[np]*part->n_omega_y[np]+part->n_sz[np]*part->n_omega_z[np]));
+       part->jn[np]=min(acos(part->n_nx[np]*part->n_omega_x[np]+part->n_ny[np]*part->n_omega_y[np]+part->n_nz[np]*part->n_omega_z[np]),acos(part->n_nx[np]*(-part->n_omega_x[np])+part->n_ny[np]*(-part->n_omega_y[np])+part->n_nz[np]*(-part->n_omega_z[np])));
        while (v<0){
 	       v=sqrt(8.0/M_PI)*part->sigma_v+gsl_ran_gaussian_ziggurat(part->r, part->sigma_v);
        }
