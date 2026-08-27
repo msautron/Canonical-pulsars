@@ -13,13 +13,13 @@ struct func_params{
 
 	double M_for_K; //Mass of neutron stars used for the computation of compactness
 	double R_for_K; //Radius of neutron stars used for the computation of compactness
-	double A_propto1; //Factor for relation between T and P, Pdot <<north>>
-	double A_propto2; //Factor for relation between T and P, Pdot <<south>>
-	double D_propto1; //Factor for relation between size of hotspot and sqrt(R_NS/R_L) <<north>>
-	double D_propto2; //Factor for relation between size of hotspot and sqrt(R_NS/R_L) <<south>>
-	double pcst; //Power for the gamma luminosity law (constant)
-	double pb; //Power for the gamma luminosity law (Magnetic field)
-	double pe; //Power for the gamma luminosity law (Spin down luminosity)
+	double A_propto; //Factor for relation between T and P, Pdot <<north>>
+	//double A_propto2; //Factor for relation between T and P, Pdot <<south>>
+	double D_propto; //Factor for relation between size of hotspot and sqrt(R_NS/R_L) <<north>>
+	//double D_propto2; //Factor for relation between size of hotspot and sqrt(R_NS/R_L) <<south>>
+	//double pcst; //Power for the gamma luminosity law (constant)
+	//double pb; //Power for the gamma luminosity law (Magnetic field)
+	//double pe; //Power for the gamma luminosity law (Spin down luminosity)
 	long birth_rate; //BR for the number thres1 of pulsars
 	int *sky_chandra; //Info about if the position of the pulsar was observed by chandra
 	int *sky_XMM; //Info about if the position of the pulsar was observed by XMM-Newton

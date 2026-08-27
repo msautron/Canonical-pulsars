@@ -47,20 +47,20 @@ def simulator(params):
             'p_mean'     : params[2]*1e-3,
             'sigma_p'    : params[3],
             'BR'    : np.round(params[4]),
-            'pcst' : params[5],
-            'pb' : params[6],
-            'pe' : params[7],
-            'A_propto1' : 10**(params[8]),
-            'D_propto1' : 10**(params[9]),
-            'M_for_K' : params[10],
-            'R_for_K' : params[11],
-            'tau_d'   : 10**params[12]*365*24*3600,
-            'alpha_d' : params[13],
-            'D_propto2' : 10**(params[14]),
-            'A_propto2' : 10**(params[15])
+            #'pcst' : params[5],
+            #'pb' : params[6],
+            #'pe' : params[7],
+            'A_propto1' : 10**(params[5]),
+            'D_propto1' : 10**(params[6]),
+            'M_for_K' : params[7],
+            'R_for_K' : params[8],
+            'tau_d'   : 10**params[9]*365*24*3600,
+            'alpha_d' : params[10]
+            #'D_propto2' : 10**(params[14]),
+            #'A_propto2' : 10**(params[15])
             }
 
-    sim_run=subprocess.run([f'bash','run_pop_for_sbi.sh', str(params['sigma_b']), str(params['b_mean']), str(params['p_mean']), str(params['sigma_p']), str(params['BR']), str(params['pcst']), str(params['pb']), str(params['pe']), str(params['A_propto1']), str(params['D_propto1']), str(params['M_for_K']), str(params['R_for_K']), str(params['tau_d']), str(params['alpha_d']), str(params['D_propto2']), str(params['A_propto2'])], capture_output=True,text=True)
+    sim_run=subprocess.run([f'bash','run_pop_for_sbi.sh', str(params['sigma_b']), str(params['b_mean']), str(params['p_mean']), str(params['sigma_p']), str(params['BR']), str(params['A_propto1']), str(params['D_propto1']), str(params['M_for_K']), str(params['R_for_K']), str(params['tau_d']), str(params['alpha_d'])], capture_output=True,text=True)
     print("STDOUT :", sim_run.stdout)
     print("STDERR :", sim_run.stderr)
     print("Return code :", sim_run.returncode)
@@ -167,7 +167,7 @@ def Repeat_sim_and_save(num_sim,num_training,prior) :
     tf.config.set_visible_devices([], 'GPU')
 
     #LHS for inference
-    sampler = qmc.LatinHypercube(d=16)
+    sampler = qmc.LatinHypercube(d=11)
     sample_params = sampler.random(n=num_sim)
     l_bounds=np.array(prior.support.base_constraint.lower_bound)
     u_bounds=np.array(prior.support.base_constraint.upper_bound)
@@ -314,7 +314,7 @@ def SBI_from_datafiles(prior,validation,show):
     with open("params_training.txt","r") as f:
         lines=f.readlines()
 
-    params_training=np.zeros((num_train,16))
+    params_training=np.zeros((num_train,11))
     for i,line in enumerate(lines):
         values=line.strip().split()
         params_training[i,:]=np.array(values,dtype=float)
@@ -322,7 +322,7 @@ def SBI_from_datafiles(prior,validation,show):
     with open("params_inference.txt","r") as f:
         lines=f.readlines()
 
-    params_inference=np.zeros((num_infer,16))
+    params_inference=np.zeros((num_infer,11))
     for i,line in enumerate(lines):
         values=line.strip().split()
         params_inference[i,:]=np.array(values,dtype=float)
@@ -379,7 +379,7 @@ def SBI_from_datafiles(prior,validation,show):
 
     #Validation part
     if (validation==True):
-        array_validation_5params,X_valid_PPdot_r,X_valid_PPdot_x=simulator(np.array([0.5,np.log10(2.75e8),129,0.45,34,26.15,0.06,0.6,np.log10(4e8),np.log10(4.5e4),1.4,12000,np.log10(1.8e6),1.5,np.log10(3e4),np.log10(4e8)]))
+        array_validation_5params,X_valid_PPdot_r,X_valid_PPdot_x=simulator(np.array([0.5,np.log10(2.75e8),129,0.45,34,np.log10(4e8),np.log10(3.8e4),1.4,12000,np.log10(1.8e6),1.5]))
         print(array_validation_5params)
         #Get the density maps from the observations
         density_map_matPPdot_r=np.zeros((num_infer,32,32,1))
@@ -448,7 +448,7 @@ def SBI_from_datafiles(prior,validation,show):
             f.write(" ".join(map(str, best_estimate)) + "\n")
             f.write(" ".join(map(str, tolerance_less)) + "\n")
             f.write(" ".join(map(str, tolerance_more)) + "\n")
-        params_known=np.array([0.5,np.log10(2.75e8),129,0.45,35,26.15,0.06,0.6,np.log10(4e8),np.log10(4.5e4),1.4,12000,np.log10(1.8e6),1.5,np.log10(3e4),np.log10(4e8)])
+        params_known=np.array([0.5,np.log10(2.75e8),129,0.45,34,np.log10(4e8),np.log10(3.8e4),1.4,12000,np.log10(1.8e6),1.5])
 
     #Comparison with observations part
     elif (validation==False):
@@ -571,12 +571,11 @@ def SBI_from_datafiles(prior,validation,show):
     print(f"Best estimates: {np.shape(best_estimate)}")
 
     #Plot
-    labelss=[r'$\sigma_{\rm B}$', r"$\log(\mu_{\rm B})$ (B in T)", r"$\mu_{\rm P}$ (ms)", r'$\sigma_{\rm P}$', r'Birth spacing (yr)',r'pcst',r'pb',r'pe',r'Cst1',r'Cst2',r'NS mass ($M_{\odot}$)',r'NS radius (m)',r'$\tau_d$ (yr)', r'alpha_d',r'Cst3',r'Cst4']
+    labelss=[r'$\sigma_{\rm B}$', r"$\log(\mu_{\rm B})$ (B in T)", r"$\mu_{\rm P}$ (ms)", r'$\sigma_{\rm P}$', r'Birth spacing (yr)',r'A (SI units)',r'D (SI units)',r'NS mass ($M_{\odot}$)',r'NS radius (m)',r'$\tau_d$ (yr)', r'alpha_d']
     groups = [
-    [0,1,2,3,4],
-    [5,6,7,8,9],
-    [10,11,12,13,14],
-    [15]
+    [0,1,2,3],
+    [4,5,6],
+    [7,8,9,10]
     ]
     best_estimate=np.array(best_estimate)
     log_probability = posterior.log_prob(samples, x=observation)

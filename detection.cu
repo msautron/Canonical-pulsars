@@ -917,8 +917,9 @@ int gamma_flux(void *params){
         const double kpc2m=3.0856775807e19; //kpc to m
         //fac=0.3;
         long np=0;
-        //double pcst,pb;
-        //double pedot=-1.0;
+        double pcst=26.15;
+	double pb=0.06;
+	double pedot=0.6;
         double alpha,xi;
         int alpha_int,xi_int;
                 for (np=0;np<part->Npulsars;np++){
@@ -927,9 +928,9 @@ int gamma_flux(void *params){
                         //pcst=26.15+gsl_ran_gaussian_ziggurat(part->r, 2.6);
                         //pb=0.11+gsl_ran_gaussian_ziggurat(part->r, 0.05);
                         //while (pedot<0) {pedot=0.51+gsl_ran_gaussian_ziggurat(part->r, 0.09);}
-                        //pcst=26.15;pb=0.06;pedot=0.6;
+                        pcst=26.15;pb=0.06;pedot=0.6;
                         //pb=0.11;pedot=0.51;
-                        lgamma = pow(10,part->pcst)*pow(part->B[np]/1e8,part->pb)*pow(part->Edot[np]/1e26,part->pe); //(W) from Kalapotharakos et al 2019
+                        lgamma = pow(10,pcst)*pow(part->B[np]/1e8,pb)*pow(part->Edot[np]/1e26,pedot); //(W) from Kalapotharakos et al 2019
                         if (part->alpha[np]<=M_PI/2) alpha=part->alpha[np];
                         else if (part->alpha[np]>M_PI/2) alpha=M_PI-part->alpha[np];
                         if (part->xi[np]<=M_PI/2) xi=part->xi[np]; // just to make it easier to read
@@ -993,14 +994,14 @@ void X_flux(void *params){
                 else if (part->jn[np]>M_PI/2.0) jn=M_PI-part->jn[np];*/
 		js=part->js[np];jn=part->jn[np];zeta=part->xi[np];
 		Fj_n=fabs(gsl_ran_gaussian_ziggurat(part->r,0.1));
-		part->Temp_n[np]=part->A_propto1*pow(pow(part->Pdot[np],1.0)/pow(part->period[np],2.28),9.0/50.0)*pow(10,Fj_n);
+		part->Temp_n[np]=part->A_propto*pow(pow(part->Pdot[np],1.0)/pow(part->period[np],2.28),9.0/50.0)*pow(10,Fj_n);
 		Fj_s=fabs(gsl_ran_gaussian_ziggurat(part->r,0.1));
-                part->Temp_s[np]=part->A_propto2*pow(pow(part->Pdot[np],1.0)/pow(part->period[np],2.28),9.0/50.0)*pow(10,Fj_s);
+                part->Temp_s[np]=part->A_propto*pow(pow(part->Pdot[np],1.0)/pow(part->period[np],2.28),9.0/50.0)*pow(10,Fj_s);
 		E_kevn=kb*(part->Temp_n[np])*(1e-3/1.6e-19);
 		E_kevs=kb*(part->Temp_s[np])*(1e-3/1.6e-19);
 		//part->r_h[np]=R_NS*sqrt((2*M_PI*R_NS)/(SI_C*part->period[np]));
-		part->r_hn[np]=part->D_propto1*sqrt((2*M_PI*part->R_for_K)/(SI_C*part->period[np])); //Pétri & Mitra (2019) r_h propto sqrt(R_NS/r_LC)
-		part->r_hs[np]=part->D_propto2*sqrt((2*M_PI*part->R_for_K)/(SI_C*part->period[np])); //Pétri & Mitra (2019) r_h propto sqrt(R_NS/r_LC)
+		part->r_hn[np]=part->D_propto*sqrt((2*M_PI*part->R_for_K)/(SI_C*part->period[np])); //Pétri & Mitra (2019) r_h propto sqrt(R_NS/r_LC)
+		part->r_hs[np]=part->D_propto*sqrt((2*M_PI*part->R_for_K)/(SI_C*part->period[np])); //Pétri & Mitra (2019) r_h propto sqrt(R_NS/r_LC)
 		L_xn=M_PI*sq(part->r_hn[np])*sigma*pow(part->Temp_n[np],4.0);
 		L_xs=M_PI*sq(part->r_hs[np])*sigma*pow(part->Temp_s[np],4.0);
 		part->cos_in[np]=part->nx[np]*part->n_nx[np]+part->ny[np]*part->n_ny[np]+part->nz[np]*part->n_nz[np];
