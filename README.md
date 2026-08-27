@@ -1,7 +1,16 @@
+# Installation requirements (might be incomplete depending on what you already have on your computer) 
+- nvcc compiler
+- healpy (python library)
+- GSL (c library)
+- SBI (python library, version 0.22)
+- xlrd (python library)
+- matlplotlib (python library)
+- odfpy (python library)
+
 # User guide
 
 This code generates a synthetic population of normal pulsars, considering radio, gamma-ray emission and thermal X-ray emission from two antipodal hot spots. If you download this repository, you are comparing the simulation to the detection made by Parkes, FAST and Fermi/LAT. 
-A GPU is needed. The library GSL is needed. You will need to go to the drive to get the temperature map of the sky obtained by Remazeilles 2014 at 408 MHz, the fits containing the sky coverage of Chandra and XMM-Newton: https://drive.google.com/drive/folders/1g5Z820uUpipQSCmaCKylrhwtkVzcgv_w?usp=sharing
+A GPU is needed. You will need to go to the drive to get the temperature map of the sky obtained by Remazeilles 2014 at 408 MHz, the fits containing the sky coverage of Chandra and XMM-Newton: https://drive.google.com/drive/folders/1g5Z820uUpipQSCmaCKylrhwtkVzcgv_w?usp=sharing
 
 ## Compilation 
 
