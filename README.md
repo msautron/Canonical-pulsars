@@ -1,4 +1,4 @@
-# Installation requirements (might be incomplete depending on what you already have on your computer) 
+# Installation requirements  
 - nvcc compiler
 - healpy (python library)
 - GSL (c library)
@@ -6,6 +6,7 @@
 - xlrd (python library)
 - matlplotlib (python library)
 - odfpy (python library)
+(might be incomplete depending on what you already have on your computer)
 
 # User guide
 
