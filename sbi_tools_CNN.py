@@ -342,7 +342,7 @@ def SBI_from_datafiles(prior,validation,show):
     )
 
     history_r=autoencoder_P_Pdot_r.fit(X_train_PPdot_r, X_train_PPdot_r, epochs=50, batch_size=25, validation_split=0.2)
-    history_x=autoencoder_P_Pdot_x.fit(X_train_PPdot_x, X_train_PPdot_x, epochs=100, batch_size=25, validation_split=0.2)
+    history_x=autoencoder_P_Pdot_x.fit(X_train_PPdot_x, X_train_PPdot_x, epochs=40, batch_size=25, validation_split=0.2)
 
     plt.figure(200)
     plt.plot(history_r.history["loss"])
@@ -571,7 +571,7 @@ def SBI_from_datafiles(prior,validation,show):
     print(f"Best estimates: {np.shape(best_estimate)}")
 
     #Plot
-    labelss=[r'$\sigma_{\rm B}$', r"$\log(\mu_{\rm B})$ (B in T)", r"$\mu_{\rm P}$ (ms)", r'$\sigma_{\rm P}$', r'Birth spacing (yr)',r'A (SI units)',r'D (SI units)',r'NS mass ($M_{\odot}$)',r'NS radius (m)',r'$\tau_d$ (yr)', r'alpha_d']
+    labelss=[r'$\sigma_{\rm B}$', r"$\log(\mu_{\rm B})$ (B in T)", r"$\mu_{\rm P}$ (ms)", r'$\sigma_{\rm P}$', r'Birth spacing (yr)',r'A (SI units)',r'D (SI units)',r'NS mass ($M_{\odot}$)',r'NS radius (m)',r'$\log\left(\tau_d\right)$ ($\tau_d$ in yr)', r'alpha_d']
     groups = [
     [0,1,2,3],
     [4,5,6],

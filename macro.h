@@ -11,6 +11,7 @@
 
 struct func_params{
 
+	double *Lgamma; //Stores the gamma luminosity
 	double M_for_K; //Mass of neutron stars used for the computation of compactness
 	double R_for_K; //Radius of neutron stars used for the computation of compactness
 	double A_propto; //Factor for relation between T and P, Pdot <<north>>
@@ -27,7 +28,7 @@ struct func_params{
 	double *Smin_fast;
 	double *w_r_fast;
 	double *w_r_pmps;
-	double *w_int; 
+	double *w_int;	
 	double *temp; //Stores sky temperature at (gl,gb) position
 	double *Smin_fermi; //Minimum flux detectable by Fermi/LAT
 	double **fomega; //f_omega values taken from table

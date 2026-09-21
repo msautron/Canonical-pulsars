@@ -621,6 +621,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
         FILE *file_wint=NULL;
 	FILE *check_nb_orbit;
 	FILE *init_val=NULL;
+	FILE *get_Lgamma=NULL;
 	//FILE *get_Bf=NULL;
 	//FILE *all_Bf=NULL;
 	double eta=0.15;double alpha_l=45*(M_PI/180);double T6=2;double b=40;
@@ -639,6 +640,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 	file_wr=fopen("wr.txt","w+");
 	info_supp=fopen("info_supp.txt","w+");
 	init_val=fopen("init_P_B.txt","w+");
+	get_Lgamma=fopen("Lgamma.txt","w+");
 	//get_Bf=fopen("Bf_info.txt","a+");
 	//all_Bf=fopen("all_bf_pulsars.txt","a+");
 			
@@ -780,6 +782,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 				  fprintf(file_wint,"%e\n",part->w_int[np]*180/M_PI);
                                   fprintf(save_tempo,"%e %e\n",xi,rho);
 				  //fprintf(get_Bf,"%e\n",part->B[np]);
+				  fprintf(get_Lgamma,"%e\n",part->Lgamma[np]);
 				  fprintf(init_val,"%e %e\n",part->Binit[np],part->Pinit[np]);
                         }
 
@@ -794,6 +797,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 				  fprintf(file_wint,"%e\n",part->w_int[np]*180/M_PI);
                                   fprintf(save_tempo,"%e %e\n",xi,rho);
 				  //fprintf(get_Bf,"%e\n",part->B[np]);
+				  fprintf(get_Lgamma,"%e\n",part->Lgamma[np]);
 				  fprintf(init_val,"%e %e\n",part->Binit[np],part->Pinit[np]);
                         }
 		}
@@ -832,6 +836,7 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 			fclose(file_wr);
 			fclose(info_supp);
 			fclose(init_val);
+			fclose(get_Lgamma);
 			//fclose(get_Bf);
 			//fclose(all_Bf);
 
@@ -931,7 +936,8 @@ int gamma_flux(void *params){
                         pcst=26.15;pb=0.06;pedot=0.6;
                         //pb=0.11;pedot=0.51;
                         lgamma = pow(10,pcst)*pow(part->B[np]/1e8,pb)*pow(part->Edot[np]/1e26,pedot); //(W) from Kalapotharakos et al 2019
-                        if (part->alpha[np]<=M_PI/2) alpha=part->alpha[np];
+                        part->Lgamma[np]=lgamma;
+			if (part->alpha[np]<=M_PI/2) alpha=part->alpha[np];
                         else if (part->alpha[np]>M_PI/2) alpha=M_PI-part->alpha[np];
                         if (part->xi[np]<=M_PI/2) xi=part->xi[np]; // just to make it easier to read
                         else if (part->xi[np]>M_PI/2) xi=M_PI-part->xi[np];

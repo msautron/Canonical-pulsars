@@ -238,4 +238,6 @@ void initialize(int argc, char *argv[], void *params){
                 if (part->r_hs== NULL) printf("r_hs: allocation failed");
        part->Temp_s= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate)
                 if (part->Temp_s== NULL) printf("Temp_s: allocation failed");
+       part->Lgamma= (double *)calloc(part->Npulsars,sizeof(double)); // (*part->Pinit first elemenet of the table) initialize pointer (allocate)
+                if (part->Lgamma== NULL) printf("Lgamma: allocation failed");
 }

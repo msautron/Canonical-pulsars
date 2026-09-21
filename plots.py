@@ -72,14 +72,17 @@ with open("wr.txt","r") as f:
 with open("init_P_B.txt","r") as f:
     init_P_B=re.findall(reg_5,f.read())
 
+with open("Lgamma.txt","r") as f:
+    Lgamma_saved=re.findall(reg_4,f.read())
+
 df=pd.read_excel('3PC_Catalog_20230803.xls')
 data_3PC=Table.from_pandas(df)
 
 #Data Alex
-alpha_tab=pd.read_csv("alpha_vs_aligntime_alex.csv")
-rho_tab=pd.read_csv("rho_vs_P_alex.csv")
+#alpha_tab=pd.read_csv("alpha_vs_aligntime_alex.csv")
+#rho_tab=pd.read_csv("rho_vs_P_alex.csv")
 
-tc_alex_sample=((alpha_tab['Period(s)'])/(2*alpha_tab['Pdot']))/(365*24*3600)
+#tc_alex_sample=((alpha_tab['Period(s)'])/(2*alpha_tab['Pdot']))/(365*24*3600)
 
 #Get the flux from the 3PC catalog for the canonical pulsars
 flux_3PC_cano,g_peak_sep_obs=[],[]
@@ -103,6 +106,11 @@ print(f'Number of gamma MSP in 3PC : {count_msp_g}')
 Fg_flux=[]
 for i in range(int(len(fg_data))):
     Fg_flux.append(float(fg_data[i]))
+
+#Get the Lgamma data
+Lgamma_saved2=[]
+for i in range(int(len(Lgamma_saved))):
+    Lgamma_saved2.append(float(Lgamma_saved[i])*1e7) #In erg/s
 
 #Get the data about the gamma-ray peak separation
 g_peak_sep_sim=[]
@@ -393,9 +401,9 @@ for i in range(len(cos_alpha)):
     tau_MHD_align0.append(np.log10(((Inertia*mu_0*c_light**3*P0_sim[i]**2*np.sin(al0*np.pi/180)**2)/(16*np.pi**3*R_NS**6*B0_sim[i]**2*np.cos(al0*np.pi/180)**4))/(365*24*3600))) #in yr + logscale
     tau_MHD_align.append(np.log10(((Inertia*mu_0*c_light**3*P[i]**2*np.sin(al*np.pi/180)**2)/(16*np.pi**3*R_NS**6*Bf[i]**2*np.cos(al*np.pi/180)**4))/(365*24*3600))) #in yr + logscale
 
-tau_MHD_alex_sample=((Inertia*mu_0*c_light**3*alpha_tab['Period(s)']**2*np.sin(alpha_tab['Alpha(deg)']*np.pi/180)**2)/(16*np.pi**3*R_NS**6*(((Inertia*mu_0*c_light**3)/(16*np.pi**3*R_NS**6*(1+np.sin(alpha_tab['Alpha(deg)']*np.pi/180)**2)))*alpha_tab['Period(s)']*alpha_tab['Pdot'])**1*np.cos(alpha_tab['Alpha(deg)']*np.pi/180)**4))/(365*24*3600)
-ratio_tc_tau_MHD_alex=tc_alex_sample/tau_MHD_alex_sample
-ratio_tau_MHD_tc_alex=tau_MHD_alex_sample/tc_alex_sample
+#tau_MHD_alex_sample=((Inertia*mu_0*c_light**3*alpha_tab['Period(s)']**2*np.sin(alpha_tab['Alpha(deg)']*np.pi/180)**2)/(16*np.pi**3*R_NS**6*(((Inertia*mu_0*c_light**3)/(16*np.pi**3*R_NS**6*(1+np.sin(alpha_tab['Alpha(deg)']*np.pi/180)**2)))*alpha_tab['Period(s)']*alpha_tab['Pdot'])**1*np.cos(alpha_tab['Alpha(deg)']*np.pi/180)**4))/(365*24*3600)
+#ratio_tc_tau_MHD_alex=tc_alex_sample/tau_MHD_alex_sample
+#ratio_tau_MHD_tc_alex=tau_MHD_alex_sample/tc_alex_sample
 
 for i in range(len(age)):
     tc_tau.append((charac_age[i])/(10**tau_MHD_align[i])) #Ratio age/tau_MHD_align
@@ -1610,15 +1618,26 @@ plt.close()
 #print(f"p_value of P={p_value_all2}")
 
 #alpha=f(tau_MHD_align/tau_c)
-plt.figure(48)
-plt.scatter(tau_tc,charac_age,c='blue',marker='o',s=5,label='Detected pulsar (simulation)')
-plt.scatter(ratio_tau_MHD_tc_alex,tc_alex_sample,c='red',marker='o',s=5,label='Observed sample')
-plt.axvline(x=20/3,color='purple',linestyle='--',linewidth=2,label=r'Mean value for an isotropic distribution of $\alpha$')
-plt.axvline(x=2,color='green',linestyle='--',linewidth=2,label=r'Mean value for a uniform distribution of $\alpha$')
-plt.ylabel(r'$\tau_c$ (yr)')
-plt.legend(fontsize='small')
-plt.xlabel(r'$\tau_{\rm align}^{\rm MHD}/\tau_c$ (yr)')
-plt.xlim(0,20)
-plt.yscale('log')
-plt.savefig('chi_f_ratio_tauMHD_tau_c.pdf',dpi=300)
+#plt.figure(48)
+#plt.scatter(tau_tc,charac_age,c='blue',marker='o',s=5,label='Detected pulsar (simulation)')
+#plt.scatter(ratio_tau_MHD_tc_alex,tc_alex_sample,c='red',marker='o',s=5,label='Observed sample')
+#plt.axvline(x=20/3,color='purple',linestyle='--',linewidth=2,label=r'Mean value for an isotropic distribution of $\alpha$')
+#plt.axvline(x=2,color='green',linestyle='--',linewidth=2,label=r'Mean value for a uniform distribution of $\alpha$')
+#plt.ylabel(r'$\tau_c$ (yr)')
+#plt.legend(fontsize='small')
+#plt.xlabel(r'$\tau_{\rm align}^{\rm MHD}/\tau_c$ (yr)')
+#plt.xlim(0,20)
+#plt.yscale('log')
+#plt.savefig('chi_f_ratio_tauMHD_tau_c.pdf',dpi=300)
+#plt.close()
+
+#Period of old pulsars : histogram
+count_lg=(np.array(Lgamma_saved2)<1e33).sum()
+print(f'Number of detected pulsars in Gamma-rays with a luminosity below 1e33 erg/s: {count_lg}')
+plt.figure(49)
+plt.hist(np.log10(Lgamma_saved2),bins=20,range=(31,37),edgecolor='black',color='red',alpha=0.5,histtype='step',label='Simulation')
+plt.legend()
+plt.xlabel(r'$L_{\gamma}$ in erg/s')
+plt.ylabel('Number of pulsars')
+plt.savefig('histo_Lgamma.pdf')
 plt.close()

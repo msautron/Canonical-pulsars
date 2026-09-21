@@ -23,8 +23,8 @@ import time
 start_time=time.time()
 
 #Choose number of simulations and training
-num_sim=100
-num_training=200
+num_sim=300
+num_training=10
 #num_check=1000
 
 #Sampling the input parameters with LHS method
@@ -89,7 +89,7 @@ prior = utils.BoxUniform(
 valid_or_obs=True #True -> run validation , False -> run the pipeline with comparison with the observations 
 show=False #True -> show the cornerplot, False -> Do not show the corner plot
 Repeat_sim_and_save(num_sim,num_training,prior)
-#posterior,observation=SBI_from_datafiles(prior,valid_or_obs,show)
+posterior,observation=SBI_from_datafiles(prior,valid_or_obs,show)
 
 #Using the parameters of SBI for num_check simulations
 #samples = posterior.sample((num_check,),x=observation)
