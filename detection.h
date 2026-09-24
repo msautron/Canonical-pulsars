@@ -9,6 +9,7 @@ void sky_temp_Fmin_fermi(void *params);
 void save_all(void *params);
 void X_telescope_sky_coverage(void *params);
 void detection_X(void *params);
+void save_PPdot_alpha_all(void *params);
 int detection(void *params);
 void pulse_profile_complete(void *params);
 void pulse_profile_complete_2(void *params);

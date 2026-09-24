@@ -580,6 +580,7 @@ int main(int argc, char **argv){
 	gamma_ray_peak_sep(&params); //Computes the gamma-ray peak separation 
 	detection(&params); // check if the pulsar is beaming to us and if its flux is high enough to be detected
 	detection_X(&params); //Idem for thermal X-ray flux
+	save_PPdot_alpha_all(&params); //save P, Pdot, cos_alpha, cos_alpha0 for all detected pulsars
 	//save_all(&params); //Save the info of every simulated pulsar
 
 

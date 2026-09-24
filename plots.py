@@ -1361,9 +1361,9 @@ with open("info_supp_obs.txt","a") as f:
 
 #f(log(wr))=logP
 plt.figure(34)
-#plt.scatter(P_r_or_rg,wr_r_or_rg,c='green',marker='o',s=5,label='Simulation with ISM and instrumental effect')
+plt.scatter(P_r_or_rg,wr_r_or_rg,c='green',marker='o',s=5,label='Simulation with ISM and instrumental effect')
 plt.scatter(P_r_or_rg2,w_geometry_r_or_rg2,c='red',marker='o',s=5,label='Simulation (geometry only)')
-#plt.plot(reglinx,regliny,linestyle='-',label=r'$\log$($w_r$) = (%.2f$\pm%.2f$) $\log(P)$ + (%.2f$\pm$%.2f)' % (a_wr,std_err, b_wr,std_err_b),c='green')
+plt.plot(reglinx,regliny,linestyle='-',label=r'$\log$($w_r$) = (%.2f$\pm%.2f$) $\log(P)$ + (%.2f$\pm$%.2f)' % (a_wr,std_err, b_wr,std_err_b),c='green')
 if (len(P_r_or_rg2)>=2 and len(w_geometry_r_or_rg2)>=2):
     plt.plot(reglinx2,regliny2,linestyle='-',label=r'$\log$($w_r$) = (%.2f$\pm$%.2f) $\log(P)$ + (%.2f$\pm$%.2f) ' % (a_wr2,std_err2,b_wr2,std_err_b2),c='red')
 plt.scatter(P3,w10_r,c='blue',marker='o',s=5)

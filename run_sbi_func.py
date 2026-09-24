@@ -23,9 +23,9 @@ import time
 start_time=time.time()
 
 #Choose number of simulations and training
-num_sim=300
+num_sim=200
 num_training=10
-#num_check=1000
+num_check=5
 
 #Sampling the input parameters with LHS method
 sigma_b_prior    = np.array([0,1]) # standard deviation of birth magnetic field
@@ -88,23 +88,116 @@ prior = utils.BoxUniform(
 #Allow to run the inference pipeline with the data stocked in result_inference.txt params_inference.txt params_training.txt result_training.txt
 valid_or_obs=True #True -> run validation , False -> run the pipeline with comparison with the observations 
 show=False #True -> show the cornerplot, False -> Do not show the corner plot
-Repeat_sim_and_save(num_sim,num_training,prior)
+#Repeat_sim_and_save(num_sim,num_training,prior)
+os.system(f'rm P_Pdot_positions.txt')
+os.system(f'rm PPdot_alpha_all.txt')
+os.system(f'rm PF_check.txt')
+os.system(f'rm x_file.txt')
+os.system(f'rm x_file2.txt')
+os.system(f'rm info_supp.txt')
+os.system(f'rm gamma_peak_sep.txt')
+os.system(f'rm Fg_flux.txt')
+os.system(f'rm xi_rho_data.txt')
+os.system(f'rm nb_orbit.txt')
+os.system(f'rm wint.txt')
+os.system(f'rm wr.txt')
+os.system(f'rm info_supp.txt')
+os.system(f'rm init_P_B.txt')
+os.system(f'rm Lgamma.txt')
 posterior,observation=SBI_from_datafiles(prior,valid_or_obs,show)
 
 #Using the parameters of SBI for num_check simulations
-#samples = posterior.sample((num_check,),x=observation)
-#for i in range(num_check):
-#    params = {
-#                'sigma_b'    : float(samples[i,0]),
-#                'b_mean'     : float(10**(samples[i,1])),
-#                'p_mean'     : float(samples[i,2]*1e-3),
-#                'sigma_p'    : float(samples[i,3]),
-#                'birth_rate' : float(torch.round(samples[i,6]))
-#                }
-#    subprocess.run([f'{path_to_data}YoungPop',
-#                str(params['sigma_b']), str(params['b_mean']), str(params['p_mean']), str(params['sigma_p']), str(params['alpha_d']), str(params['tau_d']), str(params['birth_rate'])], check=True,cwd=path_to_data)
-#    os.system(f"python3 {path_to_data}plots.py {i+1}")
-#    print(f"This was the simulation number {i+1}")
+samples = posterior.sample((num_check,),x=observation)
+os.system(f'rm P_Pdot_positions.txt')
+os.system(f'rm PPdot_alpha_all.txt')
+os.system(f'rm PF_check.txt')
+os.system(f'rm x_file.txt')
+os.system(f'rm x_file2.txt')
+os.system(f'rm info_supp.txt')
+os.system(f'rm gamma_peak_sep.txt')
+os.system(f'rm Fg_flux.txt')
+os.system(f'rm xi_rho_data.txt')
+os.system(f'rm nb_orbit.txt')
+os.system(f'rm wint.txt')
+os.system(f'rm wr.txt')
+os.system(f'rm info_supp.txt')
+os.system(f'rm init_P_B.txt')
+os.system(f'rm Lgamma.txt')
+params = {
+            'sigma_b'    : float(samples[0,0]),
+            'b_mean'     : float(10**(samples[0,1])),
+            'p_mean'     : float(samples[0,2]*1e-3),
+            'sigma_p'    : float(samples[0,3]),
+            'BR'    : float(np.round(samples[0,4])),
+            'A_propto1' : float(10**(samples[0,5])),
+            'D_propto1' : float(10**(samples[0,6])),
+            'M_for_K' : float(samples[0,7]),
+            'R_for_K' : float(samples[0,8]),
+            'tau_d'   : float((10**samples[0,9])*365*24*3600),
+            'alpha_d' : float(samples[0,10])
+            }
+print(params)
+cmd = [
+    'bash',
+    'run_pop_post_inference.sh',
+    str(params['sigma_b']),
+    str(params['b_mean']),
+    str(params['p_mean']),
+    str(params['sigma_p']),
+    str(params['BR']),
+    str(params['A_propto1']),
+    str(params['D_propto1']),
+    str(params['M_for_K']),
+    str(params['R_for_K']),
+    str(params['tau_d']),
+    str(params['alpha_d'])
+]
+print("Command executed: ")
+print(" ".join(cmd))
+sim_run=subprocess.run([f'bash','run_pop_post_inference.sh', str(params['sigma_b']), str(params['b_mean']), str(params['p_mean']), str(params['sigma_p']), str(params['BR']), str(params['A_propto1']), str(params['D_propto1']), str(params['M_for_K']), str(params['R_for_K']), str(params['tau_d']), str(params['alpha_d'])], capture_output=True,text=True)
+print("STDOUT :", sim_run.stdout)
+print("STDERR :", sim_run.stderr)
+print("Return code :", sim_run.returncode)
+#os.system(f"sed -i 's/nan/0.000000e+00/g' wint.txt")
+os.system(f"python3 plots.py")
+os.system(f'rm P_Pdot_positions.txt')
+os.system(f'rm PPdot_alpha_all.txt')
+os.system(f'rm PF_check.txt')
+os.system(f'rm x_file.txt')
+os.system(f'rm x_file2.txt')
+os.system(f'rm info_supp.txt')
+os.system(f'rm gamma_peak_sep.txt')
+os.system(f'rm Fg_flux.txt')
+os.system(f'rm xi_rho_data.txt')
+os.system(f'rm nb_orbit.txt')
+os.system(f'rm wint.txt')
+os.system(f'rm wr.txt')
+os.system(f'rm info_supp.txt')
+os.system(f'rm init_P_B.txt')
+os.system(f'rm Lgamma.txt')
+for i in range(1,num_check):
+    params = {
+                'sigma_b'    : float(samples[i,0]),
+                'b_mean'     : float(10**(samples[i,1])),
+                'p_mean'     : float(samples[i,2]*1e-3),
+                'sigma_p'    : float(samples[i,3]),
+                'BR'    : float(np.round(samples[i,4])),
+                'A_propto1' : float(10**(samples[i,5])),
+                'D_propto1' : float(10**(samples[i,6])),
+                'M_for_K' : float(samples[i,7]),
+                'R_for_K' : float(samples[i,8]),
+                'tau_d'   : float((10**samples[i,9])*365*24*3600),
+                'alpha_d' : float(samples[i,10])
+                }
+    sim_run=subprocess.run([f'bash','run_pop_post_inference.sh', str(params['sigma_b']), str(params['b_mean']), str(params['p_mean']), str(params['sigma_p']), str(params['BR']), str(params['A_propto1']), str(params['D_propto1']), str(params['M_for_K']), str(params['R_for_K']), str(params['tau_d']), str(params['alpha_d'])], capture_output=True,text=True)
+    print("STDOUT :", sim_run.stdout)
+    print("STDERR :", sim_run.stderr)
+    print("Return code :", sim_run.returncode)
+    #os.system(f"sed -i 's/nan/0.000000e+00/g' wint.txt")
+    #os.system(f"python3 plots_post_inference.py")
+    print(f"This was the simulation number {i+1}")
+
+os.system(f"python3 plots_post_inference.py")
 
 #Compute the time of execution
 end_time=time.time()

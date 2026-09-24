@@ -491,9 +491,9 @@ void detection_X(void *params){
 	long count_gx=0;long count_rgx=0;long count_gx_rgx=0;
 	double xi,alpha;
 	FILE *PF_check=NULL;
-        PF_check=fopen("PF_check.txt","w+");
-	x_file=fopen("x_file.txt","w+");
-	x_file2=fopen("x_file2.txt","w+");
+        PF_check=fopen("PF_check.txt","a+");
+	x_file=fopen("x_file.txt","a+");
+	x_file2=fopen("x_file2.txt","a+");
 	info_supp=fopen("info_supp.txt","a+");
 	for(np=0;np<part->Npulsars;np++){
 		if((part->Fx[np]>F_min_XMM && part->sky_XMM[np]==1) || (part->Fx[np]>F_min_chandra && part->sky_chandra[np]==1)){
@@ -584,6 +584,20 @@ void detection_X(void *params){
 	fclose(info_supp);
 }
 
+void save_PPdot_alpha_all(void *params){
+
+	struct func_params *part= (struct func_params*)params;
+        long np=0;
+	FILE *PPdot_alpha_all=NULL;
+	PPdot_alpha_all=fopen("PPdot_alpha_all.txt","a+");
+	for (np=0;np<part->Npulsars;np++){
+		if (part->detec[np]==1){
+			fprintf(PPdot_alpha_all,"%e %e %e %e\n",part->period[np],part->Pdot[np],part->alpha[np],part->cos_a0[np]);
+		}
+	}
+	fclose(PPdot_alpha_all);
+}
+
 int detection(void *params){ //check the flux of each pulsar and if the beam sweps the Earth
 
 
@@ -631,16 +645,16 @@ int detection(void *params){ //check the flux of each pulsar and if the beam swe
 	int detec_fast=0;int detec_pmps=0;int detec_htru=0;
         int current_detec_fast,current_detec_pmps,current_detec_htru;
 	FILE *gamma_peak_sep=NULL;
-        gamma_peak_sep=fopen("gamma_peak_sep.txt","w+");
-	file_data=fopen("P_Pdot_positions.txt","w+");
-	Fg_flux=fopen("Fg_flux.txt","w+");
-	save_tempo=fopen("xi_rho_data.txt","w+");
-	check_nb_orbit=fopen("nb_orbit.txt","w+");
-	file_wint=fopen("wint.txt","w+");
-	file_wr=fopen("wr.txt","w+");
-	info_supp=fopen("info_supp.txt","w+");
-	init_val=fopen("init_P_B.txt","w+");
-	get_Lgamma=fopen("Lgamma.txt","w+");
+        gamma_peak_sep=fopen("gamma_peak_sep.txt","a+");
+	file_data=fopen("P_Pdot_positions.txt","a+");
+	Fg_flux=fopen("Fg_flux.txt","a+");
+	save_tempo=fopen("xi_rho_data.txt","a+");
+	check_nb_orbit=fopen("nb_orbit.txt","a+");
+	file_wint=fopen("wint.txt","a+");
+	file_wr=fopen("wr.txt","a+");
+	info_supp=fopen("info_supp.txt","a+");
+	init_val=fopen("init_P_B.txt","a+");
+	get_Lgamma=fopen("Lgamma.txt","a+");
 	//get_Bf=fopen("Bf_info.txt","a+");
 	//all_Bf=fopen("all_bf_pulsars.txt","a+");
 			
