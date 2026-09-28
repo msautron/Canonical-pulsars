@@ -10,6 +10,72 @@ import pandas as pd
 from matplotlib.ticker import FuncFormatter
 import matplotlib as mpl
 
+#Code related to get the data from the reference population of the inference
+var,var2='',''
+reg_1=re.compile("-*.{12}[|]{1}")
+reg_2=re.compile("[|]{1}.{1}[|]{1}")
+
+with open("x_file_ref.txt","r") as f:
+    data_x_ref=re.findall(reg_1,f.read())
+
+for i in range(len(data_x_ref)):
+    for j in range(len(data_x_ref[i])-1):
+        var+=data_x_ref[i][j]
+    data_x_ref[i]=float(var)
+    var=''
+
+P_x_ref,P_dot_x_ref=[],[]
+for i in range(int(len(data_x_ref)/20)):
+    P_x_ref+=[data_x_ref[20*i]]    #Period of rotation of the pulsar in seconds
+    P_dot_x_ref+=[data_x_ref[20*i+1]]  #Period derivative of rotation of the pulsar, no units
+
+with open("P_Pdot_positions_ref.txt","r") as f:
+    data_ref=re.findall(reg_1,f.read())
+
+with open("P_Pdot_positions_ref.txt","r") as f:
+    data_type_ref=re.findall(reg_2,f.read())
+
+type_pulsar_ref=[]
+for i in range(len(data_type_ref)):
+    var2+=data_type_ref[i][1]
+    type_pulsar_ref+=[int(var2)]
+    var2=''
+
+for i in range(len(data_ref)):
+    for j in range(len(data_ref[i])-1):
+        var+=data_ref[i][j]
+    data_ref[i]=float(var)
+    var=''
+
+P_ref,P_dot_ref=[],[]
+for i in range(int(len(data_ref)/20)):
+    P_ref+=[data_ref[20*i]]    #Period of rotation of the pulsar in seconds
+    P_dot_ref+=[data_ref[20*i+1]]  #Period derivative of rotation of the pulsar, no units
+
+P_radio_ref,P_dot_radio_ref=[],[]
+P_gamma_ref,P_dot_gamma_ref=[],[]
+P_radio_gamma_ref,P_dot_radio_gamma_ref=[],[]
+for i in range(len(P_ref)):
+    if type_pulsar_ref[i]==1:
+        P_radio_ref+=[P_ref[i]]
+        P_dot_radio_ref+=[P_dot_ref[i]]
+    elif type_pulsar_ref[i]==2:
+        P_gamma_ref+=[P_ref[i]]
+        P_dot_gamma_ref+=[P_dot_ref[i]]
+    elif type_pulsar_ref[i]==3:
+        P_radio_gamma_ref+=[P_ref[i]]
+        P_dot_radio_gamma_ref+=[P_dot_ref[i]]
+
+reg_5=re.compile("-*\d{1}[.]\d{6}[eE]*[+-]*\d{2}")
+with open("PPdot_alpha_all_ref.txt","r") as f:
+    all_ppdot_alpha_ref=re.findall(reg_5,f.read())
+
+P_sim_all_ref,P_dot_sim_all_ref=[],[]
+for i in range(int(len(all_ppdot_alpha_ref)/4)):
+    P_sim_all_ref.append(float(all_ppdot_alpha_ref[4*i+0]))
+    P_dot_sim_all_ref.append(float(all_ppdot_alpha_ref[4*i+1]))
+
+#Useful functions
 def log_format(x, pos):
     return r"$10^{{{}}}$".format(int(x))
 
@@ -970,20 +1036,37 @@ bins_Pdot = np.linspace(-19, -10, 33)
 
 sim_P_cdf_x, sim_P_cdf_y = compute_cdf(np.log10(P_sim_all), bins_P)
 obs_P_cdf_x, obs_P_cdf_y = compute_cdf(np.log10(P_obs_all), bins_P)
+sim_P_cdf_x_ref, sim_P_cdf_y_ref = compute_cdf(np.log10(P_sim_all_ref), bins_P)
 
 sim_Pdot_cdf_x, sim_Pdot_cdf_y = compute_cdf(np.log10(P_dot_sim_all), bins_Pdot)
 obs_Pdot_cdf_x, obs_Pdot_cdf_y = compute_cdf(np.log10(P_dot_obs_all), bins_Pdot)
+sim_Pdot_cdf_x_ref, sim_Pdot_cdf_y_ref = compute_cdf(np.log10(P_dot_sim_all_ref), bins_Pdot)
 
 sim_P_cdf_x = 10**sim_P_cdf_x
 obs_P_cdf_x = 10**obs_P_cdf_x
+sim_P_cdf_x_ref = 10**sim_P_cdf_x_ref
 
 sim_Pdot_cdf_x = 10**sim_Pdot_cdf_x
 obs_Pdot_cdf_x = 10**obs_Pdot_cdf_x
+sim_Pdot_cdf_x_ref = 10**sim_Pdot_cdf_x_ref
 
 bins_P = np.logspace(-2, np.log10(3e1), 33)
 bins_Pdot = np.logspace(-19, -10, 33)
 
 #Plots
+#2D histogram P-Pdot all ref
+plt.figure(100)
+weights = np.ones_like(P_sim_all_ref) / len(P_sim_all_ref)
+hist_ref=plt.hist2d(P_sim_all_ref,P_dot_sim_all_ref,bins=(bins_P,bins_Pdot),cmap='viridis',weights=weights)
+H_ref,X_ref,Y_ref,_=plt.hist2d(P_sim_all_ref,P_dot_sim_all_ref,bins=(bins_P,bins_Pdot),cmap='viridis',weights=weights)
+cbar=plt.colorbar(hist_ref[3])
+cbar.set_label('Fraction of occurrences from simulations')
+plt.xlabel(r'Spin Period [s]')
+plt.ylabel(r'Period Derivative [s/s]')
+plt.gca().xaxis.set_major_formatter(FuncFormatter(log_format))
+plt.gca().yaxis.set_major_formatter(FuncFormatter(log_format))
+plt.savefig(f'inference_plots/2D_P_Pdot_plot_ref.pdf',dpi=300)
+plt.close()
 #2D histogram P-Pdot all
 plt.figure(0)
 weights = np.ones_like(P_sim_all) / len(P_sim_all)
@@ -998,43 +1081,31 @@ plt.gca().yaxis.set_major_formatter(FuncFormatter(log_format))
 plt.savefig(f'inference_plots/2D_P_Pdot_plot_sim.pdf',dpi=300)
 plt.close()
 
-#Contour map P-Pdot simulation all
-plt.figure(1,figsize=(8,8))
+#Contour map P-Pdot simulation ref comp
+plt.figure(101,figsize=(8,8))
 ax_main = plt.axes([0.1, 0.1, 0.65, 0.65])
 X_grid, Y_grid = np.meshgrid(X[:-1], Y[:-1])
-contour=ax_main.contour(X_grid, Y_grid, H.T, levels=10, cmap='viridis',zorder=2)  # Transposer H car les axes sont inversés
-#ax_main.xaxis.set_major_formatter(FuncFormatter(log_format))
-#ax_main.set_xticks([-2, -1, 0, 1, 2])
-#ax_main.set_xticklabels([r'$10^{-2}$', r'$10^{-1}$', r'$10^{0}$',r'$10^{1}$',r'$10^{2}$'])
-#ax_main.yaxis.set_major_formatter(FuncFormatter(log_format))
-#cbar=plt.colorbar(contour)
-#cbar.set_label('Fraction of occurrences from simulations')
-ax_main.scatter(P_obs_all,P_dot_obs_all,color='red',marker="*",s=15,zorder=1)
+contour=ax_main.contour(X_grid, Y_grid, H.T, levels=10, colors='red',label='Simulated',zorder=2)  # Transposer H car les axes sont inversés
+contour_ref=ax_main.contour(X_grid, Y_grid, H_ref.T, levels=10, colors='black',label='Reference',zorder=2)  # Transposer H car les axes sont inversés
+#ax_main.scatter(P_obs_all,P_dot_obs_all,color='red',marker="*",s=15,zorder=1)
 ax_main.set_xlabel(r'Spin Period [s]')
 ax_main.set_ylabel(r'Period Derivative [s/s]')
 ax_main.set_xlim(1e-2,3e1)
 ax_main.set_ylim(1e-19,1e-10)
 ax_main.set_yscale('log')
 ax_main.set_xscale('log')
-#ax_main.legend()
-#ax_main.grid(alpha=0.5, linestyle='-')
 #Bottom CDF (for P)
 ax_top = plt.axes([0.1, 0.78, 0.65, 0.1], sharex=ax_main)  # Aligné avec le contour
-ax_top.plot(sim_P_cdf_x, sim_P_cdf_y, label='Simulated', color='green')
-ax_top.plot(obs_P_cdf_x, obs_P_cdf_y, label='Observed', color='red')
+ax_top.plot(sim_P_cdf_x, sim_P_cdf_y, label='Simulated', color='red')
+ax_top.plot(sim_P_cdf_x_ref, sim_P_cdf_y_ref, label='Reference', color='black')
 ax_top.legend()
 ax_top.tick_params(axis="x", labelbottom=False)
 ax_top.set_ylabel("CDF")
-#ax_top.set_yscale('log')
-#ax_top.set_xscale('log')
 ax_top.grid(alpha=0.5, linestyle='-')
 #Right CDF (for Pdot)
 ax_right = plt.axes([0.77, 0.1, 0.1, 0.65], sharey=ax_main)  # Aligné avec le contour
-ax_right.plot(sim_Pdot_cdf_y, sim_Pdot_cdf_x, color='green')  # Transposée
-ax_right.plot(obs_Pdot_cdf_y, obs_Pdot_cdf_x, color='red')  # Transposée
-#ax_right.set_yscale('log')
-#ax_right.set_xscale('log')
-#ax_right.legend()
+ax_right.plot(sim_Pdot_cdf_y, sim_Pdot_cdf_x, label='Simulated',color='red')  # Transposée
+ax_right.plot(sim_Pdot_cdf_y_ref, sim_Pdot_cdf_x_ref,label='Reference', color='black')  # Transposée
 ax_right.tick_params(axis="y", labelleft=False)
 ax_right.set_xlabel("CDF")
 ax_right.grid(alpha=0.5, linestyle='-')
@@ -1050,16 +1121,59 @@ ax_main.text(P_line[7]*0.85,P_dot_Edot1e31W[7]*1.05,r'$\dot{E} = 10^{31}$W',font
 #Plot the B lines
 ax_main.plot(P_line,P_dot_B1e6,linestyle='dotted',c='black',zorder=0)
 ax_main.text(P_line[80]*0.6,P_dot_B1e6[80]*0.95,r'$B =10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
-#plt.plot(P_line,P_dot_B5e6,linestyle='dotted',c='black',zorder=0)
-#plt.text(P_line[1500]*0.6,P_dot_B5e6[1500]*0.75,r'$B =5\times10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 ax_main.plot(P_line,P_dot_B1e7,linestyle='dotted',c='black',zorder=0)
 ax_main.text(P_line[2000]*0.6,P_dot_B1e7[2000]*0.95,r'$B= 10^{7}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 ax_main.plot(P_line,P_dot_B1e8,linestyle='dotted',c='black',zorder=0)
 ax_main.text(P_line[2300]*0.6,P_dot_B1e8[2300]*0.95,r'$B= 10^{8}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 ax_main.plot(P_line,P_dot_B1e9,linestyle='dotted',c='black',zorder=0)
 ax_main.text(P_line[2500]*0.6,P_dot_B1e9[2500]*0.95,r'$B= 10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
-#plt.plot(P_line,P_dot_B4_4e9,linestyle='dotted',c='black',zorder=0)
-#plt.text(P_line[2500]*0.6,P_dot_B4_4e9[2500]*0.95,r'$B= 4.4\times10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+plt.savefig(f'inference_plots/contour_map_ppdot_reference_all.pdf',dpi=300)
+
+#Contour map P-Pdot simulation all
+plt.figure(1,figsize=(8,8))
+ax_main = plt.axes([0.1, 0.1, 0.65, 0.65])
+X_grid, Y_grid = np.meshgrid(X[:-1], Y[:-1])
+contour=ax_main.contour(X_grid, Y_grid, H.T, levels=10, cmap='viridis',label='Simulated',zorder=2)  # Transposer H car les axes sont inversés
+ax_main.scatter(P_obs_all,P_dot_obs_all,color='red',marker="*",s=15,zorder=1)
+ax_main.set_xlabel(r'Spin Period [s]')
+ax_main.set_ylabel(r'Period Derivative [s/s]')
+ax_main.set_xlim(1e-2,3e1)
+ax_main.set_ylim(1e-19,1e-10)
+ax_main.set_yscale('log')
+ax_main.set_xscale('log')
+#Bottom CDF (for P)
+ax_top = plt.axes([0.1, 0.78, 0.65, 0.1], sharex=ax_main)  # Aligné avec le contour
+ax_top.plot(sim_P_cdf_x, sim_P_cdf_y, label='Simulated', color='green')
+ax_top.plot(obs_P_cdf_x, obs_P_cdf_y, label='Observed', color='red')
+ax_top.legend()
+ax_top.tick_params(axis="x", labelbottom=False)
+ax_top.set_ylabel("CDF")
+ax_top.grid(alpha=0.5, linestyle='-')
+#Right CDF (for Pdot)
+ax_right = plt.axes([0.77, 0.1, 0.1, 0.65], sharey=ax_main)  # Aligné avec le contour
+ax_right.plot(sim_Pdot_cdf_y, sim_Pdot_cdf_x, color='green')  # Transposée
+ax_right.plot(obs_Pdot_cdf_y, obs_Pdot_cdf_x, color='red')  # Transposée
+ax_right.tick_params(axis="y", labelleft=False)
+ax_right.set_xlabel("CDF")
+ax_right.grid(alpha=0.5, linestyle='-')
+#Plot the Edot lines
+ax_main.plot(P_line,P_dot_Edot1e22W,linestyle='dotted',c='orange',zorder=0)
+ax_main.text(P_line[1800]*0.85,P_dot_Edot1e22W[1800]*1.05,r'$\dot{E} = 10^{22}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+ax_main.plot(P_line,P_dot_Edot1e25W,linestyle='dotted',c='orange',zorder=0)
+ax_main.text(P_line[800]*0.85,P_dot_Edot1e25W[800]*1.05,r'$\dot{E} = 10^{25}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+ax_main.plot(P_line,P_dot_Edot1e28W,linestyle='dotted',c='orange',zorder=0)
+ax_main.text(P_line[77]*0.85,P_dot_Edot1e28W[77]*1.05,r'$\dot{E} = 10^{28}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+ax_main.plot(P_line,P_dot_Edot1e31W,linestyle='dotted',c='orange',zorder=0)
+ax_main.text(P_line[7]*0.85,P_dot_Edot1e31W[7]*1.05,r'$\dot{E} = 10^{31}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+#Plot the B lines
+ax_main.plot(P_line,P_dot_B1e6,linestyle='dotted',c='black',zorder=0)
+ax_main.text(P_line[80]*0.6,P_dot_B1e6[80]*0.95,r'$B =10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+ax_main.plot(P_line,P_dot_B1e7,linestyle='dotted',c='black',zorder=0)
+ax_main.text(P_line[2000]*0.6,P_dot_B1e7[2000]*0.95,r'$B= 10^{7}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+ax_main.plot(P_line,P_dot_B1e8,linestyle='dotted',c='black',zorder=0)
+ax_main.text(P_line[2300]*0.6,P_dot_B1e8[2300]*0.95,r'$B= 10^{8}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+ax_main.plot(P_line,P_dot_B1e9,linestyle='dotted',c='black',zorder=0)
+ax_main.text(P_line[2500]*0.6,P_dot_B1e9[2500]*0.95,r'$B= 10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 plt.savefig(f'inference_plots/contour_map_ppdot_all.pdf',dpi=300)
 
 #Computation of the CDF of P and Pdot, obs and sim gamma
@@ -1068,15 +1182,19 @@ bins_Pdot = np.linspace(-19, -10, 33)
 
 sim_P_cdf_x, sim_P_cdf_y = compute_cdf(np.log10(P_gamma), bins_P)
 obs_P_cdf_x, obs_P_cdf_y = compute_cdf(np.log10(data_3PC_filtered['P0']), bins_P)
+ref_P_cdf_x, ref_P_cdf_y = compute_cdf(np.log10(P_gamma_ref), bins_P)
 
 sim_Pdot_cdf_x, sim_Pdot_cdf_y = compute_cdf(np.log10(P_dot_gamma), bins_Pdot)
 obs_Pdot_cdf_x, obs_Pdot_cdf_y = compute_cdf(np.log10(data_3PC_filtered['P1']), bins_Pdot)
+ref_Pdot_cdf_x, ref_Pdot_cdf_y = compute_cdf(np.log10(P_dot_gamma_ref), bins_Pdot)
 
 sim_P_cdf_x = 10**sim_P_cdf_x
 obs_P_cdf_x = 10**obs_P_cdf_x
+ref_P_cdf_x = 10**ref_P_cdf_x
 
 sim_Pdot_cdf_x = 10**sim_Pdot_cdf_x
 obs_Pdot_cdf_x = 10**obs_Pdot_cdf_x
+ref_Pdot_cdf_x = 10**ref_Pdot_cdf_x
 
 bins_P = np.logspace(-2, np.log10(3e1), 33)
 bins_Pdot = np.logspace(-19, -10, 33)
@@ -1095,39 +1213,44 @@ plt.gca().yaxis.set_major_formatter(FuncFormatter(log_format))
 plt.savefig(f'inference_plots/2D_P_Pdot_plot_gamma_sim.pdf',dpi=300)
 plt.close()
 
-#Contour map P-Pdot simulation gamma
-plt.figure(3,figsize=(8,8))
+#2D histogram P-Pdot gamma ref
+plt.figure(200)
+weights = np.ones_like(P_gamma_ref) / len(P_gamma_ref)
+hist_ref=plt.hist2d(P_gamma_ref,P_dot_gamma_ref,bins=(bins_P,bins_Pdot),cmap='viridis',weights=weights)
+H_ref,X_ref,Y_ref,_=plt.hist2d(P_gamma_ref,P_dot_gamma_ref,bins=(bins_P,bins_Pdot),cmap='viridis',weights=weights)
+cbar=plt.colorbar(hist_ref[3])
+cbar.set_label('Fraction of occurrences from simulations')
+plt.xlabel(r'Spin Period [s]')
+plt.ylabel(r'Period Derivative [s/s]')
+plt.gca().xaxis.set_major_formatter(FuncFormatter(log_format))
+plt.gca().yaxis.set_major_formatter(FuncFormatter(log_format))
+plt.savefig(f'inference_plots/2D_P_Pdot_plot_gamma_ref.pdf',dpi=300)
+plt.close()
+
+#Contour map P-Pdot simulation ref comp gamma
+plt.figure(201,figsize=(8,8))
 ax_main = plt.axes([0.1, 0.1, 0.65, 0.65])
 X_grid, Y_grid = np.meshgrid(X[:-1], Y[:-1])
-contour=ax_main.contour(X_grid, Y_grid, H.T, levels=10, cmap='viridis')  # Transposer H car les axes sont inversés
-#ax_main.xaxis.set_major_formatter(FuncFormatter(log_format))
-#ax_main.set_xticks([-2, -1, 0, 1, 2])
-#ax_main.set_xticklabels([r'$10^{-2}$', r'$10^{-1}$', r'$10^{0}$',r'$10^{1}$',r'$10^{2}$'])
-#ax_main.yaxis.set_major_formatter(FuncFormatter(log_format))
-#cbar=plt.colorbar(contour)
-#cbar.set_label('Fraction of occurrences from simulations')
-ax_main.scatter(data_3PC_filtered['P0'],data_3PC_filtered['P1'],color='red',marker="*",s=15,zorder=2)
+contour=ax_main.contour(X_grid, Y_grid, H.T, levels=10, colors='red',label='Simulated',zorder=2)  # Transposer H car les axes sont inversés
+contour_ref=ax_main.contour(X_grid, Y_grid, H_ref.T, levels=10, colors='black',label='Reference',zorder=2)  # Transposer H car les axes sont inversés
 ax_main.set_xlabel(r'Spin Period [s]')
 ax_main.set_ylabel(r'Period Derivative [s/s]')
 ax_main.set_xlim(1e-2,3e1)
 ax_main.set_ylim(1e-19,1e-10)
 ax_main.set_yscale('log')
 ax_main.set_xscale('log')
-#ax_main.legend()
-#ax_main.grid(alpha=0.5, linestyle='-')
 #Bottom CDF (for P)
 ax_top = plt.axes([0.1, 0.78, 0.65, 0.1], sharex=ax_main)  # Aligné avec le contour
-ax_top.plot(sim_P_cdf_x, sim_P_cdf_y, label='Simulated', color='green')
-ax_top.plot(obs_P_cdf_x, obs_P_cdf_y, label='Observed', color='red')
+ax_top.plot(sim_P_cdf_x, sim_P_cdf_y, label='Simulated', color='red')
+ax_top.plot(ref_P_cdf_x, ref_P_cdf_y, label='Reference', color='black')
 ax_top.legend()
 ax_top.tick_params(axis="x", labelbottom=False)
 ax_top.set_ylabel("CDF")
 ax_top.grid(alpha=0.5, linestyle='-')
 #Right CDF (for Pdot)
 ax_right = plt.axes([0.77, 0.1, 0.1, 0.65], sharey=ax_main)  # Aligné avec le contour
-ax_right.plot(sim_Pdot_cdf_y, sim_Pdot_cdf_x, color='green')  # Transposée
-ax_right.plot(obs_Pdot_cdf_y, obs_Pdot_cdf_x, color='red')  # Transposée
-#ax_right.legend()
+ax_right.plot(sim_Pdot_cdf_y, sim_Pdot_cdf_x, label='Simulated',color='red')  # Transposée
+ax_right.plot(ref_Pdot_cdf_y, ref_Pdot_cdf_x,label='Reference', color='black')  # Transposée
 ax_right.tick_params(axis="y", labelleft=False)
 ax_right.set_xlabel("CDF")
 ax_right.grid(alpha=0.5, linestyle='-')
@@ -1143,16 +1266,59 @@ ax_main.text(P_line[7]*0.85,P_dot_Edot1e31W[7]*1.05,r'$\dot{E} = 10^{31}$W',font
 #Plot the B lines
 ax_main.plot(P_line,P_dot_B1e6,linestyle='dotted',c='black',zorder=0)
 ax_main.text(P_line[80]*0.6,P_dot_B1e6[80]*0.95,r'$B =10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
-#plt.plot(P_line,P_dot_B5e6,linestyle='dotted',c='black',zorder=0)
-#plt.text(P_line[1500]*0.6,P_dot_B5e6[1500]*0.75,r'$B =5\times10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 ax_main.plot(P_line,P_dot_B1e7,linestyle='dotted',c='black',zorder=0)
 ax_main.text(P_line[2000]*0.6,P_dot_B1e7[2000]*0.95,r'$B= 10^{7}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 ax_main.plot(P_line,P_dot_B1e8,linestyle='dotted',c='black',zorder=0)
 ax_main.text(P_line[2300]*0.6,P_dot_B1e8[2300]*0.95,r'$B= 10^{8}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 ax_main.plot(P_line,P_dot_B1e9,linestyle='dotted',c='black',zorder=0)
 ax_main.text(P_line[2500]*0.6,P_dot_B1e9[2500]*0.95,r'$B= 10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
-#plt.plot(P_line,P_dot_B4_4e9,linestyle='dotted',c='black',zorder=0)
-#plt.text(P_line[2500]*0.6,P_dot_B4_4e9[2500]*0.95,r'$B= 4.4\times10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+plt.savefig(f'inference_plots/contour_map_ppdot_reference_gamma.pdf',dpi=300)
+
+#Contour map P-Pdot simulation gamma
+plt.figure(3,figsize=(8,8))
+ax_main = plt.axes([0.1, 0.1, 0.65, 0.65])
+X_grid, Y_grid = np.meshgrid(X[:-1], Y[:-1])
+contour=ax_main.contour(X_grid, Y_grid, H.T, levels=10, cmap='viridis',label='Simulated')  # Transposer H car les axes sont inversés
+ax_main.scatter(data_3PC_filtered['P0'],data_3PC_filtered['P1'],color='red',marker="*",s=15,zorder=2)
+ax_main.set_xlabel(r'Spin Period [s]')
+ax_main.set_ylabel(r'Period Derivative [s/s]')
+ax_main.set_xlim(1e-2,3e1)
+ax_main.set_ylim(1e-19,1e-10)
+ax_main.set_yscale('log')
+ax_main.set_xscale('log')
+#Bottom CDF (for P)
+ax_top = plt.axes([0.1, 0.78, 0.65, 0.1], sharex=ax_main)  # Aligné avec le contour
+ax_top.plot(sim_P_cdf_x, sim_P_cdf_y, label='Simulated', color='green')
+ax_top.plot(obs_P_cdf_x, obs_P_cdf_y, label='Observed', color='red')
+ax_top.legend()
+ax_top.tick_params(axis="x", labelbottom=False)
+ax_top.set_ylabel("CDF")
+ax_top.grid(alpha=0.5, linestyle='-')
+#Right CDF (for Pdot)
+ax_right = plt.axes([0.77, 0.1, 0.1, 0.65], sharey=ax_main)  # Aligné avec le contour
+ax_right.plot(sim_Pdot_cdf_y, sim_Pdot_cdf_x, color='green')  # Transposée
+ax_right.plot(obs_Pdot_cdf_y, obs_Pdot_cdf_x, color='red')  # Transposée
+ax_right.tick_params(axis="y", labelleft=False)
+ax_right.set_xlabel("CDF")
+ax_right.grid(alpha=0.5, linestyle='-')
+#Plot the Edot lines
+ax_main.plot(P_line,P_dot_Edot1e22W,linestyle='dotted',c='orange',zorder=0)
+ax_main.text(P_line[1800]*0.85,P_dot_Edot1e22W[1800]*1.05,r'$\dot{E} = 10^{22}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+ax_main.plot(P_line,P_dot_Edot1e25W,linestyle='dotted',c='orange',zorder=0)
+ax_main.text(P_line[800]*0.85,P_dot_Edot1e25W[800]*1.05,r'$\dot{E} = 10^{25}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+ax_main.plot(P_line,P_dot_Edot1e28W,linestyle='dotted',c='orange',zorder=0)
+ax_main.text(P_line[77]*0.85,P_dot_Edot1e28W[77]*1.05,r'$\dot{E} = 10^{28}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+ax_main.plot(P_line,P_dot_Edot1e31W,linestyle='dotted',c='orange',zorder=0)
+ax_main.text(P_line[7]*0.85,P_dot_Edot1e31W[7]*1.05,r'$\dot{E} = 10^{31}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+#Plot the B lines
+ax_main.plot(P_line,P_dot_B1e6,linestyle='dotted',c='black',zorder=0)
+ax_main.text(P_line[80]*0.6,P_dot_B1e6[80]*0.95,r'$B =10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+ax_main.plot(P_line,P_dot_B1e7,linestyle='dotted',c='black',zorder=0)
+ax_main.text(P_line[2000]*0.6,P_dot_B1e7[2000]*0.95,r'$B= 10^{7}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+ax_main.plot(P_line,P_dot_B1e8,linestyle='dotted',c='black',zorder=0)
+ax_main.text(P_line[2300]*0.6,P_dot_B1e8[2300]*0.95,r'$B= 10^{8}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+ax_main.plot(P_line,P_dot_B1e9,linestyle='dotted',c='black',zorder=0)
+ax_main.text(P_line[2500]*0.6,P_dot_B1e9[2500]*0.95,r'$B= 10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 plt.savefig(f'inference_plots/contour_map_ppdot_gamma.pdf',dpi=300)
 
 #Computation of the CDF of P and Pdot, obs and sim radio
@@ -1161,15 +1327,19 @@ bins_Pdot = np.linspace(-19, -10, 33)
 
 sim_P_cdf_x, sim_P_cdf_y = compute_cdf(np.log10(P_radio), bins_P)
 obs_P_cdf_x, obs_P_cdf_y = compute_cdf(np.log10(P3), bins_P)
+ref_P_cdf_x, ref_P_cdf_y = compute_cdf(np.log10(P_radio_ref), bins_P)
 
 sim_Pdot_cdf_x, sim_Pdot_cdf_y = compute_cdf(np.log10(P_dot_radio), bins_Pdot)
 obs_Pdot_cdf_x, obs_Pdot_cdf_y = compute_cdf(np.log10(P_dot3), bins_Pdot)
+ref_Pdot_cdf_x, ref_Pdot_cdf_y = compute_cdf(np.log10(P_dot_radio_ref), bins_Pdot)
 
 sim_P_cdf_x = 10**sim_P_cdf_x
 obs_P_cdf_x = 10**obs_P_cdf_x
+ref_P_cdf_x = 10**ref_P_cdf_x
 
 sim_Pdot_cdf_x = 10**sim_Pdot_cdf_x
 obs_Pdot_cdf_x = 10**obs_Pdot_cdf_x
+ref_Pdot_cdf_x = 10**ref_Pdot_cdf_x
 
 bins_P = np.logspace(-2, np.log10(3e1), 33)
 bins_Pdot = np.logspace(-19, -10, 33)
@@ -1188,17 +1358,72 @@ plt.gca().yaxis.set_major_formatter(FuncFormatter(log_format))
 plt.savefig(f'inference_plots/2D_P_Pdot_plot_radio_sim.pdf',dpi=300)
 plt.close()
 
-#Contour map P-Pdot simulation gamma
+#2D histogram P-Pdot radio ref
+plt.figure(400)
+weights = np.ones_like(P_radio_ref) / len(P_radio_ref)
+hist_ref=plt.hist2d(P_radio_ref,P_dot_radio_ref,bins=(bins_P,bins_Pdot),cmap='viridis',weights=weights)
+H_ref,X_ref,Y_ref,_=plt.hist2d(P_radio_ref,P_dot_radio_ref,bins=(bins_P,bins_Pdot),cmap='viridis',weights=weights)
+cbar=plt.colorbar(hist_ref[3])
+cbar.set_label('Fraction of occurrences from simulations')
+plt.xlabel(r'Spin Period [s]')
+plt.ylabel(r'Period Derivative [s/s]')
+plt.gca().xaxis.set_major_formatter(FuncFormatter(log_format))
+plt.gca().yaxis.set_major_formatter(FuncFormatter(log_format))
+plt.savefig(f'inference_plots/2D_P_Pdot_plot_radio_ref.pdf',dpi=300)
+plt.close()
+
+#Contour map P-Pdot simulation ref comp radio
+plt.figure(401,figsize=(8,8))
+ax_main = plt.axes([0.1, 0.1, 0.65, 0.65])
+X_grid, Y_grid = np.meshgrid(X[:-1], Y[:-1])
+contour=ax_main.contour(X_grid, Y_grid, H.T, levels=10, colors='red',label='Simulated',zorder=2)  # Transposer H car les axes sont inversés
+contour_ref=ax_main.contour(X_grid, Y_grid, H_ref.T, levels=10, colors='black',label='Reference',zorder=2)  # Transposer H car les axes sont inversés
+ax_main.set_xlabel(r'Spin Period [s]')
+ax_main.set_ylabel(r'Period Derivative [s/s]')
+ax_main.set_xlim(1e-2,3e1)
+ax_main.set_ylim(1e-19,1e-10)
+ax_main.set_yscale('log')
+ax_main.set_xscale('log')
+#Bottom CDF (for P)
+ax_top = plt.axes([0.1, 0.78, 0.65, 0.1], sharex=ax_main)  # Aligné avec le contour
+ax_top.plot(sim_P_cdf_x, sim_P_cdf_y, label='Simulated', color='red')
+ax_top.plot(ref_P_cdf_x, ref_P_cdf_y, label='Reference', color='black')
+ax_top.legend()
+ax_top.tick_params(axis="x", labelbottom=False)
+ax_top.set_ylabel("CDF")
+ax_top.grid(alpha=0.5, linestyle='-')
+#Right CDF (for Pdot)
+ax_right = plt.axes([0.77, 0.1, 0.1, 0.65], sharey=ax_main)  # Aligné avec le contour
+ax_right.plot(sim_Pdot_cdf_y, sim_Pdot_cdf_x, label='Simulated',color='red')  # Transposée
+ax_right.plot(ref_Pdot_cdf_y, ref_Pdot_cdf_x,label='Reference', color='black')  # Transposée
+ax_right.tick_params(axis="y", labelleft=False)
+ax_right.set_xlabel("CDF")
+ax_right.grid(alpha=0.5, linestyle='-')
+#Plot the Edot lines
+ax_main.plot(P_line,P_dot_Edot1e22W,linestyle='dotted',c='orange',zorder=0)
+ax_main.text(P_line[1800]*0.85,P_dot_Edot1e22W[1800]*1.05,r'$\dot{E} = 10^{22}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+ax_main.plot(P_line,P_dot_Edot1e25W,linestyle='dotted',c='orange',zorder=0)
+ax_main.text(P_line[800]*0.85,P_dot_Edot1e25W[800]*1.05,r'$\dot{E} = 10^{25}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+ax_main.plot(P_line,P_dot_Edot1e28W,linestyle='dotted',c='orange',zorder=0)
+ax_main.text(P_line[77]*0.85,P_dot_Edot1e28W[77]*1.05,r'$\dot{E} = 10^{28}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+ax_main.plot(P_line,P_dot_Edot1e31W,linestyle='dotted',c='orange',zorder=0)
+ax_main.text(P_line[7]*0.85,P_dot_Edot1e31W[7]*1.05,r'$\dot{E} = 10^{31}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+#Plot the B lines
+ax_main.plot(P_line,P_dot_B1e6,linestyle='dotted',c='black',zorder=0)
+ax_main.text(P_line[80]*0.6,P_dot_B1e6[80]*0.95,r'$B =10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+ax_main.plot(P_line,P_dot_B1e7,linestyle='dotted',c='black',zorder=0)
+ax_main.text(P_line[2000]*0.6,P_dot_B1e7[2000]*0.95,r'$B= 10^{7}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+ax_main.plot(P_line,P_dot_B1e8,linestyle='dotted',c='black',zorder=0)
+ax_main.text(P_line[2300]*0.6,P_dot_B1e8[2300]*0.95,r'$B= 10^{8}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+ax_main.plot(P_line,P_dot_B1e9,linestyle='dotted',c='black',zorder=0)
+ax_main.text(P_line[2500]*0.6,P_dot_B1e9[2500]*0.95,r'$B= 10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+plt.savefig(f'inference_plots/contour_map_ppdot_reference_radio.pdf',dpi=300)
+
+#Contour map P-Pdot simulation radio
 plt.figure(5,figsize=(8,8))
 ax_main = plt.axes([0.1, 0.1, 0.65, 0.65])
 X_grid, Y_grid = np.meshgrid(X[:-1], Y[:-1])
-contour=ax_main.contour(X_grid, Y_grid, H.T, levels=10, cmap='viridis')  # Transposer H car les axes sont inversés
-#ax_main.xaxis.set_major_formatter(FuncFormatter(log_format))
-#ax_main.set_xticks([-2, -1, 0, 1, 2])
-#ax_main.set_xticklabels([r'$10^{-2}$', r'$10^{-1}$', r'$10^{0}$',r'$10^{1}$',r'$10^{2}$'])
-#ax_main.yaxis.set_major_formatter(FuncFormatter(log_format))
-#cbar=plt.colorbar(contour)
-#cbar.set_label('Fraction of occurrences from simulations')
+contour=ax_main.contour(X_grid, Y_grid, H.T, levels=10, cmap='viridis',label='Simulated')  # Transposer H car les axes sont inversés
 ax_main.scatter(P3,P_dot3,color='red',marker="*",s=15,zorder=2)
 ax_main.set_xlabel(r'Spin Period [s]')
 ax_main.set_ylabel(r'Period Derivative [s/s]')
@@ -1206,8 +1431,6 @@ ax_main.set_xlim(1e-2,3e1)
 ax_main.set_ylim(1e-19,1e-10)
 ax_main.set_yscale('log')
 ax_main.set_xscale('log')
-#ax_main.legend()
-#ax_main.grid(alpha=0.5, linestyle='-')
 #Bottom CDF (for P)
 ax_top = plt.axes([0.1, 0.78, 0.65, 0.1], sharex=ax_main)  # Aligné avec le contour
 ax_top.plot(sim_P_cdf_x, sim_P_cdf_y, label='Simulated', color='green')
@@ -1236,16 +1459,12 @@ ax_main.text(P_line[7]*0.85,P_dot_Edot1e31W[7]*1.05,r'$\dot{E} = 10^{31}$W',font
 #Plot the B lines
 ax_main.plot(P_line,P_dot_B1e6,linestyle='dotted',c='black',zorder=0)
 ax_main.text(P_line[80]*0.6,P_dot_B1e6[80]*0.95,r'$B =10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
-#plt.plot(P_line,P_dot_B5e6,linestyle='dotted',c='black',zorder=0)
-#plt.text(P_line[1500]*0.6,P_dot_B5e6[1500]*0.75,r'$B =5\times10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 ax_main.plot(P_line,P_dot_B1e7,linestyle='dotted',c='black',zorder=0)
 ax_main.text(P_line[2000]*0.6,P_dot_B1e7[2000]*0.95,r'$B= 10^{7}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 ax_main.plot(P_line,P_dot_B1e8,linestyle='dotted',c='black',zorder=0)
 ax_main.text(P_line[2300]*0.6,P_dot_B1e8[2300]*0.95,r'$B= 10^{8}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 ax_main.plot(P_line,P_dot_B1e9,linestyle='dotted',c='black',zorder=0)
 ax_main.text(P_line[2500]*0.6,P_dot_B1e9[2500]*0.95,r'$B= 10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
-#plt.plot(P_line,P_dot_B4_4e9,linestyle='dotted',c='black',zorder=0)
-#plt.text(P_line[2500]*0.6,P_dot_B4_4e9[2500]*0.95,r'$B= 4.4\times10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 plt.savefig(f'inference_plots/contour_map_ppdot_radio.pdf',dpi=300)
 
 #Computation of the CDF of P and Pdot, obs and sim thermal x-rays
@@ -1254,15 +1473,19 @@ bins_Pdot = np.linspace(-19, -10, 33)
 
 sim_P_cdf_x, sim_P_cdf_y = compute_cdf(np.log10(P_x), bins_P)
 obs_P_cdf_x, obs_P_cdf_y = compute_cdf(np.log10(data_X2['P']), bins_P)
+ref_P_cdf_x, ref_P_cdf_y = compute_cdf(np.log10(P_x_ref), bins_P)
 
 sim_Pdot_cdf_x, sim_Pdot_cdf_y = compute_cdf(np.log10(P_dot_x), bins_Pdot)
 obs_Pdot_cdf_x, obs_Pdot_cdf_y = compute_cdf(np.log10(data_X2['Pdot']), bins_Pdot)
+ref_Pdot_cdf_x, ref_Pdot_cdf_y = compute_cdf(np.log10(P_dot_x_ref), bins_Pdot)
 
 sim_P_cdf_x = 10**sim_P_cdf_x
 obs_P_cdf_x = 10**obs_P_cdf_x
+ref_P_cdf_x = 10**ref_P_cdf_x
 
 sim_Pdot_cdf_x = 10**sim_Pdot_cdf_x
 obs_Pdot_cdf_x = 10**obs_Pdot_cdf_x
+ref_Pdot_cdf_x = 10**ref_Pdot_cdf_x
 
 bins_P = np.logspace(-2, np.log10(3e1), 33)
 bins_Pdot = np.logspace(-19, -10, 33)
@@ -1281,17 +1504,72 @@ plt.gca().yaxis.set_major_formatter(FuncFormatter(log_format))
 plt.savefig(f'inference_plots/2D_P_Pdot_plot_x_sim.pdf',dpi=300)
 plt.close()
 
+#2D histogram P-Pdot x-ray ref
+plt.figure(600)
+weights = np.ones_like(P_x_ref) / len(P_x_ref)
+hist_ref=plt.hist2d(P_x_ref,P_dot_x_ref,bins=(bins_P,bins_Pdot),cmap='viridis',weights=weights)
+H_ref,X_ref,Y_ref,_=plt.hist2d(P_x_ref,P_dot_x_ref,bins=(bins_P,bins_Pdot),cmap='viridis',weights=weights)
+cbar=plt.colorbar(hist_ref[3])
+cbar.set_label('Fraction of occurrences from simulations')
+plt.xlabel(r'Spin Period [s]')
+plt.ylabel(r'Period Derivative [s/s]')
+plt.gca().xaxis.set_major_formatter(FuncFormatter(log_format))
+plt.gca().yaxis.set_major_formatter(FuncFormatter(log_format))
+plt.savefig(f'inference_plots/2D_P_Pdot_plot_x_ref.pdf',dpi=300)
+plt.close()
+
+#Contour map P-Pdot simulation ref comp x-ray
+plt.figure(601,figsize=(8,8))
+ax_main = plt.axes([0.1, 0.1, 0.65, 0.65])
+X_grid, Y_grid = np.meshgrid(X[:-1], Y[:-1])
+contour=ax_main.contour(X_grid, Y_grid, H.T, levels=10, colors='red',label='Simulated',zorder=2)  # Transposer H car les axes sont inversés
+contour_ref=ax_main.contour(X_grid, Y_grid, H_ref.T, levels=10, colors='black',label='Reference',zorder=2)  # Transposer H car les axes sont inversés
+ax_main.set_xlabel(r'Spin Period [s]')
+ax_main.set_ylabel(r'Period Derivative [s/s]')
+ax_main.set_xlim(1e-2,3e1)
+ax_main.set_ylim(1e-19,1e-10)
+ax_main.set_yscale('log')
+ax_main.set_xscale('log')
+#Bottom CDF (for P)
+ax_top = plt.axes([0.1, 0.78, 0.65, 0.1], sharex=ax_main)  # Aligné avec le contour
+ax_top.plot(sim_P_cdf_x, sim_P_cdf_y, label='Simulated', color='red')
+ax_top.plot(ref_P_cdf_x, ref_P_cdf_y, label='Reference', color='black')
+ax_top.legend()
+ax_top.tick_params(axis="x", labelbottom=False)
+ax_top.set_ylabel("CDF")
+ax_top.grid(alpha=0.5, linestyle='-')
+#Right CDF (for Pdot)
+ax_right = plt.axes([0.77, 0.1, 0.1, 0.65], sharey=ax_main)  # Aligné avec le contour
+ax_right.plot(sim_Pdot_cdf_y, sim_Pdot_cdf_x, label='Simulated',color='red')  # Transposée
+ax_right.plot(ref_Pdot_cdf_y, ref_Pdot_cdf_x,label='Reference', color='black')  # Transposée
+ax_right.tick_params(axis="y", labelleft=False)
+ax_right.set_xlabel("CDF")
+ax_right.grid(alpha=0.5, linestyle='-')
+#Plot the Edot lines
+ax_main.plot(P_line,P_dot_Edot1e22W,linestyle='dotted',c='orange',zorder=0)
+ax_main.text(P_line[1800]*0.85,P_dot_Edot1e22W[1800]*1.05,r'$\dot{E} = 10^{22}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+ax_main.plot(P_line,P_dot_Edot1e25W,linestyle='dotted',c='orange',zorder=0)
+ax_main.text(P_line[800]*0.85,P_dot_Edot1e25W[800]*1.05,r'$\dot{E} = 10^{25}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+ax_main.plot(P_line,P_dot_Edot1e28W,linestyle='dotted',c='orange',zorder=0)
+ax_main.text(P_line[77]*0.85,P_dot_Edot1e28W[77]*1.05,r'$\dot{E} = 10^{28}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+ax_main.plot(P_line,P_dot_Edot1e31W,linestyle='dotted',c='orange',zorder=0)
+ax_main.text(P_line[7]*0.85,P_dot_Edot1e31W[7]*1.05,r'$\dot{E} = 10^{31}$W',fontsize=7,color='orange',rotation=45,zorder=3)
+#Plot the B lines
+ax_main.plot(P_line,P_dot_B1e6,linestyle='dotted',c='black',zorder=0)
+ax_main.text(P_line[80]*0.6,P_dot_B1e6[80]*0.95,r'$B =10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+ax_main.plot(P_line,P_dot_B1e7,linestyle='dotted',c='black',zorder=0)
+ax_main.text(P_line[2000]*0.6,P_dot_B1e7[2000]*0.95,r'$B= 10^{7}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+ax_main.plot(P_line,P_dot_B1e8,linestyle='dotted',c='black',zorder=0)
+ax_main.text(P_line[2300]*0.6,P_dot_B1e8[2300]*0.95,r'$B= 10^{8}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+ax_main.plot(P_line,P_dot_B1e9,linestyle='dotted',c='black',zorder=0)
+ax_main.text(P_line[2500]*0.6,P_dot_B1e9[2500]*0.95,r'$B= 10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
+plt.savefig(f'inference_plots/contour_map_ppdot_reference_x.pdf',dpi=300)
+
 #Contour map P-Pdot simulation thermal x-ray
 plt.figure(7,figsize=(8,8))
 ax_main = plt.axes([0.1, 0.1, 0.65, 0.65])
 X_grid, Y_grid = np.meshgrid(X[:-1], Y[:-1])
-contour=ax_main.contour(X_grid, Y_grid, H.T, levels=10, cmap='viridis')  # Transposer H car les axes sont inversés
-#ax_main.xaxis.set_major_formatter(FuncFormatter(log_format))
-#ax_main.set_xticks([-2, -1, 0, 1, 2])
-#ax_main.set_xticklabels([r'$10^{-2}$', r'$10^{-1}$', r'$10^{0}$',r'$10^{1}$',r'$10^{2}$'])
-#ax_main.yaxis.set_major_formatter(FuncFormatter(log_format))
-#cbar=plt.colorbar(contour)
-#cbar.set_label('Fraction of occurrences from simulations')
+contour=ax_main.contour(X_grid, Y_grid, H.T, levels=10, cmap='viridis',label='Simulated')  # Transposer H car les axes sont inversés
 ax_main.scatter(data_X2['P'],data_X2['Pdot'],color='red',marker="*",s=15,zorder=2)
 ax_main.set_xlabel(r'Spin Period [s]')
 ax_main.set_ylabel(r'Period Derivative [s/s]')
@@ -1299,8 +1577,6 @@ ax_main.set_xlim(1e-2,3e1)
 ax_main.set_ylim(1e-19,1e-10)
 ax_main.set_yscale('log')
 ax_main.set_xscale('log')
-#ax_main.legend()
-#ax_main.grid(alpha=0.5, linestyle='-')
 #Bottom CDF (for P)
 ax_top = plt.axes([0.1, 0.78, 0.65, 0.1], sharex=ax_main)  # Aligné avec le contour
 ax_top.plot(sim_P_cdf_x, sim_P_cdf_y, label='Simulated', color='green')
@@ -1329,16 +1605,12 @@ ax_main.text(P_line[7]*0.85,P_dot_Edot1e31W[7]*1.05,r'$\dot{E} = 10^{31}$W',font
 #Plot the B lines
 ax_main.plot(P_line,P_dot_B1e6,linestyle='dotted',c='black',zorder=0)
 ax_main.text(P_line[80]*0.6,P_dot_B1e6[80]*0.95,r'$B =10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
-#plt.plot(P_line,P_dot_B5e6,linestyle='dotted',c='black',zorder=0)
-#plt.text(P_line[1500]*0.6,P_dot_B5e6[1500]*0.75,r'$B =5\times10^{6}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 ax_main.plot(P_line,P_dot_B1e7,linestyle='dotted',c='black',zorder=0)
 ax_main.text(P_line[2000]*0.6,P_dot_B1e7[2000]*0.95,r'$B= 10^{7}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 ax_main.plot(P_line,P_dot_B1e8,linestyle='dotted',c='black',zorder=0)
 ax_main.text(P_line[2300]*0.6,P_dot_B1e8[2300]*0.95,r'$B= 10^{8}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 ax_main.plot(P_line,P_dot_B1e9,linestyle='dotted',c='black',zorder=0)
 ax_main.text(P_line[2500]*0.6,P_dot_B1e9[2500]*0.95,r'$B= 10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
-#plt.plot(P_line,P_dot_B4_4e9,linestyle='dotted',c='black',zorder=0)
-#plt.text(P_line[2500]*0.6,P_dot_B4_4e9[2500]*0.95,r'$B= 4.4\times10^{9}$T',fontsize=7,color='black',rotation=-20,zorder=3)
 plt.savefig(f'inference_plots/contour_map_ppdot_xray.pdf',dpi=300)
 
 #T histogram

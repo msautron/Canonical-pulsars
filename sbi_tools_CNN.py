@@ -341,8 +341,8 @@ def SBI_from_datafiles(prior,validation,show):
     restore_best_weights=True
     )
 
-    history_r=autoencoder_P_Pdot_r.fit(X_train_PPdot_r, X_train_PPdot_r, epochs=50, batch_size=25, validation_split=0.2)
-    history_x=autoencoder_P_Pdot_x.fit(X_train_PPdot_x, X_train_PPdot_x, epochs=40, batch_size=25, validation_split=0.2)
+    history_r=autoencoder_P_Pdot_r.fit(X_train_PPdot_r, X_train_PPdot_r, epochs=50, batch_size=15, validation_split=0.2,callbacks=[early_stop])
+    history_x=autoencoder_P_Pdot_x.fit(X_train_PPdot_x, X_train_PPdot_x, epochs=40, batch_size=15, validation_split=0.2,callbacks=[early_stop])
 
     plt.figure(200)
     plt.plot(history_r.history["loss"])
