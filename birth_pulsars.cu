@@ -9,6 +9,7 @@
 #include<gsl/gsl_randist.h>
 #include<gsl/gsl_cdf.h>
 
+//Just added a comment for test
 
 double f_weibull_P0(double P0,double J,double K){
 	return (J/(K*sq(P0)))*(1.0/pow(K*P0,J-1))*exp(-pow(1.0/(K*P0),J));
